@@ -1,6 +1,8 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/register_screen.dart';
+import '../../features/auth/screens/verification_screen.dart';
 import '../../features/pedidos/screens/pedido_placeholder_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
@@ -15,11 +17,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/registro',
-      builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Registro',
-            message: 'El registro se migrará en el siguiente loop.',
-          ),
+      builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
       path: '/recuperar',
@@ -32,9 +30,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/registro-verificacion',
       builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Verificar cuenta',
-            message: 'La verificación se migrará en el siguiente loop.',
+          (context, state) => VerificationScreen(
+            accountKey: state.extra is int ? state.extra! as int : 0,
           ),
     ),
     GoRoute(

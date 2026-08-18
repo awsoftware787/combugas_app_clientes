@@ -43,8 +43,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
 
     switch (result) {
-      case LoginSuccess(:final hasAddress):
-        context.go(hasAddress ? '/pedido' : '/perfil-pendiente');
+      case LoginSuccess():
+        context.go('/pedido');
       case LoginInactiveAccount(:final accountKey):
         context.go('/registro-verificacion', extra: accountKey);
       case LoginBlockedAccount(:final reason):

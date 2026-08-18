@@ -26,7 +26,14 @@ final class SoapRequestBuilder {
               attributes: {'xmlns': namespace},
               nest: () {
                 for (final parameter in parameters.entries) {
-                  builder.element(parameter.key, nest: parameter.value ?? '');
+                  if (parameter.value == null) {
+                    builder.element(
+                      parameter.key,
+                      attributes: {'xsi:nil': 'true'},
+                    );
+                  } else {
+                    builder.element(parameter.key, nest: parameter.value);
+                  }
                 }
               },
             );
