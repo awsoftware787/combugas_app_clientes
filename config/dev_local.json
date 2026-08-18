@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "dev",
+  "SERVICE_BASE_URL_DEV": "http://192.168.100.10:52666/",
+  "SOAP_NAMESPACE": "awserver.noip.me:8888/"
+}

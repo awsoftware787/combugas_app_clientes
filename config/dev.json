@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "dev",
+  "SERVICE_BASE_URL_DEV": "http://cgtng.sytes.net:8888/wscli/",
+  "SOAP_NAMESPACE": "awserver.noip.me:8888/"
+}

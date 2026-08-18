@@ -13,9 +13,9 @@ final class ServiceEndpoints {
     AppEnvironment.prod => _prodBaseUrl,
   };
 
-  static Uri get clientes => _serviceUri('clientes.asmx');
-  static Uri get direcciones => _serviceUri('direcciones.asmx');
-  static Uri get pedidos => _serviceUri('pedidos.asmx');
+  static Uri get clientes => _serviceUri('ws/clientes.asmx');
+  static Uri get direcciones => _serviceUri('ws/direcciones.asmx');
+  static Uri get pedidos => _serviceUri('ws/pedidos.asmx');
 
   static Uri _serviceUri(String service) {
     if (baseUrl.trim().isEmpty) {
