@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/verification_screen.dart';
+import '../../features/direcciones/screens/direccion_form_screen.dart';
+import '../../features/direcciones/screens/direcciones_screen.dart';
 import '../../features/pedidos/screens/pedido_placeholder_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
@@ -14,6 +16,21 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/pedido',
       builder: (context, state) => const PedidoPlaceholderScreen(),
+    ),
+    GoRoute(
+      path: '/direcciones',
+      builder: (context, state) => const DireccionesScreen(),
+    ),
+    GoRoute(
+      path: '/direcciones/nueva',
+      builder: (context, state) => const DireccionFormScreen(),
+    ),
+    GoRoute(
+      path: '/direcciones/editar/:id',
+      builder:
+          (context, state) => DireccionFormScreen(
+            direccionId: int.tryParse(state.pathParameters['id'] ?? ''),
+          ),
     ),
     GoRoute(
       path: '/registro',
