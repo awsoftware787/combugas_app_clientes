@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class MigrationPlaceholderScreen extends StatelessWidget {
   const MigrationPlaceholderScreen({
     super.key,
-    this.title = 'Combugas Clientes',
+    this.title = 'COMBUGAS',
     this.message = 'Funcionalidad pendiente de migración.',
   });
 
