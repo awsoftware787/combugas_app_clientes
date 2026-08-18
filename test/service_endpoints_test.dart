@@ -4,6 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('construye las URLs de los servicios del ambiente configurado', () {
+    const configuredBaseUrl = String.fromEnvironment('SERVICE_BASE_URL_DEV');
+    if (configuredBaseUrl.isEmpty) {
+      expect(() => ServiceEndpoints.clientes, throwsStateError);
+      return;
+    }
+
     expect(
       ServiceEndpoints.clientes.toString(),
       'http://cgtng.sytes.net:8888/wscli/ws/clientes.asmx',

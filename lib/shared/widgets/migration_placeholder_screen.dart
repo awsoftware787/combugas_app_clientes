@@ -1,16 +1,28 @@
 import 'package:flutter/material.dart';
 
 class MigrationPlaceholderScreen extends StatelessWidget {
-  const MigrationPlaceholderScreen({super.key});
+  const MigrationPlaceholderScreen({
+    super.key,
+    this.title = 'Combugas Clientes',
+    this.message = 'Funcionalidad pendiente de migración.',
+  });
+
+  final String title;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
       body: SafeArea(
         child: Center(
-          child: Text(
-            'Combugas Clientes',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18),
+            ),
           ),
         ),
       ),
