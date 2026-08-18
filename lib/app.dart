@@ -11,7 +11,7 @@ class CombugasApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Combugas Clientes',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
+      theme: AppTheme.lightTheme,
       routerConfig: appRouter,
     );
   }

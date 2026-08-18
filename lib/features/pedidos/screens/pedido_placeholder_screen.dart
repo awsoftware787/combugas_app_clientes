@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_assets.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 class PedidoPlaceholderScreen extends ConsumerWidget {
@@ -20,7 +21,7 @@ class PedidoPlaceholderScreen extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.shopping_cart_outlined, size: 72),
+              Image.asset(AppAssets.iconCart, width: 72, height: 72),
               const SizedBox(height: 16),
               const Text(
                 'PedidoActivity se migrará en un loop posterior.',

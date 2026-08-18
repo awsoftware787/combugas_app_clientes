@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('muestra la pantalla temporal', (WidgetTester tester) async {
+  testWidgets('muestra el inicio de sesión al arrancar', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [localStorageProvider.overrideWithValue(_MemoryStorage())],
@@ -13,11 +15,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Mi Pedido'), findsOneWidget);
-    expect(
-      find.text('Actualmente estás navegando como invitado.'),
-      findsOneWidget,
-    );
+    expect(find.text('Entrar'), findsOneWidget);
+    expect(find.text('¿No tienes cuenta?'), findsOneWidget);
   });
 }
 

@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/external_urls.dart';
+import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import '../models/login_result.dart';
 import '../widgets/phone_input_formatter.dart';
@@ -91,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0D47A1), Color(0xFF1565C0)],
+            colors: [AppColors.primary, AppColors.primary],
           ),
         ),
         child: SafeArea(
@@ -105,19 +107,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.local_shipping_outlined,
-                        color: Colors.white,
-                        size: 72,
-                      ),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'COMBUGAS',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Image.asset(
+                        AppAssets.logo,
+                        width: 280,
+                        fit: BoxFit.contain,
                       ),
                       const SizedBox(height: 32),
                       TextFormField(
@@ -150,10 +143,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   () =>
                                       _mostrarContrasena = !_mostrarContrasena,
                                 ),
-                            icon: Icon(
-                              _mostrarContrasena
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
+                            icon: Image.asset(
+                              AppAssets.iconShowPassword,
+                              width: 24,
+                              height: 24,
                             ),
                           ),
                         ),
@@ -176,7 +169,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     dimension: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: AppColors.white,
                                     ),
                                   )
                                   : const Text('Entrar'),
@@ -189,7 +182,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           const Text(
                             '¿No tienes cuenta?',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: AppColors.white),
                           ),
                           TextButton(
                             onPressed: () => context.go('/registro'),
@@ -203,7 +196,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           const Text(
                             '¿Olvidaste tu contraseña?',
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: AppColors.white),
                           ),
                           TextButton(
                             onPressed: () => context.go('/recuperar'),
@@ -215,7 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const Text(
                         'Servicio solo disponible para doméstico',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white),
+                        style: TextStyle(color: AppColors.white),
                       ),
                       TextButton(
                         onPressed: _abrirAvisoPrivacidad,
@@ -236,8 +229,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor: Colors.white,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+      fillColor: AppColors.white,
     );
   }
 }

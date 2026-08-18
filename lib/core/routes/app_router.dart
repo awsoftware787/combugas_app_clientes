@@ -5,9 +5,9 @@ import '../../features/pedidos/screens/pedido_placeholder_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/pedido',
+  initialLocation: '/login',
   routes: [
-    GoRoute(path: '/', redirect: (context, state) => '/pedido'),
+    GoRoute(path: '/', redirect: (context, state) => '/login'),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/pedido',
