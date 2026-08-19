@@ -1,0 +1,224 @@
+import 'package:combugas_clientes/core/network/soap_http_client.dart';
+import 'package:combugas_clientes/core/network/soap_service.dart';
+import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
+import 'package:combugas_clientes/features/auth/models/login_result.dart';
+import 'package:combugas_clientes/features/auth/models/session_data.dart';
+import 'package:combugas_clientes/features/direcciones/data/direccion_repository.dart';
+import 'package:combugas_clientes/features/direcciones/models/catalogos_direccion.dart';
+import 'package:combugas_clientes/features/direcciones/models/direccion.dart';
+import 'package:combugas_clientes/features/direcciones/models/direccion_request.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
+import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
+import 'package:combugas_clientes/features/pedidos/data/evaluacion_pendiente_service.dart';
+import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
+import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
+import 'package:combugas_clientes/features/pedidos/models/producto.dart';
+import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+void main() {
+  testWidgets('muestra selector, producto, agrega, badge y limpia', (
+    tester,
+  ) async {
+    final cart = _CartStore();
+    final container = _container(cart: cart, directions: const [_address]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Dirección de entrega'), findsOneWidget);
+    expect(find.text('Gas en cilindro'), findsOneWidget);
+    expect(find.text('CASA'), findsWidgets);
+
+    final add = find.text('Agregar').last;
+    await tester.ensureVisible(add);
+    await tester.tap(add);
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).lineas, 1);
+
+    await tester.tap(find.text('Limpiar'));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).lineas, 0);
+  });
+
+  testWidgets('Drawer conserva orden y cliente sin dirección puede agregar', (
+    tester,
+  ) async {
+    final container = _container(cart: _CartStore(), directions: const []);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('No tienes una dirección registrada.'), findsOneWidget);
+    expect(find.text('Agregar dirección'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    final labels = [
+      'Perfil',
+      'Carburaciones',
+      'Mis direcciones',
+      'Mis Pedidos',
+      'Cerrar sesión',
+    ];
+    for (final label in labels) {
+      expect(find.text(label), findsOneWidget);
+    }
+    final positions =
+        labels.map((label) => tester.getTopLeft(find.text(label)).dy).toList();
+    expect(positions, orderedEquals([...positions]..sort()));
+    expect(find.text('VALERIA CORDERO'), findsOneWidget);
+  });
+}
+
+ProviderContainer _container({
+  required _CartStore cart,
+  required List<Direccion> directions,
+}) => ProviderContainer(
+  overrides: [
+    authRepositoryProvider.overrideWithValue(_AuthRepository()),
+    direccionRepositoryProvider.overrideWithValue(
+      _DirectionRepository(directions),
+    ),
+    pedidoRepositoryProvider.overrideWithValue(_PedidoRepository()),
+    carritoStoreProvider.overrideWithValue(cart),
+    evaluacionPendienteServiceProvider.overrideWithValue(_pendingService()),
+  ],
+);
+
+EvaluacionPendienteService _pendingService() => EvaluacionPendienteService(
+  soapService: SoapService(
+    httpClient: SoapHttpClient(
+      client: MockClient(
+        (_) async => http.Response(
+          '''
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><pendienteFormularioResponse><pendienteFormularioResult>
+<Result>true</Result><Message>SIN PENDIENTES</Message><Data><![CDATA[[]]]></Data>
+</pendienteFormularioResult></pendienteFormularioResponse></soap:Body></soap:Envelope>''',
+          200,
+        ),
+      ),
+    ),
+  ),
+);
+
+final class _AuthRepository implements AuthRepositoryContract {
+  @override
+  SessionData? getSession() => const SessionData(
+    claveUsuario: 12,
+    nombreUsuario: 'VALERIA CORDERO',
+    claveTelefono: 2,
+    subcanalUsuario: 1,
+  );
+  @override
+  Future<LoginResult> login({
+    required String telefono,
+    required String contrasena,
+  }) => throw UnimplementedError();
+  @override
+  Future<void> logout() async {}
+}
+
+final class _PedidoRepository implements PedidoRepositoryContract {
+  @override
+  Future<List<Producto>> getPrecios() async => const [
+    Producto(
+      id: 2,
+      descripcion: 'CILINDRO 30 KG',
+      presentacion: '30 KG',
+      servicioId: 1,
+      precioCentavos: 60000,
+    ),
+  ];
+  @override
+  Future<MontosMinimos> getMontosMinimos() async => const MontosMinimos.empty();
+}
+
+final class _CartStore implements CarritoStore {
+  List<ItemPedido> items = [];
+  @override
+  List<ItemPedido> read() => items;
+  @override
+  Future<void> save(List<ItemPedido> value) async => items = [...value];
+}
+
+final class _DirectionRepository implements DireccionRepositoryContract {
+  _DirectionRepository(this.directions);
+  final List<Direccion> directions;
+  Direccion? selected;
+  @override
+  Future<List<Direccion>> getDirecciones(int clienteId) async => directions;
+  @override
+  Direccion? getSelected() => selected;
+  @override
+  Future<void> saveSelected(Direccion direccion) async => selected = direccion;
+  @override
+  Future<void> clearSelected() async => selected = null;
+  @override
+  Future<Direccion> getDireccion(int direccionId) async => _address;
+  @override
+  Future<List<Colonia>> getColonias() async => const [];
+  @override
+  Future<List<Calle>> getCalles(int coloniaId) async => const [];
+  @override
+  Future<List<Cerrada>> getCerradas(int coloniaId) async => const [];
+  @override
+  Future<DireccionOperationResult> guardar(
+    int clienteId,
+    DireccionRequest request,
+  ) => throw UnimplementedError();
+  @override
+  Future<DireccionOperationResult> actualizar(
+    int direccionId,
+    DireccionRequest request,
+  ) => throw UnimplementedError();
+  @override
+  Future<DireccionOperationResult> desactivar(int direccionId, int clienteId) =>
+      throw UnimplementedError();
+}
+
+const _address = Direccion(
+  id: 9,
+  descripcion: 'CASA',
+  tipoCalle: 'CALLE',
+  idCalle: 2,
+  calle: 'HIDALGO',
+  numeroInterior: '',
+  numeroExterior: '123',
+  idColonia: 3,
+  colonia: 'CENTRO',
+  idCiudad: 1,
+  ciudad: 'TORREÓN',
+  idEstado: 5,
+  estado: 'COAHUILA',
+  idZona: 0,
+  zona: '',
+  idCodigoPostal: 0,
+  codigoPostal: '',
+  referencias: '',
+  activa: true,
+  latitud: 25.5,
+  longitud: -103.4,
+  observaciones: '',
+  entreCalle1: '',
+  entreCalle2: '',
+  entreCalle3: '',
+  idSegmento: 1,
+  cerrada: '',
+  requiereClave: false,
+  clave: '',
+  idRuta: 0,
+  tienePedido: false,
+);
