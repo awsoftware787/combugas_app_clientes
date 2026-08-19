@@ -28,6 +28,27 @@ void main() {
       throwsA(isA<WebServiceException>()),
     );
   });
+
+  test('parsea tiempos y el id devuelto al crear pedido', () {
+    final times = parser.parseTiempos(XmlDocument.parse(_times));
+    expect(times.single.id, 2);
+    expect(times.single.descripcion, '45 Minutos');
+    final result = parser.parseCreateOrder(XmlDocument.parse(_created));
+    expect(result.pedidoId, 321);
+  });
+
+  test('rechazo de validaSalvarPedido conserva el mensaje del servidor', () {
+    expect(
+      () => parser.parseCreateOrder(XmlDocument.parse(_createFailure)),
+      throwsA(
+        isA<WebServiceException>().having(
+          (error) => error.message,
+          'message',
+          'NOHORARIO',
+        ),
+      ),
+    );
+  });
 }
 
 String _envelope(String method, String result, String data) => '''
@@ -46,3 +67,13 @@ final _minimums = _envelope(
   '[{"montominimo_dinero":500,"montominimo_litros":42.5}]',
 );
 final _failure = _envelope('getPrecios', 'false', '[]');
+final _times = _envelope(
+  'getTiemposFases',
+  'true',
+  '[{"_idTF":2,"_tiempoTF":"45","_unidad":"Minutos"}]',
+);
+final _created = _envelope('validaSalvarPedido', 'true', '321');
+final _createFailure = '''
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><validaSalvarPedidoResponse><validaSalvarPedidoResult>
+<Result>false</Result><Message>NOHORARIO</Message><Data></Data>
+</validaSalvarPedidoResult></validaSalvarPedidoResponse></soap:Body></soap:Envelope>''';

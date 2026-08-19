@@ -13,6 +13,7 @@ import '../controllers/pedido_controller.dart';
 import '../data/evaluacion_pendiente_service.dart';
 import '../models/item_pedido.dart';
 import '../models/producto.dart';
+import '../presentation/producto_asset_resolver.dart';
 import '../widgets/pedido_drawer.dart';
 
 class PedidoScreen extends ConsumerStatefulWidget {
@@ -212,7 +213,6 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
       _ProductPage(
         key: const ValueKey('cilindros'),
         title: 'Gas en cilindro',
-        image: AppAssets.productCylinder,
         products: ids([ProductoIds.cilindro30, ProductoIds.cilindro45]),
         subchannel: subchannel,
       ),
@@ -223,14 +223,13 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         _StationaryPage(product: stationary, minimums: state.montosMinimos),
       );
     }
-    void fixed(int id, String title, String image) {
+    void fixed(int id, String title) {
       final product = state.producto(id);
       if (product != null) {
         pages.add(
           _ProductPage(
             key: ValueKey(id),
             title: title,
-            image: image,
             products: [product],
             subchannel: subchannel,
           ),
@@ -238,32 +237,15 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
       }
     }
 
-    fixed(
-      ProductoIds.garrafonNatural,
-      'Garrafón de agua natural',
-      AppAssets.productWater,
-    );
-    fixed(
-      ProductoIds.garrafonAlcalino,
-      'Garrafón de agua alcalina',
-      AppAssets.productAlkalineWater,
-    );
-    fixed(
-      ProductoIds.sixNatural,
-      'Six de agua natural',
-      AppAssets.productSixPack,
-    );
-    fixed(
-      ProductoIds.sixAlcalino,
-      'Six de agua alcalina',
-      AppAssets.productAlkalineSixPack,
-    );
+    fixed(ProductoIds.garrafonNatural, 'Garrafón de agua natural');
+    fixed(ProductoIds.garrafonAlcalino, 'Garrafón de agua alcalina');
+    fixed(ProductoIds.sixNatural, 'Six de agua natural');
+    fixed(ProductoIds.sixAlcalino, 'Six de agua alcalina');
     if (state.bultos.isNotEmpty) {
       pages.add(
         _ProductPage(
           key: const ValueKey('bultos'),
           title: 'Croquetas por bulto',
-          image: AppAssets.productDogFoodBulk,
           products: state.bultos,
           subchannel: subchannel,
         ),
@@ -274,7 +256,6 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         _ProductPage(
           key: const ValueKey('bolsas'),
           title: 'Croquetas por bolsa',
-          image: AppAssets.productDogFoodBag,
           products: state.bolsas,
           subchannel: subchannel,
         ),
@@ -418,12 +399,10 @@ class _ProductPage extends ConsumerStatefulWidget {
   const _ProductPage({
     super.key,
     required this.title,
-    required this.image,
     required this.products,
     required this.subchannel,
   });
   final String title;
-  final String image;
   final List<Producto> products;
   final int subchannel;
 
@@ -452,7 +431,12 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
           children: [
             Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
-            Expanded(child: Image.asset(widget.image, fit: BoxFit.contain)),
+            Expanded(
+              child: Image.asset(
+                ProductoAssetResolver.forProducto(product),
+                fit: BoxFit.contain,
+              ),
+            ),
             if (widget.products.length > 1)
               DropdownButtonFormField<int>(
                 value: _selected,
@@ -561,7 +545,7 @@ class _StationaryPageState extends ConsumerState<_StationaryPage> {
           const SizedBox(height: 8),
           Expanded(
             child: Image.asset(
-              AppAssets.productStationaryTank,
+              ProductoAssetResolver.forProducto(widget.product),
               fit: BoxFit.contain,
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:xml/xml.dart';
 
 import '../../../core/network/network_exception.dart';
 import '../models/producto.dart';
+import '../models/create_order.dart';
 
 final class PedidosSoapParser {
   const PedidosSoapParser();
@@ -36,6 +37,28 @@ final class PedidosSoapParser {
           (_double(values.first['montominimo_dinero']) * 100).round(),
       litros: _double(values.first['montominimo_litros']),
     );
+  }
+
+  List<TiempoFase> parseTiempos(XmlDocument document) {
+    final payload = _response(document, 'getTiemposFases');
+    if (!payload.succeeded) throw WebServiceException(payload.message);
+    return _list(payload.data)
+        .map(
+          (item) => TiempoFase(
+            id: _int(item['_idTF']),
+            tiempo: _text(item['_tiempoTF']),
+            unidad: _text(item['_unidad']),
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  CreateOrderResult parseCreateOrder(XmlDocument document) {
+    final payload = _response(document, 'validaSalvarPedido');
+    if (!payload.succeeded) throw WebServiceException(payload.message);
+    final id = int.tryParse(payload.data.trim());
+    if (id == null || id <= 0) throw const InvalidSoapResponseException();
+    return CreateOrderResult(pedidoId: id, mensaje: payload.message);
   }
 
   _SoapPayload _response(XmlDocument document, String method) {

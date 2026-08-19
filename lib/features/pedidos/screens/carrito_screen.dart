@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../controllers/carrito_controller.dart';
 import '../models/item_pedido.dart';
+import '../widgets/cart_item_tile.dart';
 
 class CarritoScreen extends ConsumerWidget {
   const CarritoScreen({super.key});
@@ -50,11 +51,8 @@ class CarritoScreen extends ConsumerWidget {
                     );
                   }
                   final item = cart.items[index];
-                  return ListTile(
-                    title: Text(item.descripcion),
-                    subtitle: Text(
-                      'Cantidad: ${_cantidad(item.cantidad)} · ${formatoMoneda(item.importeCentavos)}',
-                    ),
+                  return CartItemTile(
+                    item: item,
                     trailing: IconButton(
                       tooltip: 'Eliminar',
                       onPressed:
@@ -69,15 +67,11 @@ class CarritoScreen extends ConsumerWidget {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.all(16),
         child: FilledButton(
-          onPressed: () => context.push('/confirmacion'),
+          onPressed:
+              cart.items.isEmpty ? null : () => context.push('/confirmacion'),
           child: const Text('Continuar'),
         ),
       ),
     );
   }
-
-  String _cantidad(double value) =>
-      value == value.roundToDouble()
-          ? value.toInt().toString()
-          : value.toStringAsFixed(2);
 }

@@ -1,6 +1,7 @@
 import 'package:combugas_clientes/features/pedidos/controllers/pedido_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
+import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -37,6 +38,11 @@ ProviderContainer _container(_Repository repository) => ProviderContainer(
 );
 
 final class _Repository implements PedidoRepositoryContract {
+  @override
+  Future<CreateOrderResult> createOrder(CreateOrderRequest request) =>
+      throw UnimplementedError();
+  @override
+  Future<List<TiempoFase>> getTiempos() async => const [];
   bool fail = false;
   @override
   Future<List<Producto>> getPrecios() async {

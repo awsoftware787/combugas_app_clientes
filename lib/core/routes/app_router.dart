@@ -6,7 +6,9 @@ import '../../features/auth/screens/verification_screen.dart';
 import '../../features/direcciones/screens/direccion_form_screen.dart';
 import '../../features/direcciones/screens/direcciones_screen.dart';
 import '../../features/pedidos/screens/carrito_screen.dart';
-import '../../features/pedidos/screens/confirmacion_placeholder_screen.dart';
+import '../../features/pedidos/screens/confirmacion_screen.dart';
+import '../../features/pedidos/screens/pedido_guardado_screen.dart';
+import '../../features/pedidos/models/create_order.dart';
 import '../../features/pedidos/screens/pedido_screen.dart';
 import '../../features/pedidos/data/evaluacion_pendiente_service.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
@@ -23,7 +25,13 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/confirmacion',
-      builder: (context, state) => const ConfirmacionPlaceholderScreen(),
+      builder: (context, state) => const ConfirmacionScreen(),
+    ),
+    GoRoute(
+      path: '/pedido-guardado',
+      builder:
+          (context, state) =>
+              PedidoGuardadoScreen(result: state.extra as CreateOrderResult?),
     ),
     GoRoute(
       path: '/calificacion',

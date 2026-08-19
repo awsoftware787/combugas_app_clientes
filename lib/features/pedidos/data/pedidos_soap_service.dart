@@ -2,11 +2,14 @@ import '../../../core/constants/service_endpoints.dart';
 import '../../../core/constants/soap_constants.dart';
 import '../../../core/network/soap_service.dart';
 import '../models/producto.dart';
+import '../models/create_order.dart';
 import 'pedidos_soap_parser.dart';
 
 abstract interface class PedidosService {
   Future<List<Producto>> getPrecios();
   Future<MontosMinimos> getMontosMinimos();
+  Future<List<TiempoFase>> getTiempos();
+  Future<CreateOrderResult> createOrder(CreateOrderRequest request);
 }
 
 final class PedidosSoapService implements PedidosService {
@@ -32,10 +35,27 @@ final class PedidosSoapService implements PedidosService {
     await _call(PedidosSoapMethods.obtenerMontosMinimos),
   );
 
-  Future<dynamic> _call(String method) => _soap.call(
+  @override
+  Future<List<TiempoFase>> getTiempos() async =>
+      _parser.parseTiempos(await _call(PedidosSoapMethods.obtenerTiempos));
+
+  @override
+  Future<CreateOrderResult> createOrder(CreateOrderRequest request) async =>
+      _parser.parseCreateOrder(
+        await _call(
+          PedidosSoapMethods.guardar,
+          parameters: request.soapParameters,
+        ),
+      );
+
+  Future<dynamic> _call(
+    String method, {
+    Map<String, Object?> parameters = const {},
+  }) => _soap.call(
     endpoint: endpoint,
     namespace: SoapConstants.namespace,
     methodName: method,
+    parameters: parameters,
   );
 
   void close() => _soap.close();

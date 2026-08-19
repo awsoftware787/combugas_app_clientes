@@ -12,6 +12,7 @@ import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/data/evaluacion_pendiente_service.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
+import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
 import 'package:flutter/material.dart';
@@ -132,6 +133,11 @@ final class _AuthRepository implements AuthRepositoryContract {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
+  @override
+  Future<CreateOrderResult> createOrder(CreateOrderRequest request) =>
+      throw UnimplementedError();
+  @override
+  Future<List<TiempoFase>> getTiempos() async => const [];
   @override
   Future<List<Producto>> getPrecios() async => const [
     Producto(

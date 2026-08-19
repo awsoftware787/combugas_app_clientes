@@ -35,6 +35,9 @@ abstract final class AppAssets {
   static const iconPaypal = 'assets/images/icons/ico_paypal.png';
   static const iconCard = 'assets/images/icons/ico_tarjeta.png';
 
+  /// Recurso seguro para productos dinámicos que todavía no tienen imagen.
+  static const productFallback = iconCart;
+
   static const mapBothFuelTypes =
       'assets/images/map/marker_carburacionambos.png';
   static const mapGasStation = 'assets/images/map/marker_carburaciongas.png';

@@ -16,6 +16,14 @@ void main() {
     expect(store.items, isEmpty);
   });
 
+  test('total suma los importes reales en centavos sin perder precisión', () {
+    final store = _Store([_item, _item.copyWith(importeCentavos: 59010)]);
+    final container = _container(store);
+    addTearDown(container.dispose);
+    expect(container.read(carritoControllerProvider).totalCentavos, 119010);
+    expect(formatoMoneda(119010), r'$1190.10');
+  });
+
   test('productos normales crean líneas; croquetas iguales acumulan', () async {
     final store = _Store();
     final container = _container(store);
