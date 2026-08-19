@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/mis_pedidos_controller.dart';
 import '../widgets/pedido_list_item.dart';
+import '../widgets/pedido_drawer.dart';
 
 class MisPedidosScreen extends ConsumerStatefulWidget {
   const MisPedidosScreen({super.key});
@@ -35,6 +36,7 @@ class _MisPedidosScreenState extends ConsumerState<MisPedidosScreen> {
     });
     final state = ref.watch(misPedidosControllerProvider);
     return Scaffold(
+      drawer: const PedidoDrawer(),
       appBar: AppBar(
         foregroundColor: AppColors.white,
         title: const Text(

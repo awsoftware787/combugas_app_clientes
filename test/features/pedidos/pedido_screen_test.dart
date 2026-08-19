@@ -41,15 +41,27 @@ void main() {
     expect(find.text('Gas en cilindro'), findsOneWidget);
     expect(find.text('CASA'), findsWidgets);
 
+    final clear = tester.widget<TextButton>(
+      find.byKey(const ValueKey('clear-order')),
+    );
+    expect(clear.onPressed, isNull);
+    expect(clear.style?.foregroundColor?.resolve(const {}), AppColors.accent);
+
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.foregroundColor, AppColors.white);
-    expect(tester.widget<Text>(find.text('Pedido')).style?.color, AppColors.white);
+    expect(
+      tester.widget<Text>(find.text('Pedido')).style?.color,
+      AppColors.white,
+    );
     expect(
       appBar.actions!.whereType<IconButton>().single.color,
       AppColors.white,
     );
     expect(
-      tester.widget<Text>(find.byKey(const ValueKey('product-amount'))).style?.color,
+      tester
+          .widget<Text>(find.byKey(const ValueKey('product-amount')))
+          .style
+          ?.color,
       AppColors.accent,
     );
     for (final key in const ['quantity-minus', 'quantity-plus']) {
@@ -60,7 +72,7 @@ void main() {
       );
     }
 
-    final add = find.text('Agregar').last;
+    final add = find.text('Agregar').hitTestable();
     final addButton = tester.widget<FilledButton>(
       find.ancestor(of: add, matching: find.byType(FilledButton)),
     );
@@ -72,10 +84,72 @@ void main() {
     await tester.tap(add);
     await tester.pumpAndSettle();
     expect(container.read(carritoControllerProvider).lineas, 1);
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
+    expect(
+      tester
+          .widget<Text>(
+            find.byKey(const ValueKey('quantity-value')).hitTestable(),
+          )
+          .data,
+      '1',
+    );
+
+    final enabledClear = tester.widget<TextButton>(
+      find.byKey(const ValueKey('clear-order')),
+    );
+    expect(enabledClear.onPressed, isNotNull);
+    expect(
+      enabledClear.style?.foregroundColor?.resolve({WidgetState.pressed}),
+      AppColors.accent,
+    );
 
     await tester.tap(find.text('Limpiar'));
     await tester.pumpAndSettle();
     expect(container.read(carritoControllerProvider).lineas, 0);
+  });
+
+  testWidgets('reinicia a uno cilindro, agua y croqueta tras agregar', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+      directions: const [_address],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (var page = 0; page < 3; page++) {
+      final plus = find.byKey(const ValueKey('quantity-plus')).hitTestable();
+      await tester.ensureVisible(plus);
+      for (var index = 0; index < 3; index++) {
+        await tester.tap(plus);
+        await tester.pump();
+      }
+      await tester.tap(find.text('Agregar').hitTestable());
+      await tester.pumpAndSettle();
+      expect(
+        tester
+            .widget<Text>(
+              find.byKey(const ValueKey('quantity-value')).hitTestable(),
+            )
+            .data,
+        '1',
+      );
+      if (page < 2) {
+        await tester.drag(find.byType(PageView), const Offset(-500, 0));
+        await tester.pumpAndSettle();
+      }
+    }
+
+    final items = container.read(carritoControllerProvider).items;
+    expect(items.map((item) => item.productoId), [2, 4, 20]);
+    expect(items.map((item) => item.cantidad), everyElement(4));
   });
 
   testWidgets('Drawer conserva orden y cliente sin dirección puede agregar', (
@@ -182,6 +256,20 @@ final class _PedidoRepository implements PedidoRepositoryContract {
       presentacion: '30 KG',
       servicioId: 1,
       precioCentavos: 60000,
+    ),
+    Producto(
+      id: 4,
+      descripcion: 'GARRAFÓN NATURAL',
+      presentacion: '20 L',
+      servicioId: 3,
+      precioCentavos: 5000,
+    ),
+    Producto(
+      id: 20,
+      descripcion: 'BULTO DE ADULTO 20 KG',
+      presentacion: '20 KG',
+      servicioId: 9,
+      precioCentavos: 40000,
     ),
   ];
   @override

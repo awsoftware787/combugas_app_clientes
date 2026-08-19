@@ -12,6 +12,7 @@ import '../../features/pedidos/models/create_order.dart';
 import '../../features/pedidos/screens/pedido_screen.dart';
 import '../../features/pedidos/screens/mis_pedidos_screen.dart';
 import '../../features/pedidos/screens/pedido_detalle_screen.dart';
+import '../../features/pedidos/screens/seguimiento_pedido_screen.dart';
 import '../../features/pedidos/data/evaluacion_pendiente_service.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
@@ -122,10 +123,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/seguimiento/:id',
       builder:
-          (context, state) => MigrationPlaceholderScreen(
-            title: 'Seguimiento del pedido',
-            message:
-                'Pedido ${state.pathParameters['id']}. El seguimiento se migrará en el siguiente loop.',
+          (context, state) => SeguimientoPedidoScreen(
+            pedidoId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
           ),
     ),
     GoRoute(

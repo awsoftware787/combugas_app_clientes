@@ -10,14 +10,17 @@ final class FakeHistorialRepository implements PedidoRepositoryContract {
   FakeHistorialRepository({
     List<PedidoHistorial>? pedidos,
     this.getPedidosHandler,
+    this.getUnPedidoHandler,
     this.cancelHandler,
   }) : pedidos = pedidos ?? [];
 
   List<PedidoHistorial> pedidos;
   Future<List<PedidoHistorial>> Function(int clienteId)? getPedidosHandler;
+  Future<PedidoSeguimientoInfo> Function(int pedidoId)? getUnPedidoHandler;
   Future<CancelarPedidoResult> Function(int pedidoId)? cancelHandler;
   int getPedidosCalls = 0;
   int cancelCalls = 0;
+  int getUnPedidoCalls = 0;
 
   @override
   Future<List<PedidoHistorial>> getPedidos(int clienteId) async {
@@ -33,16 +36,20 @@ final class FakeHistorialRepository implements PedidoRepositoryContract {
   }
 
   @override
-  Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) =>
-      throw UnimplementedError();
+  Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) {
+    getUnPedidoCalls++;
+    final handler = getUnPedidoHandler;
+    if (handler == null) throw UnimplementedError();
+    return handler(pedidoId);
+  }
+
   @override
   Future<CreateOrderResult> createOrder(CreateOrderRequest request) =>
       throw UnimplementedError();
   @override
   Future<List<Producto>> getPrecios() async => const [];
   @override
-  Future<MontosMinimos> getMontosMinimos() async =>
-      const MontosMinimos.empty();
+  Future<MontosMinimos> getMontosMinimos() async => const MontosMinimos.empty();
   @override
   Future<List<TiempoFase>> getTiempos() async => const [];
 }

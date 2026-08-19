@@ -83,6 +83,7 @@ final class PedidosSoapParser {
               operadorId: _int(item['_idOperador']),
               nombreOperador: _text(item['_nombreOperador']),
               rutaId: _int(item['_idRuta']),
+              vehiculo: _vehiculo(item['_Vehiculo']),
             ),
           )
           .toList(growable: false),
@@ -93,6 +94,20 @@ final class PedidosSoapParser {
     final payload = _response(document, 'cancelarPedido');
     if (!payload.succeeded) throw WebServiceException(payload.message);
     return CancelarPedidoResult(mensaje: payload.message);
+  }
+
+  PedidoVehiculo? _vehiculo(Object? value) {
+    if (value == null) return null;
+    try {
+      final data = Map<String, dynamic>.from(value as Map);
+      return PedidoVehiculo(
+        descripcion: _text(data['_descrVehiculo']),
+        latitud: _double(data['_latitudVehiculo']),
+        longitud: _double(data['_longitudVehiculo']),
+      );
+    } catch (error) {
+      throw InvalidSoapResponseException(error);
+    }
   }
 
   PedidoHistorial _pedido(Map<String, dynamic> data) => PedidoHistorial(

@@ -81,6 +81,10 @@ void main() {
     );
     expect(result.direccion.id, 9);
     expect(result.asignaciones.single.operadorId, 4);
+    expect(result.asignaciones.single.nombreOperador, 'JUAN');
+    expect(result.asignaciones.single.vehiculo?.descripcion, 'UNIDAD 12');
+    expect(result.asignaciones.single.vehiculo?.latitud, 25.56);
+    expect(result.asignaciones.single.vehiculo?.longitud, -103.45);
   });
 
   test('cancelarPedido reconoce CANCELADO y propaga rechazo funcional', () {

@@ -10,6 +10,7 @@ import '../models/item_pedido.dart';
 import '../models/metodo_pago.dart';
 import '../models/producto.dart';
 import 'carrito_controller.dart';
+import 'mis_pedidos_controller.dart';
 
 enum ConfirmacionStatus { idle, loadingTime, ready, saving, success, error }
 
@@ -159,6 +160,7 @@ final class ConfirmacionController extends Notifier<ConfirmacionState> {
         status: ConfirmacionStatus.success,
         result: result,
       );
+      ref.invalidate(misPedidosControllerProvider);
       try {
         await ref.read(ultimoPedidoStoreProvider).save(result);
         await ref.read(carritoControllerProvider.notifier).clear();

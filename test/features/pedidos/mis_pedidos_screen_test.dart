@@ -42,6 +42,23 @@ void main() {
     final refresh = appBar.actions!.whereType<IconButton>().single;
     expect(refresh.color, AppColors.white);
 
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+    for (final label in const [
+      'Perfil',
+      'Carburaciones',
+      'Mis direcciones',
+      'Mis Pedidos',
+      'Cerrar sesión',
+    ]) {
+      expect(
+        find.descendant(of: find.byType(Drawer), matching: find.text(label)),
+        findsOneWidget,
+      );
+    }
+    Navigator.of(tester.element(find.byType(Drawer))).pop();
+    await tester.pumpAndSettle();
+
     await tester.tap(find.textContaining('HIDALGO'));
     await tester.pumpAndSettle();
     expect(find.text('detalle 321'), findsOneWidget);
@@ -104,9 +121,8 @@ GoRouter _router() => GoRouter(
         GoRoute(
           path: ':id',
           builder:
-              (_, state) => Scaffold(
-                body: Text('detalle ${state.pathParameters['id']}'),
-              ),
+              (_, state) =>
+                  Scaffold(body: Text('detalle ${state.pathParameters['id']}')),
         ),
       ],
     ),

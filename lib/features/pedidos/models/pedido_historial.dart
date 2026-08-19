@@ -135,10 +135,24 @@ final class PedidoAsignacion {
     required this.operadorId,
     required this.nombreOperador,
     required this.rutaId,
+    this.vehiculo,
   });
   final int operadorId;
   final String nombreOperador;
   final int rutaId;
+  final PedidoVehiculo? vehiculo;
+}
+
+final class PedidoVehiculo {
+  const PedidoVehiculo({
+    required this.descripcion,
+    required this.latitud,
+    required this.longitud,
+  });
+
+  final String descripcion;
+  final double latitud;
+  final double longitud;
 }
 
 final class CancelarPedidoResult {

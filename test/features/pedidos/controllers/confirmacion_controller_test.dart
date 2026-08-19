@@ -10,6 +10,7 @@ import 'package:combugas_clientes/features/direcciones/models/direccion.dart';
 import 'package:combugas_clientes/features/direcciones/models/direccion_request.dart';
 import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
 import 'package:combugas_clientes/features/pedidos/controllers/confirmacion_controller.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/mis_pedidos_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/data/ultimo_pedido_storage.dart';
@@ -68,6 +69,20 @@ void main() {
       context.container.read(confirmacionControllerProvider).message,
       contains('horario'),
     );
+  });
+
+  test('pedido creado invalida Mis Pedidos y obliga otra consulta', () async {
+    final context = await _context();
+    addTearDown(context.container.dispose);
+    await context.container.read(misPedidosControllerProvider.notifier).load();
+    expect(context.repository.getPedidosCalls, 1);
+
+    await context.container
+        .read(confirmacionControllerProvider.notifier)
+        .submit();
+    await context.container.read(misPedidosControllerProvider.notifier).load();
+
+    expect(context.repository.getPedidosCalls, 2);
   });
 
   test('error de servidor conserva el carrito', () async {
@@ -150,13 +165,18 @@ final class _PedidoRepository implements PedidoRepositoryContract {
   _PedidoRepository(this.error);
   final Object? error;
   int calls = 0;
+  int getPedidosCalls = 0;
   CreateOrderRequest? received;
 
   @override
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
       throw UnimplementedError();
   @override
-  Future<List<PedidoHistorial>> getPedidos(int clienteId) async => const [];
+  Future<List<PedidoHistorial>> getPedidos(int clienteId) async {
+    getPedidosCalls++;
+    return const [];
+  }
+
   @override
   Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) =>
       throw UnimplementedError();

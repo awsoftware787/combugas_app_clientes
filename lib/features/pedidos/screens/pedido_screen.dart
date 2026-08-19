@@ -73,8 +73,9 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         title: const Text('Pedido', style: TextStyle(color: AppColors.white)),
         actions: [
           TextButton(
+            key: const ValueKey('clear-order'),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.white,
+              foregroundColor: AppColors.accent,
               disabledForegroundColor: Colors.white54,
             ),
             onPressed:
@@ -493,6 +494,7 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
                   width: 58,
                   child: Text(
                     '$_quantity',
+                    key: const ValueKey('quantity-value'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 20),
                   ),
@@ -522,6 +524,9 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
                           subcanalUsuario: widget.subchannel,
                         );
                     if (!context.mounted) return;
+                    if (result.agregado) {
+                      setState(() => _quantity = 1);
+                    }
                     ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(SnackBar(content: Text(result.mensaje)));
