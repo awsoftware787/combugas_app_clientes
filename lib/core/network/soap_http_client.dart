@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import 'network_config.dart';
@@ -14,8 +15,14 @@ final class SoapHttpClient {
     required Uri endpoint,
     required String soapAction,
     required String body,
+    bool logExchange = false,
   }) async {
     try {
+      if (kDebugMode && logExchange) {
+        debugPrint('Request confirmación pedido: $body');
+        debugPrint('SOAP endpoint: $endpoint');
+        debugPrint('SOAPAction: $soapAction');
+      }
       final response = await _client
           .post(
             endpoint,
@@ -27,18 +34,40 @@ final class SoapHttpClient {
           )
           .timeout(NetworkConfig.requestTimeout);
 
+      if (kDebugMode && logExchange) {
+        debugPrint(
+          'Response confirmación pedido statusCode: '
+          '${response.statusCode}',
+        );
+        debugPrint('Response confirmación pedido body: ${response.body}');
+      }
+
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw InvalidHttpResponseException(response.statusCode, response.body);
       }
 
       return response.body;
-    } on NetworkException {
+    } on NetworkException catch (error, stackTrace) {
+      if (kDebugMode && logExchange) {
+        debugPrint('Exception confirmación pedido: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       rethrow;
     } on TimeoutException catch (error) {
+      if (kDebugMode && logExchange) {
+        debugPrint('Exception confirmación pedido: $error');
+      }
       throw NetworkTimeoutException(error);
     } on http.ClientException catch (error) {
+      if (kDebugMode && logExchange) {
+        debugPrint('Exception confirmación pedido: $error');
+      }
       throw NoConnectionException(error);
-    } catch (error) {
+    } catch (error, stackTrace) {
+      if (kDebugMode && logExchange) {
+        debugPrint('Exception confirmación pedido: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       throw UnexpectedNetworkException(error);
     }
   }

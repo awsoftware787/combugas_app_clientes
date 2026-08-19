@@ -68,7 +68,7 @@ void main() {
     );
     expect(
       container.read(calificacionControllerProvider).message,
-      contains('ERROR'),
+      'No fue posible enviar la evaluación. Inténtalo nuevamente.',
     );
 
     fail = false;

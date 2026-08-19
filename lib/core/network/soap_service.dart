@@ -22,6 +22,7 @@ final class SoapService {
     required String namespace,
     required String methodName,
     Map<String, Object?> parameters = const {},
+    bool logExchange = false,
   }) async {
     final request = _requestBuilder.build(
       methodName: methodName,
@@ -32,6 +33,7 @@ final class SoapService {
       endpoint: endpoint,
       soapAction: '$namespace$methodName',
       body: request,
+      logExchange: logExchange,
     );
     return _responseParser.parse(response);
   }

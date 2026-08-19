@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/network_exception.dart';
@@ -65,7 +66,11 @@ final class CalificacionController extends Notifier<CalificacionState> {
       );
       ref.invalidate(misPedidosControllerProvider);
       return true;
-    } catch (error) {
+    } catch (error, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('Error al enviar evaluación: $error');
+        debugPrintStack(stackTrace: stackTrace);
+      }
       state = CalificacionState(
         status: CalificacionStatus.error,
         message: _calificacionErrorMessage(error),
@@ -85,8 +90,8 @@ String _calificacionErrorMessage(Object error) {
   if (error is InvalidSoapResponseException) {
     return 'No fue posible procesar la respuesta del servidor.';
   }
-  if (error is WebServiceException && error.message.isNotEmpty) {
-    return error.message;
+  if (error is WebServiceException) {
+    return 'No fue posible enviar la evaluación. Inténtalo nuevamente.';
   }
   return 'No fue posible enviar la calificación. Inténtalo nuevamente.';
 }

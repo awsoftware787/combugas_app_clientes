@@ -48,7 +48,7 @@ class _CalificacionScreenState extends ConsumerState<CalificacionScreen> {
             children: [
               Container(
                 width: double.infinity,
-                color: AppColors.secondary,
+                color: AppColors.primary,
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 10),
                 child: Column(
                   children: [
@@ -119,7 +119,22 @@ class _CalificacionScreenState extends ConsumerState<CalificacionScreen> {
                         ],
                         onChanged: (_) => setState(() {}),
                         decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            borderSide: BorderSide(
+                              color: AppColors.menuBackground,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
+                            borderSide: BorderSide(
+                              color: AppColors.accent,
+                              width: 2,
+                            ),
+                          ),
                         ),
                       ),
                       Align(

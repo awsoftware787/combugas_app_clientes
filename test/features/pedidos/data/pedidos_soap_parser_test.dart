@@ -118,6 +118,28 @@ void main() {
     expect(result.mensaje, 'CALIFICACION GUARDADA');
   });
 
+  test('calificarServicio acepta la respuesta ASMX real sin Data', () {
+    final result = parser.parseCalificacion(
+      XmlDocument.parse(_calificacionRealSinData),
+    );
+    expect(result.mensaje, 'CALIFOK');
+  });
+
+  test('calificarServicio interpreta rechazo ASMX real sin Data', () {
+    expect(
+      () => parser.parseCalificacion(
+        XmlDocument.parse(_calificacionErrorRealSinData),
+      ),
+      throwsA(
+        isA<WebServiceException>().having(
+          (error) => error.message,
+          'message',
+          'CALIFERR',
+        ),
+      ),
+    );
+  });
+
   test('calificarServicio propaga el rechazo funcional', () {
     expect(
       () => parser.parseCalificacion(
@@ -172,3 +194,9 @@ final _createFailure = '''
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><validaSalvarPedidoResponse><validaSalvarPedidoResult>
 <Result>false</Result><Message>NOHORARIO</Message><Data></Data>
 </validaSalvarPedidoResult></validaSalvarPedidoResponse></soap:Body></soap:Envelope>''';
+
+const _calificacionRealSinData = '''
+<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><calificarServicioResponse xmlns="awserver.noip.me:8888/"><calificarServicioResult><Result>true</Result><Message>CALIFOK</Message></calificarServicioResult></calificarServicioResponse></soap:Body></soap:Envelope>''';
+
+const _calificacionErrorRealSinData = '''
+<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><calificarServicioResponse xmlns="awserver.noip.me:8888/"><calificarServicioResult><Result>false</Result><Message>CALIFERR</Message></calificarServicioResult></calificarServicioResponse></soap:Body></soap:Envelope>''';

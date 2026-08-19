@@ -178,10 +178,18 @@ final class PedidosSoapParser {
               .firstWhere((element) => element.name.local == name)
               .innerText
               .trim();
+      String optionalValue(String name) =>
+          result.descendants
+              .whereType<XmlElement>()
+              .where((element) => element.name.local == name)
+              .firstOrNull
+              ?.innerText
+              .trim() ??
+          '';
       return _SoapPayload(
         succeeded: value('Result').toLowerCase() == 'true',
         message: value('Message'),
-        data: value('Data'),
+        data: optionalValue('Data'),
       );
     } catch (error) {
       throw InvalidSoapResponseException(error);

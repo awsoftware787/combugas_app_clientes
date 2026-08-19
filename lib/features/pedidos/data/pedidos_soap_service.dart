@@ -99,6 +99,7 @@ final class PedidosSoapService implements PedidosService {
     namespace: SoapConstants.namespace,
     methodName: method,
     parameters: parameters,
+    logExchange: method == PedidosSoapMethods.calificar,
   );
 
   void close() => _soap.close();

@@ -28,11 +28,30 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Confirmación de pedido de entrega'), findsOneWidget);
+    final header = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.text('Confirmación de pedido de entrega'),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
+    expect(header.color, AppColors.primary);
     expect(find.textContaining('CASA'), findsOneWidget);
     expect(find.byIcon(Icons.star), findsNWidgets(5));
     expect(find.text('120 caracteres restantes'), findsOneWidget);
     expect(find.text('Sí'), findsOneWidget);
     expect(find.text('No'), findsOneWidget);
+    final comments = tester.widget<TextField>(
+      find.byKey(const ValueKey('rating-comments')),
+    );
+    expect(comments.decoration?.border, isA<OutlineInputBorder>());
+    expect(comments.decoration?.enabledBorder, isA<OutlineInputBorder>());
+    expect(comments.decoration?.focusedBorder, isA<OutlineInputBorder>());
+    expect(
+      (comments.decoration?.border! as OutlineInputBorder).borderRadius,
+      BorderRadius.circular(8),
+    );
 
     await tester.tap(find.byKey(const ValueKey('rating-star-2')));
     await tester.enterText(
@@ -43,7 +62,10 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('submit-rating')));
     await tester.pumpAndSettle();
 
-    expect(find.text('SERVICIO OCUPADO'), findsOneWidget);
+    expect(
+      find.text('No fue posible enviar la evaluación. Inténtalo nuevamente.'),
+      findsOneWidget,
+    );
     expect(find.text('No llegó completo'), findsOneWidget);
     expect(find.byIcon(Icons.star), findsNWidgets(2));
     expect(repository.calificacionRecibida?.entregado, isFalse);
