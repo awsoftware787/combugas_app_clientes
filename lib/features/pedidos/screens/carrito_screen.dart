@@ -18,13 +18,19 @@ class CarritoScreen extends ConsumerWidget {
         foregroundColor: AppColors.white,
         title: const Text('Carrito', style: TextStyle(color: AppColors.white)),
         actions: [
-          if (cart.items.isNotEmpty)
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: AppColors.white),
-              onPressed:
-                  () => ref.read(carritoControllerProvider.notifier).clear(),
-              child: const Text('Limpiar'),
+          TextButton(
+            key: const ValueKey('clear-cart'),
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.accent,
+              disabledForegroundColor: Colors.white54,
             ),
+            onPressed:
+                cart.items.isEmpty
+                    ? null
+                    : () =>
+                        ref.read(carritoControllerProvider.notifier).clear(),
+            child: const Text('Limpiar'),
+          ),
         ],
       ),
       body:

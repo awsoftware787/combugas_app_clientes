@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/producto.dart';
 import '../models/create_order.dart';
+import '../models/calificacion.dart';
 import '../models/pedido_historial.dart';
 import 'pedidos_soap_service.dart';
 
@@ -13,6 +14,7 @@ abstract interface class PedidoRepositoryContract {
   Future<List<PedidoHistorial>> getPedidos(int clienteId);
   Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId);
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId);
+  Future<CalificacionResult> calificarServicio(CalificacionRequest request);
 }
 
 final class PedidoRepository implements PedidoRepositoryContract {
@@ -36,6 +38,9 @@ final class PedidoRepository implements PedidoRepositoryContract {
   @override
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
       _service.cancelarPedido(pedidoId);
+  @override
+  Future<CalificacionResult> calificarServicio(CalificacionRequest request) =>
+      _service.calificarServicio(request);
 }
 
 final pedidosSoapServiceProvider = Provider<PedidosSoapService>((ref) {

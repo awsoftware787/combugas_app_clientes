@@ -3,6 +3,7 @@ import '../../../core/constants/soap_constants.dart';
 import '../../../core/network/soap_service.dart';
 import '../models/producto.dart';
 import '../models/create_order.dart';
+import '../models/calificacion.dart';
 import '../models/pedido_historial.dart';
 import 'pedidos_soap_parser.dart';
 
@@ -14,6 +15,7 @@ abstract interface class PedidosService {
   Future<List<PedidoHistorial>> getPedidos(int clienteId);
   Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId);
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId);
+  Future<CalificacionResult> calificarServicio(CalificacionRequest request);
 }
 
 final class PedidosSoapService implements PedidosService {
@@ -78,6 +80,16 @@ final class PedidosSoapService implements PedidosService {
           parameters: {'_intIdPedido': pedidoId},
         ),
       );
+
+  @override
+  Future<CalificacionResult> calificarServicio(
+    CalificacionRequest request,
+  ) async => _parser.parseCalificacion(
+    await _call(
+      PedidosSoapMethods.calificar,
+      parameters: request.soapParameters,
+    ),
+  );
 
   Future<dynamic> _call(
     String method, {

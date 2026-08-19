@@ -66,6 +66,10 @@ class _SeguimientoPedidoScreenState
                 bottom: 12,
                 child: FilledButton(
                   key: const ValueKey('cancel-tracking-order'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.accent,
+                    foregroundColor: AppColors.white,
+                  ),
                   onPressed: state.canceling ? null : _confirmCancel,
                   child:
                       state.canceling

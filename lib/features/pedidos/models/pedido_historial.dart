@@ -1,6 +1,11 @@
 import 'item_pedido.dart';
 
-enum PedidoHistorialStatus { enCurso, completo, cancelado }
+enum PedidoHistorialStatus {
+  enCurso,
+  pendienteConfirmacion,
+  completo,
+  cancelado,
+}
 
 final class PedidoHistorial {
   const PedidoHistorial({
@@ -27,9 +32,11 @@ final class PedidoHistorial {
 
   PedidoHistorialStatus get status {
     if (!estatusPedido) return PedidoHistorialStatus.cancelado;
-    return completo
-        ? PedidoHistorialStatus.completo
-        : PedidoHistorialStatus.enCurso;
+    if (completo && confirmadoCliente) return PedidoHistorialStatus.completo;
+    if (completo || confirmadoOperador) {
+      return PedidoHistorialStatus.pendienteConfirmacion;
+    }
+    return PedidoHistorialStatus.enCurso;
   }
 
   bool get puedeCancelar => status == PedidoHistorialStatus.enCurso;

@@ -43,7 +43,36 @@ void main() {
       tester.widget<Icon>(find.byIcon(Icons.delete_outline)).color,
       AppColors.accent,
     );
+    final clear = tester.widget<TextButton>(
+      find.byKey(const ValueKey('clear-cart')),
+    );
+    expect(clear.onPressed, isNotNull);
+    expect(clear.style?.foregroundColor?.resolve(const {}), AppColors.accent);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Limpiar permanece visible y deshabilitado con carrito vacío', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [carritoStoreProvider.overrideWithValue(_Store([]))],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: CarritoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final clear = tester.widget<TextButton>(
+      find.byKey(const ValueKey('clear-cart')),
+    );
+    expect(clear.onPressed, isNull);
+    expect(
+      clear.style?.foregroundColor?.resolve({WidgetState.disabled}),
+      Colors.white54,
+    );
   });
 }
 

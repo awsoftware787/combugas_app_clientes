@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:combugas_clientes/features/pedidos/screens/seguimiento_pedido_screen.dart';
@@ -25,6 +26,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('mapa CASA / UNIDAD 12'), findsOneWidget);
     expect(find.text('Cancelar Pedido'), findsOneWidget);
+    final cancel = tester.widget<FilledButton>(
+      find.byKey(const ValueKey('cancel-tracking-order')),
+    );
+    expect(cancel.style?.backgroundColor?.resolve(const {}), AppColors.accent);
     expect(repository.getUnPedidoCalls, 1);
   });
 

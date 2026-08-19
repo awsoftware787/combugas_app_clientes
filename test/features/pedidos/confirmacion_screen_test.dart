@@ -1,4 +1,5 @@
 import 'package:combugas_clientes/core/constants/app_assets.dart';
+import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/direcciones/controllers/direccion_controller.dart';
@@ -55,6 +56,16 @@ void main() {
         tester.getBottomRight(confirmButton).dy,
         lessThanOrEqualTo(tester.view.physicalSize.height),
       );
+      final confirm = tester.widget<FilledButton>(confirmButton);
+      expect(
+        confirm.style?.backgroundColor?.resolve(const {}),
+        AppColors.addButtonGreen,
+      );
+      final clear = tester.widget<OutlinedButton>(
+        find.byKey(const ValueKey('clear-confirmation')),
+      );
+      expect(clear.style?.foregroundColor?.resolve(const {}), AppColors.accent);
+      expect(clear.style?.side?.resolve(const {})?.color, AppColors.accent);
 
       final accessButton = find.byKey(const ValueKey('access-key-button'));
       await tester.tap(accessButton);

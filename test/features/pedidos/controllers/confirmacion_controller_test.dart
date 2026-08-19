@@ -15,6 +15,7 @@ import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/data/ultimo_pedido_storage.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
+import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
 import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
@@ -162,6 +163,9 @@ final class _TestContext {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
+  @override
+  Future<CalificacionResult> calificarServicio(CalificacionRequest request) =>
+      throw UnimplementedError();
   _PedidoRepository(this.error);
   final Object? error;
   int calls = 0;

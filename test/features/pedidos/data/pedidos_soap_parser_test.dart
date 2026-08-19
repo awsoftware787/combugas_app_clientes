@@ -103,6 +103,42 @@ void main() {
       throwsA(isA<WebServiceException>()),
     );
   });
+
+  test('calificarServicio reconoce éxito y conserva el mensaje', () {
+    final result = parser.parseCalificacion(
+      XmlDocument.parse(
+        _envelope(
+          'calificarServicio',
+          'true',
+          '',
+          message: 'CALIFICACION GUARDADA',
+        ),
+      ),
+    );
+    expect(result.mensaje, 'CALIFICACION GUARDADA');
+  });
+
+  test('calificarServicio propaga el rechazo funcional', () {
+    expect(
+      () => parser.parseCalificacion(
+        XmlDocument.parse(
+          _envelope(
+            'calificarServicio',
+            'false',
+            '',
+            message: 'NO FUE POSIBLE GUARDAR',
+          ),
+        ),
+      ),
+      throwsA(
+        isA<WebServiceException>().having(
+          (error) => error.message,
+          'message',
+          'NO FUE POSIBLE GUARDAR',
+        ),
+      ),
+    );
+  });
 }
 
 String _envelope(

@@ -4,6 +4,8 @@ PedidoHistorial pedidoFixture({
   int id = 321,
   bool activo = true,
   bool completo = false,
+  bool confirmadoOperador = false,
+  bool confirmadoCliente = false,
 }) => PedidoHistorial(
   id: id,
   fecha: DateTime(2026, 8, 19, 14, 35),
@@ -25,8 +27,8 @@ PedidoHistorial pedidoFixture({
   ],
   estatusPedido: activo,
   completo: completo,
-  confirmadoOperador: false,
-  confirmadoCliente: false,
+  confirmadoOperador: confirmadoOperador,
+  confirmadoCliente: confirmadoCliente,
 );
 
 const direccionPedidoFixture = PedidoDireccion(

@@ -61,6 +61,7 @@ class PedidoListItem extends StatelessWidget {
 
 Color pedidoStatusColor(PedidoHistorialStatus status) => switch (status) {
   PedidoHistorialStatus.enCurso => AppColors.link,
+  PedidoHistorialStatus.pendienteConfirmacion => AppColors.accent,
   PedidoHistorialStatus.completo => AppColors.success,
   PedidoHistorialStatus.cancelado => AppColors.accent,
 };

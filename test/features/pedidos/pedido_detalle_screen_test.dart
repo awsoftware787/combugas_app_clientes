@@ -35,6 +35,18 @@ void main() {
     expect(find.text('en curso'), findsOneWidget);
     expect(find.text('Cancelar Pedido'), findsOneWidget);
     expect(find.text('Seguimiento'), findsOneWidget);
+    final cancel = tester.widget<OutlinedButton>(
+      find.widgetWithText(OutlinedButton, 'Cancelar Pedido'),
+    );
+    expect(cancel.style?.foregroundColor?.resolve(const {}), AppColors.accent);
+    expect(cancel.style?.side?.resolve(const {})?.color, AppColors.accent);
+    final tracking = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, 'Seguimiento'),
+    );
+    expect(
+      tracking.style?.backgroundColor?.resolve(const {}),
+      AppColors.menuBackground,
+    );
 
     final cylinder = tester.widget<Image>(
       find.byKey(const ValueKey('producto-2-imagen')),

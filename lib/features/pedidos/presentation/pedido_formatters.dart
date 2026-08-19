@@ -28,6 +28,7 @@ String formatoFechaPedido(DateTime? value) {
 
 String pedidoStatusLabel(PedidoHistorialStatus status) => switch (status) {
   PedidoHistorialStatus.enCurso => 'en curso',
+  PedidoHistorialStatus.pendienteConfirmacion => 'por confirmar',
   PedidoHistorialStatus.completo => 'completo',
   PedidoHistorialStatus.cancelado => 'cancelado',
 };

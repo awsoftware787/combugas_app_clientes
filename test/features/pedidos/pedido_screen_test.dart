@@ -1,5 +1,3 @@
-import 'package:combugas_clientes/core/network/soap_http_client.dart';
-import 'package:combugas_clientes/core/network/soap_service.dart';
 import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/login_result.dart';
@@ -10,18 +8,16 @@ import 'package:combugas_clientes/features/direcciones/models/direccion.dart';
 import 'package:combugas_clientes/features/direcciones/models/direccion_request.dart';
 import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
-import 'package:combugas_clientes/features/pedidos/data/evaluacion_pendiente_service.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
+import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
 import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 
 void main() {
   testWidgets('muestra selector, producto, agrega, badge y limpia', (
@@ -40,6 +36,10 @@ void main() {
     expect(find.text('Dirección de entrega'), findsOneWidget);
     expect(find.text('Gas en cilindro'), findsOneWidget);
     expect(find.text('CASA'), findsWidgets);
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.home)).color,
+      AppColors.accent,
+    );
 
     final clear = tester.widget<TextButton>(
       find.byKey(const ValueKey('clear-order')),
@@ -170,17 +170,32 @@ void main() {
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
     final labels = [
+      'Pedido',
       'Perfil',
       'Carburaciones',
       'Mis direcciones',
       'Mis Pedidos',
+      'Aviso de privacidad',
       'Cerrar sesión',
     ];
+    final drawer = find.byType(Drawer);
     for (final label in labels) {
-      expect(find.text(label), findsOneWidget);
+      expect(
+        find.descendant(of: drawer, matching: find.text(label)),
+        findsOneWidget,
+      );
     }
     final positions =
-        labels.map((label) => tester.getTopLeft(find.text(label)).dy).toList();
+        labels
+            .map(
+              (label) =>
+                  tester
+                      .getTopLeft(
+                        find.descendant(of: drawer, matching: find.text(label)),
+                      )
+                      .dy,
+            )
+            .toList();
     expect(positions, orderedEquals([...positions]..sort()));
     expect(find.text('VALERIA CORDERO'), findsOneWidget);
   });
@@ -197,24 +212,7 @@ ProviderContainer _container({
     ),
     pedidoRepositoryProvider.overrideWithValue(_PedidoRepository()),
     carritoStoreProvider.overrideWithValue(cart),
-    evaluacionPendienteServiceProvider.overrideWithValue(_pendingService()),
   ],
-);
-
-EvaluacionPendienteService _pendingService() => EvaluacionPendienteService(
-  soapService: SoapService(
-    httpClient: SoapHttpClient(
-      client: MockClient(
-        (_) async => http.Response(
-          '''
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><pendienteFormularioResponse><pendienteFormularioResult>
-<Result>true</Result><Message>SIN PENDIENTES</Message><Data><![CDATA[[]]]></Data>
-</pendienteFormularioResult></pendienteFormularioResponse></soap:Body></soap:Envelope>''',
-          200,
-        ),
-      ),
-    ),
-  ),
 );
 
 final class _AuthRepository implements AuthRepositoryContract {
@@ -235,6 +233,9 @@ final class _AuthRepository implements AuthRepositoryContract {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
+  @override
+  Future<CalificacionResult> calificarServicio(CalificacionRequest request) =>
+      throw UnimplementedError();
   @override
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
       throw UnimplementedError();

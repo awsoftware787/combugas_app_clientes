@@ -4,6 +4,7 @@ import 'package:xml/xml.dart';
 
 import '../../../core/network/network_exception.dart';
 import '../models/create_order.dart';
+import '../models/calificacion.dart';
 import '../models/pedido_historial.dart';
 import '../models/producto.dart';
 import '../presentation/pedido_formatters.dart';
@@ -94,6 +95,12 @@ final class PedidosSoapParser {
     final payload = _response(document, 'cancelarPedido');
     if (!payload.succeeded) throw WebServiceException(payload.message);
     return CancelarPedidoResult(mensaje: payload.message);
+  }
+
+  CalificacionResult parseCalificacion(XmlDocument document) {
+    final payload = _response(document, 'calificarServicio');
+    if (!payload.succeeded) throw WebServiceException(payload.message);
+    return CalificacionResult(mensaje: payload.message);
   }
 
   PedidoVehiculo? _vehiculo(Object? value) {

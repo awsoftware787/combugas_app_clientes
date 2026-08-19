@@ -177,6 +177,9 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                 child: const Text('Cancelar'),
               ),
               FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.addButtonGreen,
+                ),
                 onPressed: () => Navigator.pop(dialogContext, true),
                 child: const Text('Confirmar'),
               ),
@@ -250,6 +253,11 @@ class _ConfirmationActions extends StatelessWidget {
             child: SizedBox(
               height: 52,
               child: OutlinedButton(
+                key: const ValueKey('clear-confirmation'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.accent,
+                  side: const BorderSide(color: AppColors.accent),
+                ),
                 onPressed: saving || !enabled ? null : onClear,
                 child: const Text('Limpiar'),
               ),
@@ -261,6 +269,10 @@ class _ConfirmationActions extends StatelessWidget {
               height: 52,
               child: FilledButton(
                 key: const ValueKey('confirm-order'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.addButtonGreen,
+                  foregroundColor: AppColors.white,
+                ),
                 onPressed: saving || !enabled ? null : onConfirm,
                 child:
                     saving

@@ -18,13 +18,15 @@ final class EvaluacionPendiente {
 }
 
 final class EvaluacionPendienteService {
-  EvaluacionPendienteService({SoapService? soapService})
-    : _soap = soapService ?? SoapService();
+  EvaluacionPendienteService({SoapService? soapService, Uri? endpoint})
+    : _soap = soapService ?? SoapService(),
+      _endpoint = endpoint;
   final SoapService _soap;
+  final Uri? _endpoint;
 
   Future<EvaluacionPendiente?> consultar(int clienteId) async {
     final document = await _soap.call(
-      endpoint: ServiceEndpoints.clientes,
+      endpoint: _endpoint ?? ServiceEndpoints.clientes,
       namespace: SoapConstants.namespace,
       methodName: ClientesSoapMethods.pendientes,
       parameters: {'_intClaveCliente': clienteId},

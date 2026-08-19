@@ -3,6 +3,7 @@ import 'package:combugas_clientes/features/auth/models/login_result.dart';
 import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
+import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
 import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 
@@ -12,15 +13,30 @@ final class FakeHistorialRepository implements PedidoRepositoryContract {
     this.getPedidosHandler,
     this.getUnPedidoHandler,
     this.cancelHandler,
+    this.calificarHandler,
   }) : pedidos = pedidos ?? [];
 
   List<PedidoHistorial> pedidos;
   Future<List<PedidoHistorial>> Function(int clienteId)? getPedidosHandler;
   Future<PedidoSeguimientoInfo> Function(int pedidoId)? getUnPedidoHandler;
   Future<CancelarPedidoResult> Function(int pedidoId)? cancelHandler;
+  Future<CalificacionResult> Function(CalificacionRequest request)?
+  calificarHandler;
   int getPedidosCalls = 0;
   int cancelCalls = 0;
   int getUnPedidoCalls = 0;
+  int calificarCalls = 0;
+  CalificacionRequest? calificacionRecibida;
+
+  @override
+  Future<CalificacionResult> calificarServicio(
+    CalificacionRequest request,
+  ) async {
+    calificarCalls++;
+    calificacionRecibida = request;
+    return calificarHandler?.call(request) ??
+        const CalificacionResult(mensaje: 'OK');
+  }
 
   @override
   Future<List<PedidoHistorial>> getPedidos(int clienteId) async {

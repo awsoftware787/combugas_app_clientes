@@ -10,7 +10,6 @@ import '../../direcciones/controllers/direccion_controller.dart';
 import '../../direcciones/models/direccion.dart';
 import '../controllers/carrito_controller.dart';
 import '../controllers/pedido_controller.dart';
-import '../data/evaluacion_pendiente_service.dart';
 import '../models/item_pedido.dart';
 import '../models/producto.dart';
 import '../presentation/producto_asset_resolver.dart';
@@ -35,8 +34,6 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         ref.read(direccionControllerProvider.notifier).load(),
         ref.read(pedidoControllerProvider.notifier).load(),
       ]);
-      if (!mounted) return;
-      await _checkPendingRating();
       if (!mounted) return;
       final hour = DateTime.now().hour;
       if (hour < 7 || hour > 19) {
@@ -276,21 +273,6 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     if (mounted) await ref.read(direccionControllerProvider.notifier).load();
   }
 
-  Future<void> _checkPendingRating() async {
-    final clientId = ref.read(authControllerProvider).session?.claveUsuario;
-    if (clientId == null) return;
-    try {
-      final pending = await ref
-          .read(evaluacionPendienteServiceProvider)
-          .consultar(clientId);
-      if (pending != null && mounted) {
-        await context.push('/calificacion', extra: pending);
-      }
-    } catch (_) {
-      // La consulta de evaluación no debe impedir hacer un pedido.
-    }
-  }
-
   void _continue() {
     if (!_hasAddress()) return;
     context.push('/confirmacion');
@@ -371,7 +353,9 @@ class _DireccionSelector extends StatelessWidget {
         DropdownButtonFormField<Direccion>(
           value: state.selected,
           isExpanded: true,
-          decoration: const InputDecoration(prefixIcon: Icon(Icons.home)),
+          decoration: const InputDecoration(
+            prefixIcon: Icon(Icons.home, color: AppColors.accent),
+          ),
           items:
               state.direcciones
                   .map(

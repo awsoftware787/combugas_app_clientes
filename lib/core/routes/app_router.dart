@@ -14,6 +14,7 @@ import '../../features/pedidos/screens/mis_pedidos_screen.dart';
 import '../../features/pedidos/screens/pedido_detalle_screen.dart';
 import '../../features/pedidos/screens/seguimiento_pedido_screen.dart';
 import '../../features/pedidos/data/evaluacion_pendiente_service.dart';
+import '../../features/pedidos/screens/calificacion_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
 final appRouter = GoRouter(
@@ -38,16 +39,10 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/calificacion',
-      builder: (context, state) {
-        final pending = state.extra as EvaluacionPendiente?;
-        return MigrationPlaceholderScreen(
-          title: 'Calificar servicio',
-          message:
-              pending == null
-                  ? 'La calificación se migrará en un loop posterior.'
-                  : 'Pedido ${pending.pedidoId}\n${pending.descripcionDireccion}\n\nLa calificación se migrará en un loop posterior.',
-        );
-      },
+      builder:
+          (context, state) => CalificacionScreen(
+            pendiente: state.extra as EvaluacionPendiente?,
+          ),
     ),
     GoRoute(
       path: '/direcciones',

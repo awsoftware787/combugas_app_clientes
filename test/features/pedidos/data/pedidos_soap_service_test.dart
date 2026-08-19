@@ -4,6 +4,7 @@ import 'package:combugas_clientes/core/network/soap_http_client.dart';
 import 'package:combugas_clientes/core/network/soap_service.dart';
 import 'package:combugas_clientes/core/network/network_exception.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedidos_soap_service.dart';
+import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -163,6 +164,57 @@ void main() {
       http.Response('not xml', 200),
       isA<InvalidSoapResponseException>(),
     );
+  });
+
+  test('calificarServicio envía el contrato Android exacto', () async {
+    final endpoint = Uri.parse('http://localhost/ws/pedidos.asmx');
+    final service = PedidosSoapService(
+      endpoint: endpoint,
+      soapService: SoapService(
+        httpClient: SoapHttpClient(
+          client: MockClient((request) async {
+            expect(request.url, endpoint);
+            expect(
+              request.headers['SOAPAction'],
+              'awserver.noip.me:8888/calificarServicio',
+            );
+            final expectedParameters = <String, String>{
+              '_blEntregado': 'false',
+              '_strPuntuacion': '4.0',
+              '_strComentarios': 'Llegó completo',
+              '_intPedido': '321',
+              '_intCliente': '12',
+            };
+            for (final entry in expectedParameters.entries) {
+              expect(
+                request.body,
+                contains('<${entry.key}>${entry.value}</${entry.key}>'),
+              );
+            }
+            return http.Response(
+              _response(
+                'calificarServicio',
+                '',
+                message: 'CALIFICACION GUARDADA',
+              ),
+              200,
+            );
+          }),
+        ),
+      ),
+    );
+
+    final result = await service.calificarServicio(
+      const CalificacionRequest(
+        entregado: false,
+        puntuacion: 4,
+        comentarios: 'Llegó completo',
+        pedidoId: 321,
+        clienteId: 12,
+      ),
+    );
+    expect(result.mensaje, 'CALIFICACION GUARDADA');
+    service.close();
   });
 
   test('getUnPedido cubre error, vacío, timeout y SOAP inválido', () async {

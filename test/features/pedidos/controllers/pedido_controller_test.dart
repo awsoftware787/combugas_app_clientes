@@ -2,6 +2,7 @@ import 'package:combugas_clientes/features/pedidos/controllers/pedido_controller
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
+import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
 import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -39,6 +40,9 @@ ProviderContainer _container(_Repository repository) => ProviderContainer(
 );
 
 final class _Repository implements PedidoRepositoryContract {
+  @override
+  Future<CalificacionResult> calificarServicio(CalificacionRequest request) =>
+      throw UnimplementedError();
   @override
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
       throw UnimplementedError();

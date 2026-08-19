@@ -203,6 +203,10 @@ class _PedidoDetailBody extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.accent,
+                    side: const BorderSide(color: AppColors.accent),
+                  ),
                   onPressed: state.canceling ? null : onCancel,
                   child:
                       state.canceling
@@ -216,6 +220,10 @@ class _PedidoDetailBody extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.menuBackground,
+                    foregroundColor: AppColors.white,
+                  ),
                   onPressed: state.canceling ? null : onTracking,
                   child: const Text('Seguimiento'),
                 ),
