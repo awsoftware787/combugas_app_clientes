@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../controllers/carrito_controller.dart';
 import '../models/item_pedido.dart';
 import '../widgets/cart_item_tile.dart';
@@ -14,10 +15,12 @@ class CarritoScreen extends ConsumerWidget {
     final cart = ref.watch(carritoControllerProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Carrito'),
+        foregroundColor: AppColors.white,
+        title: const Text('Carrito', style: TextStyle(color: AppColors.white)),
         actions: [
           if (cart.items.isNotEmpty)
             TextButton(
+              style: TextButton.styleFrom(foregroundColor: AppColors.white),
               onPressed:
                   () => ref.read(carritoControllerProvider.notifier).clear(),
               child: const Text('Limpiar'),
@@ -59,7 +62,10 @@ class CarritoScreen extends ConsumerWidget {
                           () => ref
                               .read(carritoControllerProvider.notifier)
                               .eliminarLinea(index),
-                      icon: const Icon(Icons.delete_outline),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: AppColors.accent,
+                      ),
                     ),
                   );
                 },

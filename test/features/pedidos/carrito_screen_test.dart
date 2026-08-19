@@ -1,4 +1,5 @@
 import 'package:combugas_clientes/core/constants/app_assets.dart';
+import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
 import 'package:combugas_clientes/features/pedidos/screens/carrito_screen.dart';
@@ -32,6 +33,16 @@ void main() {
     expect((image.image as AssetImage).assetName, AppAssets.productCylinder);
     expect(find.text('CILINDRO 30 KG'), findsOneWidget);
     expect(find.text(r'$600.00'), findsNWidgets(2));
+    final appBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect(appBar.foregroundColor, AppColors.white);
+    expect(
+      tester.widget<Text>(find.text('Carrito')).style?.color,
+      AppColors.white,
+    );
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.delete_outline)).color,
+      AppColors.accent,
+    );
     expect(tester.takeException(), isNull);
   });
 }

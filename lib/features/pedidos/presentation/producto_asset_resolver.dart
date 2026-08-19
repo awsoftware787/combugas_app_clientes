@@ -42,8 +42,10 @@ abstract final class ProductoAssetResolver {
 
     // El catálogo Android no define IDs constantes para croquetas: el servicio
     // identifica la familia y la presentación determina bolsa o bulto.
-    if (servicioId == ServicioIds.croquetas) {
-      final text = '$presentacion $descripcion'.toUpperCase();
+    final text = '$presentacion $descripcion'.toUpperCase();
+    if (servicioId == ServicioIds.croquetas ||
+        text.contains('BULTO') ||
+        text.contains('BOLSA')) {
       if (text.contains('BULTO')) return AppAssets.productDogFoodBulk;
       if (text.contains('BOLSA')) return AppAssets.productDogFoodBag;
     }

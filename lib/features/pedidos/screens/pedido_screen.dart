@@ -69,9 +69,14 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     return Scaffold(
       drawer: const PedidoDrawer(),
       appBar: AppBar(
-        title: const Text('Pedido'),
+        foregroundColor: AppColors.white,
+        title: const Text('Pedido', style: TextStyle(color: AppColors.white)),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: AppColors.white,
+              disabledForegroundColor: Colors.white54,
+            ),
             onPressed:
                 carrito.items.isEmpty
                     ? null
@@ -81,6 +86,7 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
           ),
           IconButton(
             tooltip: 'Actualizar productos',
+            color: AppColors.white,
             onPressed:
                 pedido.refreshing
                     ? null
@@ -459,14 +465,25 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
               Text(label, textAlign: TextAlign.center),
             const SizedBox(height: 8),
             Text(
-              formatoMoneda(product.precioCentavos * _quantity),
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              'Importe: ${formatoMoneda(product.precioCentavos * _quantity)}',
+              key: const ValueKey('product-amount'),
+              style: const TextStyle(
+                color: AppColors.accent,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton.outlined(
+                  key: const ValueKey('quantity-minus'),
+                  style: IconButton.styleFrom(
+                    foregroundColor: AppColors.quantityButtonBlue,
+                    disabledForegroundColor: AppColors.quantityButtonBlue,
+                    side: const BorderSide(color: AppColors.quantityButtonBlue),
+                  ),
                   onPressed:
                       _quantity > 1 ? () => setState(() => _quantity--) : null,
                   onLongPress: () => setState(() => _quantity = 1),
@@ -481,12 +498,21 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
                   ),
                 ),
                 IconButton.outlined(
+                  key: const ValueKey('quantity-plus'),
+                  style: IconButton.styleFrom(
+                    foregroundColor: AppColors.quantityButtonBlue,
+                    side: const BorderSide(color: AppColors.quantityButtonBlue),
+                  ),
                   onPressed: () => setState(() => _quantity++),
                   onLongPress: () => setState(() => _quantity = 1),
                   icon: const Icon(Icons.add),
                 ),
                 const SizedBox(width: 12),
                 FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.addButtonGreen,
+                    foregroundColor: AppColors.white,
+                  ),
                   onPressed: () async {
                     final result = await ref
                         .read(carritoControllerProvider.notifier)
@@ -550,8 +576,12 @@ class _StationaryPageState extends ConsumerState<_StationaryPage> {
             ),
           ),
           Text(
-            '${formatoMoneda(widget.product.precioCentavos)} por litro',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            'Importe: ${formatoMoneda(widget.product.precioCentavos)} por litro',
+            key: const ValueKey('stationary-amount'),
+            style: const TextStyle(
+              color: AppColors.accent,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           SegmentedButton<_StationaryMode>(
             segments: const [
@@ -596,7 +626,14 @@ class _StationaryPageState extends ConsumerState<_StationaryPage> {
                 ),
               ),
               const SizedBox(width: 12),
-              FilledButton(onPressed: _add, child: const Text('Agregar')),
+              FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.addButtonGreen,
+                  foregroundColor: AppColors.white,
+                ),
+                onPressed: _add,
+                child: const Text('Agregar'),
+              ),
             ],
           ),
         ],

@@ -15,6 +15,7 @@ import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/data/ultimo_pedido_storage.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
+import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -150,6 +151,15 @@ final class _PedidoRepository implements PedidoRepositoryContract {
   final Object? error;
   int calls = 0;
   CreateOrderRequest? received;
+
+  @override
+  Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
+      throw UnimplementedError();
+  @override
+  Future<List<PedidoHistorial>> getPedidos(int clienteId) async => const [];
+  @override
+  Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) =>
+      throw UnimplementedError();
 
   @override
   Future<CreateOrderResult> createOrder(CreateOrderRequest request) async {

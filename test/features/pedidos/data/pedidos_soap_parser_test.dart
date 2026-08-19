@@ -3,6 +3,8 @@ import 'package:combugas_clientes/features/pedidos/data/pedidos_soap_parser.dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:xml/xml.dart';
 
+import '../pedido_historial_fixture.dart';
+
 void main() {
   const parser = PedidosSoapParser();
 
@@ -49,11 +51,64 @@ void main() {
       ),
     );
   });
+
+  test('getPedidos parsea listado completo, total, fecha y estado', () {
+    final pedidos = parser.parsePedidos(
+      XmlDocument.parse(_envelope('getPedidos', 'true', pedidoJson)),
+    );
+    expect(pedidos, hasLength(1));
+    expect(pedidos.single.id, 321);
+    expect(pedidos.single.direccion.direccionCompleta, contains('HIDALGO'));
+    expect(pedidos.single.productos, hasLength(2));
+    expect(pedidos.single.totalCentavos, 89010);
+    expect(pedidos.single.puedeCancelar, isTrue);
+  });
+
+  test('getPedidos distingue lista vacía real', () {
+    expect(
+      parser.parsePedidos(
+        XmlDocument.parse(_envelope('getPedidos', 'true', '[]')),
+      ),
+      isEmpty,
+    );
+  });
+
+  test('getUnPedido parsea dirección y asignación de seguimiento', () {
+    final result = parser.parseUnPedido(
+      XmlDocument.parse(
+        _envelope('getUnPedido', 'true', seguimientoJson, message: 'OKPED'),
+      ),
+    );
+    expect(result.direccion.id, 9);
+    expect(result.asignaciones.single.operadorId, 4);
+  });
+
+  test('cancelarPedido reconoce CANCELADO y propaga rechazo funcional', () {
+    final result = parser.parseCancelarPedido(
+      XmlDocument.parse(
+        _envelope('cancelarPedido', 'true', '', message: 'CANCELADO'),
+      ),
+    );
+    expect(result.cancelado, isTrue);
+    expect(
+      () => parser.parseCancelarPedido(
+        XmlDocument.parse(
+          _envelope('cancelarPedido', 'false', '', message: 'ERROR'),
+        ),
+      ),
+      throwsA(isA<WebServiceException>()),
+    );
+  });
 }
 
-String _envelope(String method, String result, String data) => '''
+String _envelope(
+  String method,
+  String result,
+  String data, {
+  String message = 'ERROR DE PRUEBA',
+}) => '''
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><${method}Response><${method}Result>
-<Result>$result</Result><Message>ERROR DE PRUEBA</Message><Data><![CDATA[$data]]></Data>
+<Result>$result</Result><Message>$message</Message><Data><![CDATA[$data]]></Data>
 </${method}Result></${method}Response></soap:Body></soap:Envelope>''';
 
 final _prices = _envelope(

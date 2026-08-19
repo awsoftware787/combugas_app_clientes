@@ -3,6 +3,7 @@ import '../../../core/constants/soap_constants.dart';
 import '../../../core/network/soap_service.dart';
 import '../models/producto.dart';
 import '../models/create_order.dart';
+import '../models/pedido_historial.dart';
 import 'pedidos_soap_parser.dart';
 
 abstract interface class PedidosService {
@@ -10,6 +11,9 @@ abstract interface class PedidosService {
   Future<MontosMinimos> getMontosMinimos();
   Future<List<TiempoFase>> getTiempos();
   Future<CreateOrderResult> createOrder(CreateOrderRequest request);
+  Future<List<PedidoHistorial>> getPedidos(int clienteId);
+  Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId);
+  Future<CancelarPedidoResult> cancelarPedido(int pedidoId);
 }
 
 final class PedidosSoapService implements PedidosService {
@@ -45,6 +49,33 @@ final class PedidosSoapService implements PedidosService {
         await _call(
           PedidosSoapMethods.guardar,
           parameters: request.soapParameters,
+        ),
+      );
+
+  @override
+  Future<List<PedidoHistorial>> getPedidos(int clienteId) async =>
+      _parser.parsePedidos(
+        await _call(
+          PedidosSoapMethods.obtenerTodos,
+          parameters: {'_intIdCliente': clienteId},
+        ),
+      );
+
+  @override
+  Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) async =>
+      _parser.parseUnPedido(
+        await _call(
+          PedidosSoapMethods.obtenerUno,
+          parameters: {'_intIdPedido': pedidoId},
+        ),
+      );
+
+  @override
+  Future<CancelarPedidoResult> cancelarPedido(int pedidoId) async =>
+      _parser.parseCancelarPedido(
+        await _call(
+          PedidosSoapMethods.cancelar,
+          parameters: {'_intIdPedido': pedidoId},
         ),
       );
 

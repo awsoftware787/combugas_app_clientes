@@ -12,6 +12,8 @@ abstract final class AppColors {
   static const menuBackground = Color(0xFF5F5F5F);
   static const menuBackgroundDark = Color(0xFF545454);
   static const success = Color(0xFF009540);
+  static const addButtonGreen = success;
+  static const quantityButtonBlue = link;
   static const white = Color(0xFFFFFFFF);
 
   // Colores activos definidos fuera de colors.xml en el proyecto Android.

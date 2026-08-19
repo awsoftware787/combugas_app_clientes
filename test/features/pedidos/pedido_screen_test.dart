@@ -1,5 +1,6 @@
 import 'package:combugas_clientes/core/network/soap_http_client.dart';
 import 'package:combugas_clientes/core/network/soap_service.dart';
+import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/login_result.dart';
 import 'package:combugas_clientes/features/auth/models/session_data.dart';
@@ -13,6 +14,7 @@ import 'package:combugas_clientes/features/pedidos/data/evaluacion_pendiente_ser
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
+import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
 import 'package:flutter/material.dart';
@@ -39,7 +41,33 @@ void main() {
     expect(find.text('Gas en cilindro'), findsOneWidget);
     expect(find.text('CASA'), findsWidgets);
 
+    final appBar = tester.widget<AppBar>(find.byType(AppBar));
+    expect(appBar.foregroundColor, AppColors.white);
+    expect(tester.widget<Text>(find.text('Pedido')).style?.color, AppColors.white);
+    expect(
+      appBar.actions!.whereType<IconButton>().single.color,
+      AppColors.white,
+    );
+    expect(
+      tester.widget<Text>(find.byKey(const ValueKey('product-amount'))).style?.color,
+      AppColors.accent,
+    );
+    for (final key in const ['quantity-minus', 'quantity-plus']) {
+      final button = tester.widget<IconButton>(find.byKey(ValueKey(key)));
+      expect(
+        button.style?.foregroundColor?.resolve(const {}),
+        AppColors.quantityButtonBlue,
+      );
+    }
+
     final add = find.text('Agregar').last;
+    final addButton = tester.widget<FilledButton>(
+      find.ancestor(of: add, matching: find.byType(FilledButton)),
+    );
+    expect(
+      addButton.style?.backgroundColor?.resolve(const {}),
+      AppColors.addButtonGreen,
+    );
     await tester.ensureVisible(add);
     await tester.tap(add);
     await tester.pumpAndSettle();
@@ -133,6 +161,14 @@ final class _AuthRepository implements AuthRepositoryContract {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
+  @override
+  Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
+      throw UnimplementedError();
+  @override
+  Future<List<PedidoHistorial>> getPedidos(int clienteId) async => const [];
+  @override
+  Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) =>
+      throw UnimplementedError();
   @override
   Future<CreateOrderResult> createOrder(CreateOrderRequest request) =>
       throw UnimplementedError();

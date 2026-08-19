@@ -10,6 +10,8 @@ import '../../features/pedidos/screens/confirmacion_screen.dart';
 import '../../features/pedidos/screens/pedido_guardado_screen.dart';
 import '../../features/pedidos/models/create_order.dart';
 import '../../features/pedidos/screens/pedido_screen.dart';
+import '../../features/pedidos/screens/mis_pedidos_screen.dart';
+import '../../features/pedidos/screens/pedido_detalle_screen.dart';
 import '../../features/pedidos/data/evaluacion_pendiente_service.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
@@ -106,10 +108,24 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/mis-pedidos',
+      builder: (context, state) => const MisPedidosScreen(),
+      routes: [
+        GoRoute(
+          path: ':id',
+          builder:
+              (context, state) => PedidoDetalleScreen(
+                pedidoId: int.tryParse(state.pathParameters['id'] ?? '') ?? 0,
+              ),
+        ),
+      ],
+    ),
+    GoRoute(
+      path: '/seguimiento/:id',
       builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Mis Pedidos',
-            message: 'El historial de pedidos se migrará posteriormente.',
+          (context, state) => MigrationPlaceholderScreen(
+            title: 'Seguimiento del pedido',
+            message:
+                'Pedido ${state.pathParameters['id']}. El seguimiento se migrará en el siguiente loop.',
           ),
     ),
     GoRoute(

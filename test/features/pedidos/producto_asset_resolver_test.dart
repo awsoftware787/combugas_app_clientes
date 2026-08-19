@@ -35,6 +35,14 @@ void main() {
       ),
       AppAssets.productDogFoodBag,
     );
+    expect(
+      ProductoAssetResolver.resolve(
+        productoId: 999,
+        servicioId: 0,
+        descripcion: 'BULTO DE 20KG',
+      ),
+      AppAssets.productDogFoodBulk,
+    );
   });
 }
 
