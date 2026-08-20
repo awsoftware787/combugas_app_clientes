@@ -113,7 +113,7 @@ class PedidoDrawer extends ConsumerWidget {
               onTap: () async {
                 Navigator.of(context).pop();
                 await ref.read(authControllerProvider.notifier).logout();
-                if (context.mounted) context.go('/login');
+                if (context.mounted) context.go('/productos');
               },
             ),
           ],
@@ -134,11 +134,7 @@ class PedidoDrawer extends ConsumerWidget {
       final currentRoute = GoRouterState.of(context).uri.path;
       Navigator.of(context).pop();
       if (currentRoute == route) return;
-      if (route == '/pedido') {
-        context.go(route);
-      } else {
-        context.push(route);
-      }
+      context.go(route);
     },
   );
 }

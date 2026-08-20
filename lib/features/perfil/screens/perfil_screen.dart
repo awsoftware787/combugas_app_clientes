@@ -156,7 +156,7 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
 
   Future<void> _cerrarSesion() async {
     await ref.read(authControllerProvider.notifier).logout();
-    if (mounted) context.go('/login');
+    if (mounted) context.go('/productos');
   }
 
   Future<void> _confirmarEliminarCuenta() async {
@@ -211,7 +211,7 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
       ),
     );
     await ref.read(authControllerProvider.notifier).logout();
-    if (mounted) context.go('/login');
+    if (mounted) context.go('/productos');
   }
 }
 

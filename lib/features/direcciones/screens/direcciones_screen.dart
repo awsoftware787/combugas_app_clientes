@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../pedidos/widgets/pedido_drawer.dart';
 import '../controllers/direccion_controller.dart';
 import '../widgets/direccion_card.dart';
 
@@ -24,6 +25,7 @@ class _DireccionesScreenState extends ConsumerState<DireccionesScreen> {
   Widget build(BuildContext context) {
     final state = ref.watch(direccionControllerProvider);
     return Scaffold(
+      drawer: const PedidoDrawer(),
       appBar: AppBar(title: const Text('Mis direcciones')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {

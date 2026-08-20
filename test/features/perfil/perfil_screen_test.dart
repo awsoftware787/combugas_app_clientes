@@ -69,7 +69,7 @@ void main() {
     expect(find.text('Perfil'), findsOneWidget);
   });
 
-  testWidgets('Result=true al eliminar cierra sesión y vuelve a Login', (
+  testWidgets('Result=true al eliminar cierra sesión y vuelve a Productos', (
     tester,
   ) async {
     final repository = _FakePerfilRepository();
@@ -85,7 +85,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(auth.logoutCalls, 1);
-    expect(find.text('LOGIN'), findsOneWidget);
+    expect(find.text('PRODUCTOS'), findsOneWidget);
   });
 
   testWidgets('muestra menú en lugar de Regresar y logout limpia la ruta', (
@@ -110,7 +110,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('profile-logout')));
     await tester.pumpAndSettle();
     expect(auth.logoutCalls, 1);
-    expect(find.text('LOGIN'), findsOneWidget);
+    expect(find.text('PRODUCTOS'), findsOneWidget);
   });
 }
 
@@ -131,8 +131,8 @@ final class _Harness {
             builder: (_, _) => const Scaffold(body: Text('PEDIDO')),
           ),
           GoRoute(
-            path: '/login',
-            builder: (_, _) => const Scaffold(body: Text('LOGIN')),
+            path: '/productos',
+            builder: (_, _) => const Scaffold(body: Text('PRODUCTOS')),
           ),
           GoRoute(
             path: '/direcciones',

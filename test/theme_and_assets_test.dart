@@ -25,6 +25,9 @@ void main() {
     expect(theme.colorScheme.secondary, AppColors.accent);
     expect(theme.scaffoldBackgroundColor, AppColors.white);
     expect(theme.appBarTheme.backgroundColor, AppColors.primary);
+    expect(theme.appBarTheme.foregroundColor, AppColors.white);
+    expect(theme.appBarTheme.iconTheme?.color, AppColors.white);
+    expect(theme.appBarTheme.actionsIconTheme?.color, AppColors.white);
     expect(theme.appBarTheme.centerTitle, isTrue);
     expect(theme.appBarTheme.titleTextStyle?.color, AppColors.accent);
     expect(theme.floatingActionButtonTheme.backgroundColor, AppColors.accent);
@@ -40,4 +43,63 @@ void main() {
       BorderStyle.solid,
     );
   });
+
+  testWidgets('AppBar aplica blanco a menú, regresar y acciones', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(theme: AppTheme.lightTheme, home: const _PrimaryPage()),
+    );
+
+    expect(
+      IconTheme.of(tester.element(find.byIcon(Icons.menu))).color,
+      AppColors.white,
+    );
+    expect(
+      IconTheme.of(tester.element(find.byIcon(Icons.refresh))).color,
+      AppColors.white,
+    );
+    expect(
+      DefaultTextStyle.of(tester.element(find.text('Principal'))).style.color,
+      AppColors.accent,
+    );
+
+    await tester.tap(find.text('Abrir secundaria'));
+    await tester.pumpAndSettle();
+    expect(
+      IconTheme.of(tester.element(find.byType(BackButton))).color,
+      AppColors.white,
+    );
+    expect(
+      DefaultTextStyle.of(tester.element(find.text('Secundaria'))).style.color,
+      AppColors.accent,
+    );
+  });
+}
+
+class _PrimaryPage extends StatelessWidget {
+  const _PrimaryPage();
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    drawer: const Drawer(),
+    appBar: AppBar(
+      title: const Text('Principal'),
+      actions: [IconButton(onPressed: () {}, icon: const Icon(Icons.refresh))],
+    ),
+    body: Center(
+      child: FilledButton(
+        onPressed:
+            () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder:
+                    (_) => Scaffold(
+                      appBar: AppBar(title: const Text('Secundaria')),
+                    ),
+              ),
+            ),
+        child: const Text('Abrir secundaria'),
+      ),
+    ),
+  );
 }

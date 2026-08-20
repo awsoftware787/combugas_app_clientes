@@ -24,6 +24,9 @@ void main() {
 
     expect(find.text('Debe especificar un teléfono válido'), findsOneWidget);
     expect(find.text('La contraseña no es válida'), findsOneWidget);
+    expect(find.text('Ver productos'), findsNothing);
+    expect(find.text('Productos'), findsNothing);
+    expect(find.byKey(const ValueKey('view-public-products')), findsNothing);
     expect(repository.loginCalls, 0);
   });
 

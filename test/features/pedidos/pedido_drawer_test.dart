@@ -65,6 +65,30 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No fue posible abrir el aviso.'), findsOneWidget);
   });
+
+  testWidgets('secciones principales usan go y logout limpia el stack', (
+    tester,
+  ) async {
+    final container = _container(() async => true);
+    addTearDown(container.dispose);
+    final router = _router();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app(container, router));
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
+    await tester.tap(_drawerText('Perfil'));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/perfil');
+    expect(router.canPop(), isFalse);
+
+    await _openDrawer(tester);
+    await tester.ensureVisible(_drawerText('Cerrar sesión'));
+    await tester.tap(_drawerText('Cerrar sesión'));
+    await tester.pumpAndSettle();
+    expect(router.state.uri.path, '/productos');
+    expect(router.canPop(), isFalse);
+  });
 }
 
 ProviderContainer _container(Future<bool> Function() launcher) =>
@@ -86,6 +110,20 @@ GoRouter _router() => GoRouter(
       path: '/pedido',
       builder: (_, _) => const _DrawerPage(label: 'PANTALLA PEDIDO'),
     ),
+    GoRoute(
+      path: '/perfil',
+      builder: (_, _) => const _DrawerPage(label: 'PANTALLA PERFIL'),
+    ),
+    GoRoute(
+      path: '/productos',
+      builder: (_, _) => const Scaffold(body: Text('PRODUCTOS')),
+    ),
+    for (final route in const [
+      '/carburaciones',
+      '/direcciones',
+      '/mis-pedidos',
+    ])
+      GoRoute(path: route, builder: (_, _) => _DrawerPage(label: route)),
   ],
 );
 

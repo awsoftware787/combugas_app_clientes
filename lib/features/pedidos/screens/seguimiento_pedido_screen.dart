@@ -46,7 +46,7 @@ class _SeguimientoPedidoScreenState
     ) async {
       if (next.sessionLocked && previous?.sessionLocked != true) {
         await ref.read(authControllerProvider.notifier).logout();
-        if (context.mounted) context.go('/login');
+        if (context.mounted) context.go('/productos');
       }
     });
     final state = ref.watch(seguimientoControllerProvider);

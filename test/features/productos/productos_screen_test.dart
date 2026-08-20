@@ -30,21 +30,21 @@ void main() {
     expect(find.text('Limpiar'), findsNothing);
   });
 
-  testWidgets('Login abre Productos y Continuar regresa al mismo Login', (
+  testWidgets('Productos abre Login y Login no ofrece volver a Productos', (
     tester,
   ) async {
     final harness = _Harness();
     addTearDown(harness.dispose);
-    await tester.pumpWidget(harness.widget());
+    await tester.pumpWidget(harness.widget(initialLocation: '/productos'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('view-public-products')));
-    await tester.pumpAndSettle();
     expect(find.text('Productos'), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('public-products-continue')));
     await tester.pumpAndSettle();
     expect(find.byType(LoginScreen), findsOneWidget);
+    expect(find.text('Ver productos'), findsNothing);
+    expect(find.byKey(const ValueKey('view-public-products')), findsNothing);
   });
 
   testWidgets('usuario autenticado en /productos es redirigido a Pedido', (
