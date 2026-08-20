@@ -24,6 +24,32 @@ void main() {
     expect(values.single.longitud, -103.45);
     expect(values.single.tipo, 1);
     expect(values.single.esSoloGas, isTrue);
+    expect(values.single.tieneCoordenadasUtilizables, isTrue);
+  });
+
+  test('valida coordenadas utilizables para la navegación', () {
+    const valid = Carburacion(
+      descripcion: 'CENTRO',
+      latitud: 25.56,
+      longitud: -103.45,
+      tipo: 1,
+    );
+    const missing = Carburacion(
+      descripcion: 'SIN COORDENADAS',
+      latitud: 0,
+      longitud: 0,
+      tipo: 1,
+    );
+    const outOfRange = Carburacion(
+      descripcion: 'FUERA DE RANGO',
+      latitud: 91,
+      longitud: -181,
+      tipo: 1,
+    );
+
+    expect(valid.tieneCoordenadasUtilizables, isTrue);
+    expect(missing.tieneCoordenadasUtilizables, isFalse);
+    expect(outOfRange.tieneCoordenadasUtilizables, isFalse);
   });
 
   testWidgets('muestra mapa y no depende de ubicación', (tester) async {
@@ -51,6 +77,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('MAPA CENTRO'), findsOneWidget);
+    expect(find.byTooltip('Actualizar carburaciones'), findsNothing);
   });
 }
 

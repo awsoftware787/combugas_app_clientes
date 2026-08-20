@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -41,6 +42,10 @@ class _CarburacionesScreenState extends ConsumerState<CarburacionesScreen> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: const [SystemUiOverlay.top],
+    );
     Future.microtask(() async {
       await ref.read(carburacionesControllerProvider.notifier).load();
       try {
@@ -50,6 +55,12 @@ class _CarburacionesScreenState extends ConsumerState<CarburacionesScreen> {
         // La ubicación es opcional; los puntos deben seguir visibles.
       }
     });
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    super.dispose();
   }
 
   @override
@@ -66,27 +77,7 @@ class _CarburacionesScreenState extends ConsumerState<CarburacionesScreen> {
     });
     return Scaffold(
       drawer: const PedidoDrawer(),
-      appBar: AppBar(
-        title: const BrandedAppBarTitle('Carburaciones'),
-        actions: [
-          IconButton(
-            tooltip: 'Actualizar carburaciones',
-            onPressed:
-                state.refreshing
-                    ? null
-                    : () => ref
-                        .read(carburacionesControllerProvider.notifier)
-                        .load(refresh: true),
-            icon:
-                state.refreshing
-                    ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const BrandedAppBarTitle('Carburaciones')),
       body: switch (state.status) {
         CarburacionesStatus.idle || CarburacionesStatus.loading => const Center(
           child: CircularProgressIndicator(),
@@ -135,7 +126,6 @@ class _CarburacionesMap extends StatefulWidget {
 
 class _CarburacionesMapState extends State<_CarburacionesMap> {
   BitmapDescriptor? _carburacionIcon;
-  GoogleMapController? _mapController;
   bool _iconLoadStarted = false;
 
   @override
@@ -149,12 +139,12 @@ class _CarburacionesMapState extends State<_CarburacionesMap> {
   Future<void> _loadIcon() async {
     final configuration = createLocalImageConfiguration(
       context,
-      size: const Size(56, 48),
+      size: const Size(46, 39),
     );
     final icon = await BitmapDescriptor.asset(
       configuration,
       AppAssets.mapBothFuelTypes,
-      width: 56,
+      width: 46,
     );
     if (!mounted) return;
     setState(() => _carburacionIcon = icon);
@@ -171,18 +161,20 @@ class _CarburacionesMapState extends State<_CarburacionesMap> {
         widget.position == null
             ? lagoon
             : LatLng(widget.position!.latitude, widget.position!.longitude);
-    return Stack(
-      children: [
-        GoogleMap(
-          key: const ValueKey('carburaciones-map'),
-          initialCameraPosition: CameraPosition(target: target, zoom: 12),
-          onMapCreated: (controller) => _mapController = controller,
-          mapToolbarEnabled: false,
-          zoomControlsEnabled: false,
-          myLocationEnabled: widget.position != null,
-          myLocationButtonEnabled: widget.position != null,
-          markers: {
-            for (var index = 0; index < widget.values.length; index++)
+    return SafeArea(
+      top: false,
+      left: false,
+      right: false,
+      child: GoogleMap(
+        key: const ValueKey('carburaciones-map'),
+        initialCameraPosition: CameraPosition(target: target, zoom: 12),
+        mapToolbarEnabled: true,
+        zoomControlsEnabled: false,
+        myLocationEnabled: widget.position != null,
+        myLocationButtonEnabled: widget.position != null,
+        markers: {
+          for (var index = 0; index < widget.values.length; index++)
+            if (widget.values[index].tieneCoordenadasUtilizables)
               Marker(
                 markerId: MarkerId('carburacion-$index'),
                 position: LatLng(
@@ -192,66 +184,10 @@ class _CarburacionesMapState extends State<_CarburacionesMap> {
                 icon: icon,
                 infoWindow: InfoWindow(title: widget.values[index].descripcion),
               ),
-          },
-        ),
-        Positioned(
-          right: 16,
-          bottom: 28,
-          child: Column(
-            children: [
-              _MapZoomButton(
-                key: const ValueKey('carburaciones-zoom-in'),
-                tooltip: 'Acercar mapa',
-                icon: Icons.add,
-                onPressed:
-                    () => _mapController?.animateCamera(CameraUpdate.zoomIn()),
-              ),
-              const SizedBox(height: 8),
-              _MapZoomButton(
-                key: const ValueKey('carburaciones-zoom-out'),
-                tooltip: 'Alejar mapa',
-                icon: Icons.remove,
-                onPressed:
-                    () => _mapController?.animateCamera(CameraUpdate.zoomOut()),
-              ),
-            ],
-          ),
-        ),
-      ],
+        },
+      ),
     );
   }
-}
-
-class _MapZoomButton extends StatelessWidget {
-  const _MapZoomButton({
-    super.key,
-    required this.tooltip,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String tooltip;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Material(
-    color: AppColors.white,
-    elevation: 4,
-    shadowColor: Colors.black38,
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(12),
-      child: Tooltip(
-        message: tooltip,
-        child: SizedBox.square(
-          dimension: 46,
-          child: Icon(icon, color: AppColors.quantityButtonBlue, size: 28),
-        ),
-      ),
-    ),
-  );
 }
 
 class _CarburacionesError extends StatelessWidget {

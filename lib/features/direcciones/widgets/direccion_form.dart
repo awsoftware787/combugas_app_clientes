@@ -1,11 +1,20 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../shared/widgets/searchable_dropdown_form_field.dart';
 import '../models/catalogos_direccion.dart';
 import '../models/direccion.dart';
 import '../models/direccion_request.dart';
+
+typedef DireccionMapBuilder =
+    Widget Function({
+      required LatLng position,
+      required ValueChanged<LatLng> onPositionChanged,
+    });
 
 class DireccionForm extends StatefulWidget {
   const DireccionForm({
@@ -17,6 +26,7 @@ class DireccionForm extends StatefulWidget {
     required this.saving,
     required this.onSave,
     this.onDeactivate,
+    this.mapBuilder,
   });
   final Direccion? initial;
   final Future<List<Colonia>> Function() loadColonias;
@@ -25,6 +35,7 @@ class DireccionForm extends StatefulWidget {
   final bool saving;
   final Future<void> Function(DireccionRequest) onSave;
   final Future<void> Function()? onDeactivate;
+  final DireccionMapBuilder? mapBuilder;
   @override
   State<DireccionForm> createState() => _DireccionFormState();
 }
@@ -200,38 +211,24 @@ class _DireccionFormState extends State<DireccionForm> {
                               : null,
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<Colonia>(
+                SearchableDropdownFormField<Colonia>(
+                  key: const ValueKey('direccion-colonia'),
                   value: _colonia,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Colonia'),
-                  items:
-                      _colonias
-                          .map(
-                            (v) => DropdownMenuItem(
-                              value: v,
-                              child: Text(
-                                v.descripcion,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          )
-                          .toList(),
-                  onChanged:
-                      widget.saving
-                          ? null
-                          : (value) async {
-                            setState(() {
-                              _colonia = value;
-                              _calle = null;
-                              _cerrada = null;
-                              _calles = const [];
-                              _cerradas = const [];
-                            });
-                            if (value != null) {
-                              await _loadDependent(value.id);
-                              await _geocode();
-                            }
-                          },
+                  items: _colonias,
+                  itemLabel: (value) => value.descripcion,
+                  labelText: 'Colonia',
+                  enabled: !widget.saving,
+                  onChanged: (value) async {
+                    setState(() {
+                      _colonia = value;
+                      _calle = null;
+                      _cerrada = null;
+                      _calles = const [];
+                      _cerradas = const [];
+                    });
+                    await _loadDependent(value.id);
+                    await _geocode();
+                  },
                   validator:
                       (v) =>
                           v == null
@@ -265,29 +262,17 @@ class _DireccionFormState extends State<DireccionForm> {
                   children: [
                     Expanded(
                       flex: 2,
-                      child: DropdownButtonFormField<Calle>(
+                      child: SearchableDropdownFormField<Calle>(
+                        key: const ValueKey('direccion-calle'),
                         value: _calle,
-                        isExpanded: true,
-                        decoration: const InputDecoration(labelText: 'Calle'),
-                        items:
-                            _calles
-                                .map(
-                                  (v) => DropdownMenuItem(
-                                    value: v,
-                                    child: Text(
-                                      v.descripcion,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged:
-                            widget.saving
-                                ? null
-                                : (v) {
-                                  setState(() => _calle = v);
-                                  _geocode();
-                                },
+                        items: _calles,
+                        itemLabel: (value) => value.descripcion,
+                        labelText: 'Calle',
+                        enabled: !widget.saving && _colonia != null,
+                        onChanged: (value) {
+                          setState(() => _calle = value);
+                          _geocode();
+                        },
                         validator:
                             (v) =>
                                 v == null
@@ -320,25 +305,18 @@ class _DireccionFormState extends State<DireccionForm> {
                   height: 280,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: _position,
-                        zoom: 16,
-                      ),
-                      myLocationButtonEnabled: true,
-                      myLocationEnabled: true,
-                      onMapCreated: (controller) => _map = controller,
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('domicilio'),
+                    child:
+                        widget.mapBuilder?.call(
                           position: _position,
-                          draggable: true,
-                          onDragEnd:
+                          onPositionChanged:
+                              (value) => setState(() => _position = value),
+                        ) ??
+                        _DireccionMap(
+                          position: _position,
+                          onMapCreated: (controller) => _map = controller,
+                          onPositionChanged:
                               (value) => setState(() => _position = value),
                         ),
-                      },
-                      onLongPress: (value) => setState(() => _position = value),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -380,4 +358,40 @@ class _DireccionFormState extends State<DireccionForm> {
       ),
     );
   }
+}
+
+class _DireccionMap extends StatelessWidget {
+  const _DireccionMap({
+    required this.position,
+    required this.onMapCreated,
+    required this.onPositionChanged,
+  });
+
+  final LatLng position;
+  final ValueChanged<GoogleMapController> onMapCreated;
+  final ValueChanged<LatLng> onPositionChanged;
+
+  @override
+  Widget build(BuildContext context) => GoogleMap(
+    initialCameraPosition: CameraPosition(target: position, zoom: 16),
+    myLocationButtonEnabled: true,
+    myLocationEnabled: true,
+    scrollGesturesEnabled: true,
+    zoomGesturesEnabled: true,
+    rotateGesturesEnabled: true,
+    tiltGesturesEnabled: true,
+    gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+      Factory<EagerGestureRecognizer>(EagerGestureRecognizer.new),
+    },
+    onMapCreated: onMapCreated,
+    markers: {
+      Marker(
+        markerId: const MarkerId('domicilio'),
+        position: position,
+        draggable: true,
+        onDragEnd: onPositionChanged,
+      ),
+    },
+    onLongPress: onPositionChanged,
+  );
 }
