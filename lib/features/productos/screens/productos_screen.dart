@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../pedidos/models/item_pedido.dart';
 import '../../pedidos/presentation/product_catalog.dart';
@@ -60,7 +61,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Productos'),
+        title: const BrandedAppBarTitle('Productos'),
         actions: [
           IconButton(
             tooltip: 'Actualizar productos',

@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../pedidos/widgets/pedido_drawer.dart';
 import '../controllers/carburaciones_controller.dart';
 import '../models/carburacion.dart';
@@ -66,7 +67,7 @@ class _CarburacionesScreenState extends ConsumerState<CarburacionesScreen> {
     return Scaffold(
       drawer: const PedidoDrawer(),
       appBar: AppBar(
-        title: const Text('Carburaciones'),
+        title: const BrandedAppBarTitle('Carburaciones'),
         actions: [
           IconButton(
             tooltip: 'Actualizar carburaciones',

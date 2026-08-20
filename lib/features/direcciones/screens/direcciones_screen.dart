@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../pedidos/widgets/pedido_drawer.dart';
 import '../controllers/direccion_controller.dart';
 import '../widgets/direccion_card.dart';
@@ -26,7 +27,9 @@ class _DireccionesScreenState extends ConsumerState<DireccionesScreen> {
     final state = ref.watch(direccionControllerProvider);
     return Scaffold(
       drawer: const PedidoDrawer(),
-      appBar: AppBar(title: const Text('Mis direcciones')),
+      appBar: AppBar(
+        title: const BrandedAppBarTitle('Mis direcciones'),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           await context.push('/direcciones/nueva');

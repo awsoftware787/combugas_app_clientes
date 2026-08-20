@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../pedidos/widgets/pedido_drawer.dart';
 import '../controllers/perfil_controller.dart';
@@ -33,7 +34,7 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
       },
       child: Scaffold(
         drawer: const PedidoDrawer(),
-        appBar: AppBar(title: const Text('Perfil')),
+        appBar: AppBar(title: const BrandedAppBarTitle('Perfil')),
         body: switch (state.status) {
           PerfilStatus.idle || PerfilStatus.loading when state.perfil == null =>
             const Center(child: CircularProgressIndicator()),

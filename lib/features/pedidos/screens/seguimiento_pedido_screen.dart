@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/seguimiento_controller.dart';
 import '../models/pedido_historial.dart';
@@ -53,7 +54,7 @@ class _SeguimientoPedidoScreenState
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Seguimiento'),
+        title: const BrandedAppBarTitle('Seguimiento'),
       ),
       body: SafeArea(
         top: false,

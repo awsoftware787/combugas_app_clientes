@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../../direcciones/models/direccion.dart';
@@ -70,7 +71,7 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
       drawer: const PedidoDrawer(),
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Pedido'),
+        title: const BrandedAppBarTitle('Pedido'),
         actions: [
           TextButton(
             key: const ValueKey('clear-order'),

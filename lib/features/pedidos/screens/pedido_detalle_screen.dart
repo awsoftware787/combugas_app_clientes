@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../controllers/pedido_detalle_controller.dart';
 import '../models/item_pedido.dart';
@@ -46,7 +47,7 @@ class _PedidoDetalleScreenState extends ConsumerState<PedidoDetalleScreen> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Detalle del pedido'),
+        title: const BrandedAppBarTitle('Detalle del pedido'),
         actions: [
           IconButton(
             tooltip: 'Recargar pedido',

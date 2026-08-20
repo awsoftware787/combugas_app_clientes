@@ -1,5 +1,6 @@
 /// Rutas centralizadas de los recursos visuales disponibles en tiempo de ejecución.
 abstract final class AppAssets {
+  static const flameLogo = 'assets/app_icon/combugas_app_icon.png';
   static const logo = 'assets/images/logos/img_logo_nombre.png';
 
   static const productWater = 'assets/images/products/app_slider_agua.png';
@@ -49,6 +50,7 @@ abstract final class AppAssets {
   static const profileImage = 'assets/images/misc/img_perfil.png';
 
   static const values = <String>[
+    flameLogo,
     logo,
     productWater,
     productAlkalineWater,

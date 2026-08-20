@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../controllers/mis_pedidos_controller.dart';
 import '../widgets/pedido_list_item.dart';
 import '../widgets/pedido_drawer.dart';
@@ -39,7 +40,7 @@ class _MisPedidosScreenState extends ConsumerState<MisPedidosScreen> {
       drawer: const PedidoDrawer(),
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Mis Pedidos'),
+        title: const BrandedAppBarTitle('Mis Pedidos'),
         actions: [
           IconButton(
             tooltip: 'Recargar pedidos',

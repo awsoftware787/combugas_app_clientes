@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../controllers/carrito_controller.dart';
 import '../controllers/confirmacion_controller.dart';
@@ -39,7 +40,9 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
     return PopScope(
       canPop: !confirmation.saving,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Confirmar pedido')),
+        appBar: AppBar(
+          title: const BrandedAppBarTitle('Confirmar pedido'),
+        ),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [

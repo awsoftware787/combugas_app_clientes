@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../controllers/carrito_controller.dart';
 import '../models/item_pedido.dart';
 import '../widgets/cart_item_tile.dart';
@@ -16,7 +17,7 @@ class CarritoScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Carrito'),
+        title: const BrandedAppBarTitle('Carrito'),
         actions: [
           TextButton(
             key: const ValueKey('clear-cart'),

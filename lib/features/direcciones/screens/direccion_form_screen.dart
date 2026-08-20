@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../controllers/direccion_controller.dart';
 import '../models/direccion.dart';
 import '../models/direccion_request.dart';
@@ -95,7 +96,7 @@ class _DireccionFormScreenState extends ConsumerState<DireccionFormScreen> {
     );
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: BrandedAppBarTitle(
           widget.direccionId == null ? 'Añadir dirección' : 'Editar dirección',
         ),
       ),
