@@ -150,13 +150,14 @@ class _SeguimientoMap extends StatefulWidget {
 
 class _SeguimientoMapState extends State<_SeguimientoMap> {
   BitmapDescriptor _homeIcon = BitmapDescriptor.defaultMarker;
-  BitmapDescriptor _vehicleIcon = BitmapDescriptor.defaultMarkerWithHue(
-    BitmapDescriptor.hueAzure,
-  );
+  BitmapDescriptor? _vehicleIcon;
+  bool _iconLoadStarted = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_iconLoadStarted) return;
+    _iconLoadStarted = true;
     _loadIcons();
   }
 
@@ -166,14 +167,28 @@ class _SeguimientoMapState extends State<_SeguimientoMap> {
       size: const Size(56, 56),
     );
     final icons = await Future.wait([
-      BitmapDescriptor.asset(configuration, AppAssets.mapHome, width: 48),
-      BitmapDescriptor.asset(configuration, AppAssets.mapVehicle, width: 64),
+      _loadIcon(configuration, AppAssets.mapHome, width: 48),
+      _loadIcon(configuration, AppAssets.mapVehicle, width: 48),
     ]);
     if (!mounted) return;
     setState(() {
-      _homeIcon = icons[0];
+      _homeIcon = icons[0] ?? _homeIcon;
       _vehicleIcon = icons[1];
     });
+  }
+
+  Future<BitmapDescriptor?> _loadIcon(
+    ImageConfiguration configuration,
+    String asset, {
+    required double width,
+  }) async {
+    try {
+      return await BitmapDescriptor.asset(configuration, asset, width: width);
+    } catch (error, stackTrace) {
+      debugPrint('No fue posible cargar el marcador $asset: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      return null;
+    }
   }
 
   @override
@@ -191,14 +206,23 @@ class _SeguimientoMapState extends State<_SeguimientoMap> {
         ),
       ),
     };
-    final vehicle = widget.info.asignaciones.firstOrNull?.vehiculo;
-    if (vehicle != null) {
+    final vehicle =
+        widget.info.asignaciones
+            .map((assignment) => assignment.vehiculo)
+            .whereType<PedidoVehiculo>()
+            .where(_hasValidVehicleLocation)
+            .firstOrNull;
+    final vehicleIcon = _vehicleIcon;
+    if (vehicle != null && vehicleIcon != null) {
       markers.add(
         Marker(
           markerId: const MarkerId('vehiculo'),
           position: LatLng(vehicle.latitud, vehicle.longitud),
-          icon: _vehicleIcon,
-          infoWindow: InfoWindow(title: vehicle.descripcion),
+          icon: vehicleIcon,
+          infoWindow:
+              vehicle.descripcion.trim().isEmpty
+                  ? const InfoWindow()
+                  : InfoWindow(title: vehicle.descripcion),
         ),
       );
     }
@@ -212,6 +236,16 @@ class _SeguimientoMapState extends State<_SeguimientoMap> {
       markers: markers,
     );
   }
+
+  bool _hasValidVehicleLocation(PedidoVehiculo vehicle) =>
+      vehicle.latitud.isFinite &&
+      vehicle.longitud.isFinite &&
+      vehicle.latitud != 0 &&
+      vehicle.longitud != 0 &&
+      vehicle.latitud >= -90 &&
+      vehicle.latitud <= 90 &&
+      vehicle.longitud >= -180 &&
+      vehicle.longitud <= 180;
 }
 
 class _SeguimientoError extends StatelessWidget {

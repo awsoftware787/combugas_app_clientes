@@ -87,6 +87,22 @@ void main() {
     expect(result.asignaciones.single.vehiculo?.longitud, -103.45);
   });
 
+  test('getUnPedido acepta vehículo vacío como no asignado', () {
+    final result = parser.parseUnPedido(
+      XmlDocument.parse(
+        _envelope(
+          'getUnPedido',
+          'true',
+          '{"_latitud":25.5,"_longitud":-103.4,'
+              '"_asignacion":[{"_idOperador":4,"_Vehiculo":""}]}',
+          message: 'OKPED',
+        ),
+      ),
+    );
+
+    expect(result.asignaciones.single.vehiculo, isNull);
+  });
+
   test('cancelarPedido reconoce CANCELADO y propaga rechazo funcional', () {
     final result = parser.parseCancelarPedido(
       XmlDocument.parse(

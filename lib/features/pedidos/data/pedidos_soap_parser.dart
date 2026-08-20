@@ -104,9 +104,9 @@ final class PedidosSoapParser {
   }
 
   PedidoVehiculo? _vehiculo(Object? value) {
-    if (value == null) return null;
+    if (value == null || value is! Map) return null;
     try {
-      final data = Map<String, dynamic>.from(value as Map);
+      final data = Map<String, dynamic>.from(value);
       return PedidoVehiculo(
         descripcion: _text(data['_descrVehiculo']),
         latitud: _double(data['_latitudVehiculo']),
