@@ -21,6 +21,12 @@ void main() {
     expect(find.text('Productos'), findsOneWidget);
     expect(find.byKey(const ValueKey('product-image-2')), findsOneWidget);
     expect(find.text(r'Precio: $500.00'), findsOneWidget);
+    expect(find.text('30kg'), findsOneWidget);
+    expect(find.text('45kg'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('product-option-3')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('product-image-3')), findsOneWidget);
+    expect(find.text(r'Precio: $750.00'), findsOneWidget);
     expect(find.text('Continuar'), findsOneWidget);
     expect(find.text('Dirección de entrega'), findsNothing);
     expect(find.text('Agregar'), findsNothing);
@@ -119,6 +125,13 @@ final class _ProductsRepository implements PedidoRepositoryContract {
       presentacion: '30 KG',
       servicioId: ServicioIds.gas,
       precioCentavos: 50000,
+    ),
+    Producto(
+      id: ProductoIds.cilindro45,
+      descripcion: 'CILINDRO 45 KG',
+      presentacion: '45 KG',
+      servicioId: ServicioIds.gas,
+      precioCentavos: 75000,
     ),
   ];
 

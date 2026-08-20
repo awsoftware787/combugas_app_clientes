@@ -16,6 +16,7 @@ import '../presentation/product_catalog.dart';
 import '../presentation/producto_asset_resolver.dart';
 import '../widgets/pedido_drawer.dart';
 import '../widgets/product_display_card.dart';
+import '../widgets/product_option_selector.dart';
 
 class PedidoScreen extends ConsumerStatefulWidget {
   const PedidoScreen({super.key});
@@ -422,23 +423,11 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
           'Importe: ${formatoMoneda(product.precioCentavos * _quantity)}',
       priceKey: const ValueKey('product-amount'),
       productSelector:
-          widget.products.length > 1
-              ? DropdownButtonFormField<int>(
-                value: _selected,
-                isExpanded: true,
-                items: List.generate(
-                  widget.products.length,
-                  (index) => DropdownMenuItem(
-                    value: index,
-                    child: Text(
-                      widget.products[index].esCroqueta
-                          ? widget.products[index].opcionCroqueta
-                          : widget.products[index].descripcion,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                onChanged: (value) => setState(() => _selected = value ?? 0),
+          ProductOptionSelector.supports(product)
+              ? ProductOptionSelector(
+                products: widget.products,
+                selectedIndex: _selected,
+                onSelected: (value) => setState(() => _selected = value),
               )
               : Text(label, textAlign: TextAlign.center),
       controls: Row(

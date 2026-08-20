@@ -40,11 +40,11 @@ List<ProductCatalogGroup> buildProductCatalog(List<Producto> products) {
   );
   add(
     'garrafon-alcalino',
-    'Garrafón de agua alcalina',
+    'Garrafón de agua alkalina',
     ids([ProductoIds.garrafonAlcalino]),
   );
   add('six-natural', 'Six de agua natural', ids([ProductoIds.sixNatural]));
-  add('six-alcalino', 'Six de agua alcalina', ids([ProductoIds.sixAlcalino]));
+  add('six-alcalino', 'Six de agua alkalina', ids([ProductoIds.sixAlcalino]));
   add(
     'bultos',
     'Croquetas por bulto',

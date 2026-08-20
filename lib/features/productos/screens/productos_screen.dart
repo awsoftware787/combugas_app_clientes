@@ -8,6 +8,7 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../pedidos/models/item_pedido.dart';
 import '../../pedidos/presentation/product_catalog.dart';
 import '../../pedidos/widgets/product_display_card.dart';
+import '../../pedidos/widgets/product_option_selector.dart';
 import '../controllers/productos_controller.dart';
 
 class ProductosRouteScreen extends ConsumerWidget {
@@ -185,23 +186,11 @@ class _PublicProductPageState extends State<_PublicProductPage> {
               ? 'Precio por litro: ${formatoMoneda(product.precioCentavos)}'
               : 'Precio: ${formatoMoneda(product.precioCentavos)}',
       productSelector:
-          widget.group.products.length > 1
-              ? DropdownButtonFormField<int>(
-                value: _selected,
-                isExpanded: true,
-                items: List.generate(
-                  widget.group.products.length,
-                  (index) => DropdownMenuItem(
-                    value: index,
-                    child: Text(
-                      widget.group.products[index].esCroqueta
-                          ? widget.group.products[index].opcionCroqueta
-                          : widget.group.products[index].descripcion,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                onChanged: (value) => setState(() => _selected = value ?? 0),
+          ProductOptionSelector.supports(product)
+              ? ProductOptionSelector(
+                products: widget.group.products,
+                selectedIndex: _selected,
+                onSelected: (value) => setState(() => _selected = value),
               )
               : Text(label, textAlign: TextAlign.center),
     );
