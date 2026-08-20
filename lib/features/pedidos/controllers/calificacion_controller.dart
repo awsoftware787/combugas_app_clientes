@@ -13,10 +13,12 @@ final class CalificacionState {
   const CalificacionState({
     this.status = CalificacionStatus.idle,
     this.message,
+    this.pedidoId,
   });
 
   final CalificacionStatus status;
   final String? message;
+  final int? pedidoId;
   bool get saving => status == CalificacionStatus.saving;
 }
 
@@ -28,6 +30,19 @@ final calificacionControllerProvider =
 final class CalificacionController extends Notifier<CalificacionState> {
   @override
   CalificacionState build() => const CalificacionState();
+
+  /// Prepara el controlador para el pedido que muestra la pantalla actual.
+  ///
+  /// El provider vive durante toda la sesión. Sin este reinicio, un envío
+  /// anterior en estado [CalificacionStatus.success] bloqueaba silenciosamente
+  /// la primera pulsación de Enviar de la siguiente confirmación.
+  void prepare(int? pedidoId) {
+    if (pedidoId == null || pedidoId <= 0 || state.saving) return;
+    if (state.pedidoId != pedidoId ||
+        state.status == CalificacionStatus.success) {
+      state = CalificacionState(pedidoId: pedidoId);
+    }
+  }
 
   Future<bool> submit({
     required int pedidoId,
@@ -47,7 +62,17 @@ final class CalificacionController extends Notifier<CalificacionState> {
       return false;
     }
 
-    state = const CalificacionState(status: CalificacionStatus.saving);
+    state = CalificacionState(
+      status: CalificacionStatus.saving,
+      pedidoId: pedidoId,
+    );
+    if (kDebugMode) {
+      debugPrint(
+        'Calificación: iniciando envío '
+        '(pedido=$pedidoId, entregado=$entregado, puntuación=$puntuacion, '
+        'caracteres=${comentarios.length})',
+      );
+    }
     try {
       await ref
           .read(pedidoRepositoryProvider)
@@ -60,9 +85,10 @@ final class CalificacionController extends Notifier<CalificacionState> {
               clienteId: clienteId,
             ),
           );
-      state = const CalificacionState(
+      state = CalificacionState(
         status: CalificacionStatus.success,
         message: 'Gracias por enviarnos sus comentarios.',
+        pedidoId: pedidoId,
       );
       ref.invalidate(misPedidosControllerProvider);
       return true;
@@ -74,6 +100,7 @@ final class CalificacionController extends Notifier<CalificacionState> {
       state = CalificacionState(
         status: CalificacionStatus.error,
         message: _calificacionErrorMessage(error),
+        pedidoId: pedidoId,
       );
       return false;
     }

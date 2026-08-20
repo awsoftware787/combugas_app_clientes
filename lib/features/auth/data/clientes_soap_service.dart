@@ -6,6 +6,8 @@ import '../models/register_request.dart';
 import '../models/register_result.dart';
 import '../models/verification_request.dart';
 import '../models/verification_result.dart';
+import '../../perfil/data/perfil_soap_parser.dart';
+import '../../perfil/models/perfil_cliente.dart';
 import 'login_soap_parser.dart';
 import 'registration_soap_parser.dart';
 import 'verification_soap_parser.dart';
@@ -31,13 +33,23 @@ abstract interface class RegistrationClientesService {
   Future<ResendCodeResult> resendCode(int accountKey);
 }
 
+abstract interface class PerfilClientesService {
+  Future<PerfilCliente> getPerfil(int clienteId);
+  Future<PerfilOperationResult> actualizarCorreo(int clienteId, String correo);
+  Future<PerfilOperationResult> eliminarCuenta(int clienteId);
+}
+
 final class ClientesSoapService
-    implements ClientesService, RegistrationClientesService {
+    implements
+        ClientesService,
+        RegistrationClientesService,
+        PerfilClientesService {
   ClientesSoapService({
     SoapService? soapService,
     LoginSoapParser? loginParser,
     RegistrationSoapParser? registrationParser,
     VerificationSoapParser? verificationParser,
+    PerfilSoapParser? perfilParser,
     Uri? endpoint,
   }) : _soapService = soapService ?? SoapService(),
        _loginParser = loginParser ?? const LoginSoapParser(),
@@ -45,12 +57,14 @@ final class ClientesSoapService
            registrationParser ?? const RegistrationSoapParser(),
        _verificationParser =
            verificationParser ?? const VerificationSoapParser(),
+       _perfilParser = perfilParser ?? const PerfilSoapParser(),
        _endpoint = endpoint;
 
   final SoapService _soapService;
   final LoginSoapParser _loginParser;
   final RegistrationSoapParser _registrationParser;
   final VerificationSoapParser _verificationParser;
+  final PerfilSoapParser _perfilParser;
   final Uri? _endpoint;
 
   @override
@@ -126,6 +140,48 @@ final class ClientesSoapService
       parameters: {'_intClaveUsuario': accountKey},
     );
     return _verificationParser.parseResend(response);
+  }
+
+  @override
+  Future<PerfilCliente> getPerfil(int clienteId) async {
+    final response = await _soapService.call(
+      endpoint: _endpoint ?? ServiceEndpoints.clientes,
+      namespace: SoapConstants.namespace,
+      methodName: ClientesSoapMethods.informacionCliente,
+      parameters: {'_intClaveUsuario': clienteId},
+    );
+    return _perfilParser.parsePerfil(response);
+  }
+
+  @override
+  Future<PerfilOperationResult> actualizarCorreo(
+    int clienteId,
+    String correo,
+  ) async {
+    final response = await _soapService.call(
+      endpoint: _endpoint ?? ServiceEndpoints.clientes,
+      namespace: SoapConstants.namespace,
+      methodName: ClientesSoapMethods.actualizarCorreo,
+      parameters: {'_intClaveUsuario': clienteId, '_strCorrreo': correo},
+    );
+    return _perfilParser.parseOperation(
+      response,
+      ClientesSoapMethods.actualizarCorreo,
+    );
+  }
+
+  @override
+  Future<PerfilOperationResult> eliminarCuenta(int clienteId) async {
+    final response = await _soapService.call(
+      endpoint: _endpoint ?? ServiceEndpoints.clientes,
+      namespace: SoapConstants.namespace,
+      methodName: ClientesSoapMethods.eliminarCuenta,
+      parameters: {'id_cliente': clienteId},
+    );
+    return _perfilParser.parseOperation(
+      response,
+      ClientesSoapMethods.eliminarCuenta,
+    );
   }
 
   void close() => _soapService.close();

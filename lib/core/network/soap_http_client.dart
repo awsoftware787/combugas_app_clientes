@@ -19,7 +19,7 @@ final class SoapHttpClient {
   }) async {
     try {
       if (kDebugMode && logExchange) {
-        debugPrint('Request confirmación pedido: $body');
+        debugPrint('Request confirmación pedido: ${_redactSoapBody(body)}');
         debugPrint('SOAP endpoint: $endpoint');
         debugPrint('SOAPAction: $soapAction');
       }
@@ -73,4 +73,24 @@ final class SoapHttpClient {
   }
 
   void close() => _client.close();
+}
+
+String _redactSoapBody(String body) {
+  var safeBody = body.replaceAllMapped(
+    RegExp(
+      r'(<_strComentarios[^>]*>)(.*?)(</_strComentarios>)',
+      caseSensitive: false,
+      dotAll: true,
+    ),
+    (match) => '${match[1]}[REDACTED length=${match[2]!.length}]${match[3]}',
+  );
+  safeBody = safeBody.replaceAllMapped(
+    RegExp(
+      r'(<_int(?:Clave)?Cliente[^>]*>)(.*?)(</_int(?:Clave)?Cliente>)',
+      caseSensitive: false,
+      dotAll: true,
+    ),
+    (match) => '${match[1]}[REDACTED]${match[3]}',
+  );
+  return safeBody;
 }

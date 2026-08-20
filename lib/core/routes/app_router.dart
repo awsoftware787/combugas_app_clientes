@@ -15,6 +15,7 @@ import '../../features/pedidos/screens/pedido_detalle_screen.dart';
 import '../../features/pedidos/screens/seguimiento_pedido_screen.dart';
 import '../../features/pedidos/data/evaluacion_pendiente_service.dart';
 import '../../features/pedidos/screens/calificacion_screen.dart';
+import '../../features/perfil/screens/perfil_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
 final appRouter = GoRouter(
@@ -80,20 +81,9 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/perfil-pendiente',
-      builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Perfil',
-            message: 'Debes agregar una dirección. Perfil aún no está migrado.',
-          ),
+      builder: (context, state) => const PerfilScreen(),
     ),
-    GoRoute(
-      path: '/perfil',
-      builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Perfil',
-            message: 'Perfil se migrará en un loop posterior.',
-          ),
-    ),
+    GoRoute(path: '/perfil', builder: (context, state) => const PerfilScreen()),
     GoRoute(
       path: '/carburaciones',
       builder:

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:combugas_clientes/core/network/network_exception.dart';
 import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/calificacion_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/evaluacion_pendiente_service.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
@@ -15,6 +16,43 @@ import 'package:go_router/go_router.dart';
 import 'historial_test_support.dart';
 
 void main() {
+  testWidgets(
+    'primer toque envía tras una calificación previa sin reiniciar provider',
+    (tester) async {
+      final repository = FakeHistorialRepository();
+      final container = _container(repository);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        calificacionControllerProvider.notifier,
+      );
+      expect(
+        await controller.submit(
+          pedidoId: 100,
+          entregado: true,
+          puntuacion: 5,
+          comentarios: '',
+        ),
+        isTrue,
+      );
+      expect(repository.calificarCalls, 1);
+
+      final router = _router();
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('submit-rating')));
+      await tester.pumpAndSettle();
+
+      expect(repository.calificarCalls, 2);
+      expect(repository.calificacionRecibida?.pedidoId, 321);
+    },
+  );
+
   testWidgets('reproduce formulario Android y conserva datos ante error', (
     tester,
   ) async {

@@ -105,6 +105,47 @@ void main() {
       contains('tardó'),
     );
   });
+
+  test(
+    'permite el primer envío de una nueva confirmación sin reiniciar provider',
+    () async {
+      final repository = FakeHistorialRepository();
+      final container = _container(repository);
+      addTearDown(container.dispose);
+      final controller = container.read(
+        calificacionControllerProvider.notifier,
+      );
+
+      controller.prepare(321);
+      expect(
+        await controller.submit(
+          pedidoId: 321,
+          entregado: true,
+          puntuacion: 5,
+          comentarios: 'Primera confirmación',
+        ),
+        isTrue,
+      );
+      expect(repository.calificarCalls, 1);
+
+      controller.prepare(654);
+      expect(
+        container.read(calificacionControllerProvider).status,
+        CalificacionStatus.idle,
+      );
+      expect(
+        await controller.submit(
+          pedidoId: 654,
+          entregado: true,
+          puntuacion: 4,
+          comentarios: 'Siguiente confirmación',
+        ),
+        isTrue,
+      );
+      expect(repository.calificarCalls, 2);
+      expect(repository.calificacionRecibida?.pedidoId, 654);
+    },
+  );
 }
 
 ProviderContainer _container(FakeHistorialRepository repository) =>

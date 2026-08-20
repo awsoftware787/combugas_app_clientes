@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -21,6 +22,19 @@ class _CalificacionScreenState extends ConsumerState<CalificacionScreen> {
   final _commentsController = TextEditingController();
   bool _delivered = true;
   int _rating = 5;
+  bool _prepared = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref
+          .read(calificacionControllerProvider.notifier)
+          .prepare(widget.pendiente?.pedidoId);
+      setState(() => _prepared = true);
+    });
+  }
 
   @override
   void dispose() {
@@ -165,7 +179,9 @@ class _CalificacionScreenState extends ConsumerState<CalificacionScreen> {
                               foregroundColor: AppColors.white,
                             ),
                             onPressed:
-                                state.saving || widget.pendiente == null
+                                !_prepared ||
+                                        state.saving ||
+                                        widget.pendiente == null
                                     ? null
                                     : _submit,
                             child:
@@ -195,6 +211,13 @@ class _CalificacionScreenState extends ConsumerState<CalificacionScreen> {
   Future<void> _submit() async {
     final pending = widget.pendiente;
     if (pending == null) return;
+    if (kDebugMode) {
+      debugPrint(
+        'Calificación: toque Enviar '
+        '(pedido=${pending.pedidoId}, puntuación=$_rating, '
+        'caracteres=${_commentsController.text.length})',
+      );
+    }
     final success = await ref
         .read(calificacionControllerProvider.notifier)
         .submit(
