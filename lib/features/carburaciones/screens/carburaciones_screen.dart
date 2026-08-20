@@ -133,64 +133,124 @@ class _CarburacionesMap extends StatefulWidget {
 }
 
 class _CarburacionesMapState extends State<_CarburacionesMap> {
-  BitmapDescriptor _gasIcon = BitmapDescriptor.defaultMarker;
-  BitmapDescriptor _bothIcon = BitmapDescriptor.defaultMarkerWithHue(
-    BitmapDescriptor.hueAzure,
-  );
+  BitmapDescriptor? _carburacionIcon;
+  GoogleMapController? _mapController;
+  bool _iconLoadStarted = false;
 
   @override
-  void initState() {
-    super.initState();
-    _loadIcons();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_iconLoadStarted) return;
+    _iconLoadStarted = true;
+    _loadIcon();
   }
 
-  Future<void> _loadIcons() async {
+  Future<void> _loadIcon() async {
     final configuration = createLocalImageConfiguration(
       context,
-      size: const Size(50, 50),
+      size: const Size(56, 48),
     );
-    final icons = await Future.wait([
-      BitmapDescriptor.asset(configuration, AppAssets.mapGasStation, width: 35),
-      BitmapDescriptor.asset(
-        configuration,
-        AppAssets.mapBothFuelTypes,
-        width: 50,
-      ),
-    ]);
+    final icon = await BitmapDescriptor.asset(
+      configuration,
+      AppAssets.mapBothFuelTypes,
+      width: 56,
+    );
     if (!mounted) return;
-    setState(() {
-      _gasIcon = icons.first;
-      _bothIcon = icons.last;
-    });
+    setState(() => _carburacionIcon = icon);
   }
 
   @override
   Widget build(BuildContext context) {
+    final icon = _carburacionIcon;
+    if (icon == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
     const lagoon = LatLng(25.565089, -103.452291);
     final target =
         widget.position == null
             ? lagoon
             : LatLng(widget.position!.latitude, widget.position!.longitude);
-    return GoogleMap(
-      key: const ValueKey('carburaciones-map'),
-      initialCameraPosition: CameraPosition(target: target, zoom: 12),
-      mapToolbarEnabled: false,
-      myLocationEnabled: widget.position != null,
-      myLocationButtonEnabled: widget.position != null,
-      markers: {
-        for (var index = 0; index < widget.values.length; index++)
-          Marker(
-            markerId: MarkerId('carburacion-$index'),
-            position: LatLng(
-              widget.values[index].latitud,
-              widget.values[index].longitud,
-            ),
-            icon: widget.values[index].esSoloGas ? _gasIcon : _bothIcon,
-            infoWindow: InfoWindow(title: widget.values[index].descripcion),
+    return Stack(
+      children: [
+        GoogleMap(
+          key: const ValueKey('carburaciones-map'),
+          initialCameraPosition: CameraPosition(target: target, zoom: 12),
+          onMapCreated: (controller) => _mapController = controller,
+          mapToolbarEnabled: false,
+          zoomControlsEnabled: false,
+          myLocationEnabled: widget.position != null,
+          myLocationButtonEnabled: widget.position != null,
+          markers: {
+            for (var index = 0; index < widget.values.length; index++)
+              Marker(
+                markerId: MarkerId('carburacion-$index'),
+                position: LatLng(
+                  widget.values[index].latitud,
+                  widget.values[index].longitud,
+                ),
+                icon: icon,
+                infoWindow: InfoWindow(title: widget.values[index].descripcion),
+              ),
+          },
+        ),
+        Positioned(
+          right: 16,
+          bottom: 28,
+          child: Column(
+            children: [
+              _MapZoomButton(
+                key: const ValueKey('carburaciones-zoom-in'),
+                tooltip: 'Acercar mapa',
+                icon: Icons.add,
+                onPressed:
+                    () => _mapController?.animateCamera(CameraUpdate.zoomIn()),
+              ),
+              const SizedBox(height: 8),
+              _MapZoomButton(
+                key: const ValueKey('carburaciones-zoom-out'),
+                tooltip: 'Alejar mapa',
+                icon: Icons.remove,
+                onPressed:
+                    () => _mapController?.animateCamera(CameraUpdate.zoomOut()),
+              ),
+            ],
           ),
-      },
+        ),
+      ],
     );
   }
+}
+
+class _MapZoomButton extends StatelessWidget {
+  const _MapZoomButton({
+    super.key,
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: AppColors.white,
+    elevation: 4,
+    shadowColor: Colors.black38,
+    borderRadius: BorderRadius.circular(12),
+    child: InkWell(
+      onTap: onPressed,
+      borderRadius: BorderRadius.circular(12),
+      child: Tooltip(
+        message: tooltip,
+        child: SizedBox.square(
+          dimension: 46,
+          child: Icon(icon, color: AppColors.quantityButtonBlue, size: 28),
+        ),
+      ),
+    ),
+  );
 }
 
 class _CarburacionesError extends StatelessWidget {

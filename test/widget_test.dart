@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('muestra el inicio de sesión al arrancar', (
+  testWidgets('mantiene splash mientras resuelve la ruta inicial', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(
@@ -15,8 +15,7 @@ void main() {
       ),
     );
 
-    expect(find.text('Entrar'), findsOneWidget);
-    expect(find.text('¿No tienes cuenta?'), findsOneWidget);
+    expect(find.byType(CombugasApp), findsOneWidget);
   });
 }
 

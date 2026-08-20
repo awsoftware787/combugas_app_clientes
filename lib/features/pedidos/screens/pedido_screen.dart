@@ -12,6 +12,7 @@ import '../controllers/carrito_controller.dart';
 import '../controllers/pedido_controller.dart';
 import '../models/item_pedido.dart';
 import '../models/producto.dart';
+import '../presentation/product_catalog.dart';
 import '../presentation/producto_asset_resolver.dart';
 import '../widgets/pedido_drawer.dart';
 import '../widgets/product_display_card.dart';
@@ -211,62 +212,21 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
   List<Widget> _pages(PedidoState state) {
     final session = ref.read(authControllerProvider).session;
     final subchannel = session?.subcanalUsuario ?? 0;
-    final products = state.productos;
-    List<Producto> ids(List<int> values) =>
-        products.where((item) => values.contains(item.id)).toList();
-    final pages = <Widget>[
-      _ProductPage(
-        key: const ValueKey('cilindros'),
-        title: 'Gas en cilindro',
-        products: ids([ProductoIds.cilindro30, ProductoIds.cilindro45]),
-        subchannel: subchannel,
-      ),
-    ];
-    final stationary = state.producto(ProductoIds.estacionario);
-    if (stationary != null) {
-      pages.add(
-        _StationaryPage(product: stationary, minimums: state.montosMinimos),
-      );
-    }
-    void fixed(int id, String title) {
-      final product = state.producto(id);
-      if (product != null) {
-        pages.add(
-          _ProductPage(
-            key: ValueKey(id),
-            title: title,
-            products: [product],
-            subchannel: subchannel,
-          ),
+    return buildProductCatalog(state.productos).map((group) {
+      if (group.isStationary) {
+        return _StationaryPage(
+          key: ValueKey(group.key),
+          product: group.products.single,
+          minimums: state.montosMinimos,
         );
       }
-    }
-
-    fixed(ProductoIds.garrafonNatural, 'Garrafón de agua natural');
-    fixed(ProductoIds.garrafonAlcalino, 'Garrafón de agua alcalina');
-    fixed(ProductoIds.sixNatural, 'Six de agua natural');
-    fixed(ProductoIds.sixAlcalino, 'Six de agua alcalina');
-    if (state.bultos.isNotEmpty) {
-      pages.add(
-        _ProductPage(
-          key: const ValueKey('bultos'),
-          title: 'Croquetas por bulto',
-          products: state.bultos,
-          subchannel: subchannel,
-        ),
+      return _ProductPage(
+        key: ValueKey(group.key),
+        title: group.title,
+        products: group.products,
+        subchannel: subchannel,
       );
-    }
-    if (state.bolsas.isNotEmpty) {
-      pages.add(
-        _ProductPage(
-          key: const ValueKey('bolsas'),
-          title: 'Croquetas por bolsa',
-          products: state.bolsas,
-          subchannel: subchannel,
-        ),
-      );
-    }
-    return pages;
+    }).toList();
   }
 
   Future<void> _addAddress() async {
@@ -313,7 +273,7 @@ class _DireccionSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     if (state.status == DireccionStatus.loading ||
         state.status == DireccionStatus.idle) {
-      return const LinearProgressIndicator();
+      return const _DireccionSelectorSkeleton();
     }
     if (state.status == DireccionStatus.error) {
       return Row(
@@ -385,6 +345,46 @@ class _DireccionSelector extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DireccionSelectorSkeleton extends StatelessWidget {
+  const _DireccionSelectorSkeleton();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    key: const ValueKey('direcciones-skeleton'),
+    height: 116,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Dirección de entrega',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 56,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.secondary,
+            borderRadius: BorderRadius.circular(36),
+          ),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: FractionallySizedBox(
+            widthFactor: 0.68,
+            child: Container(
+              height: 12,
+              decoration: BoxDecoration(
+                color: AppColors.menuBackground.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(6),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ProductPage extends ConsumerStatefulWidget {
@@ -507,7 +507,11 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
 enum _StationaryMode { importe, litros }
 
 class _StationaryPage extends ConsumerStatefulWidget {
-  const _StationaryPage({required this.product, required this.minimums});
+  const _StationaryPage({
+    super.key,
+    required this.product,
+    required this.minimums,
+  });
   final Producto product;
   final MontosMinimos minimums;
 

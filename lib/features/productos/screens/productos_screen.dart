@@ -6,7 +6,7 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../pedidos/models/item_pedido.dart';
-import '../../pedidos/models/producto.dart';
+import '../../pedidos/presentation/product_catalog.dart';
 import '../../pedidos/widgets/product_display_card.dart';
 import '../controllers/productos_controller.dart';
 
@@ -53,9 +53,9 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(productosControllerProvider);
-    final productos = state.productos;
-    if (_page >= productos.length && productos.isNotEmpty) {
-      _page = productos.length - 1;
+    final catalog = buildProductCatalog(state.productos);
+    if (_page >= catalog.length && catalog.isNotEmpty) {
+      _page = catalog.length - 1;
     }
     return Scaffold(
       appBar: AppBar(
@@ -91,7 +91,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
           ProductosStatus.ready => ListView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             children: [
-              if (productos.isEmpty)
+              if (catalog.isEmpty)
                 const SizedBox(
                   height: 420,
                   child: Center(child: Text('No hay productos disponibles.')),
@@ -101,25 +101,13 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                   height: 430,
                   child: PageView.builder(
                     controller: _pageController,
-                    itemCount: productos.length,
+                    itemCount: catalog.length,
                     onPageChanged: (value) => setState(() => _page = value),
-                    itemBuilder: (context, index) {
-                      final product = productos[index];
-                      return ProductDisplayCard(
-                        product: product,
-                        title: _title(product),
-                        priceLabel:
-                            product.id == ProductoIds.estacionario
-                                ? 'Precio por litro: ${formatoMoneda(product.precioCentavos)}'
-                                : 'Precio: ${formatoMoneda(product.precioCentavos)}',
-                        productSelector: Text(
-                          product.esCroqueta
-                              ? product.opcionCroqueta
-                              : product.descripcion,
-                          textAlign: TextAlign.center,
+                    itemBuilder:
+                        (context, index) => _PublicProductPage(
+                          key: ValueKey(catalog[index].key),
+                          group: catalog[index],
                         ),
-                      );
-                    },
                   ),
                 ),
                 Row(
@@ -136,11 +124,11 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                               ),
                       icon: Image.asset(AppAssets.previousImage, width: 24),
                     ),
-                    Text('${_page + 1} / ${productos.length}'),
+                    Text('${_page + 1} / ${catalog.length}'),
                     IconButton(
                       tooltip: 'Producto siguiente',
                       onPressed:
-                          _page == productos.length - 1
+                          _page == catalog.length - 1
                               ? null
                               : () => _pageController.nextPage(
                                 duration: const Duration(milliseconds: 250),
@@ -169,17 +157,54 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
       ),
     );
   }
+}
 
-  String _title(Producto product) {
-    if (product.id == ProductoIds.estacionario) return 'Gas estacionario';
-    if (product.esCroqueta) return 'Croquetas';
-    if (product.id == ProductoIds.cilindro30 ||
-        product.id == ProductoIds.cilindro45) {
-      return 'Gas en cilindro';
-    }
-    return product.presentacion.isEmpty
-        ? product.descripcion
-        : product.presentacion;
+class _PublicProductPage extends StatefulWidget {
+  const _PublicProductPage({super.key, required this.group});
+
+  final ProductCatalogGroup group;
+
+  @override
+  State<_PublicProductPage> createState() => _PublicProductPageState();
+}
+
+class _PublicProductPageState extends State<_PublicProductPage> {
+  int _selected = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_selected >= widget.group.products.length) _selected = 0;
+    final product = widget.group.products[_selected];
+    final label =
+        product.esCroqueta ? product.opcionCroqueta : product.descripcion;
+    return ProductDisplayCard(
+      product: product,
+      title: widget.group.title,
+      priceLabel:
+          widget.group.isStationary
+              ? 'Precio por litro: ${formatoMoneda(product.precioCentavos)}'
+              : 'Precio: ${formatoMoneda(product.precioCentavos)}',
+      productSelector:
+          widget.group.products.length > 1
+              ? DropdownButtonFormField<int>(
+                value: _selected,
+                isExpanded: true,
+                items: List.generate(
+                  widget.group.products.length,
+                  (index) => DropdownMenuItem(
+                    value: index,
+                    child: Text(
+                      widget.group.products[index].esCroqueta
+                          ? widget.group.products[index].opcionCroqueta
+                          : widget.group.products[index].descripcion,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+                onChanged: (value) => setState(() => _selected = value ?? 0),
+              )
+              : Text(label, textAlign: TextAlign.center),
+    );
   }
 }
 

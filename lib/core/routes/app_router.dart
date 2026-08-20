@@ -19,11 +19,12 @@ import '../../features/perfil/screens/perfil_screen.dart';
 import '../../features/productos/screens/productos_screen.dart';
 import '../../features/carburaciones/screens/carburaciones_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
+import '../startup/session_gate_screen.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/',
   routes: [
-    GoRoute(path: '/', redirect: (context, state) => '/login'),
+    GoRoute(path: '/', builder: (context, state) => const SessionGateScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/productos',

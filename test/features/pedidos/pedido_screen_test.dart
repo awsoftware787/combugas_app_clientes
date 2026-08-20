@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/login_result.dart';
@@ -196,16 +198,47 @@ void main() {
     expect(positions, orderedEquals([...positions]..sort()));
     expect(find.text('VALERIA CORDERO'), findsOneWidget);
   });
+
+  testWidgets('reserva el espacio del selector mientras carga direcciones', (
+    tester,
+  ) async {
+    final directions = Completer<List<Direccion>>();
+    final container = _container(
+      cart: _CartStore(),
+      directions: const [],
+      directionsFuture: directions.future,
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    final skeleton = find.byKey(const ValueKey('direcciones-skeleton'));
+    expect(skeleton, findsOneWidget);
+    expect(tester.getSize(skeleton).height, 116);
+    expect(find.text('Dirección de entrega'), findsOneWidget);
+
+    directions.complete(const [_address]);
+    await tester.pumpAndSettle();
+    expect(skeleton, findsNothing);
+    expect(find.byType(DropdownButtonFormField<Direccion>), findsOneWidget);
+  });
 }
 
 ProviderContainer _container({
   required _CartStore cart,
   required List<Direccion> directions,
+  Future<List<Direccion>>? directionsFuture,
 }) => ProviderContainer(
   overrides: [
     authRepositoryProvider.overrideWithValue(_AuthRepository()),
     direccionRepositoryProvider.overrideWithValue(
-      _DirectionRepository(directions),
+      _DirectionRepository(directions, loadFuture: directionsFuture),
     ),
     pedidoRepositoryProvider.overrideWithValue(_PedidoRepository()),
     carritoStoreProvider.overrideWithValue(cart),
@@ -283,11 +316,15 @@ final class _CartStore implements CarritoStore {
 }
 
 final class _DirectionRepository implements DireccionRepositoryContract {
-  _DirectionRepository(this.directions);
+  _DirectionRepository(this.directions, {this.loadFuture});
   final List<Direccion> directions;
+  final Future<List<Direccion>>? loadFuture;
   Direccion? selected;
   @override
-  Future<List<Direccion>> getDirecciones(int clienteId) async => directions;
+  Future<List<Direccion>> getDirecciones(int clienteId) async {
+    if (loadFuture != null) return loadFuture!;
+    return directions;
+  }
   @override
   Direccion? getSelected() => selected;
   @override
