@@ -88,7 +88,7 @@ void main() {
     expect(find.text('LOGIN'), findsOneWidget);
   });
 
-  testWidgets('Regresar exige dirección y logout limpia la ruta', (
+  testWidgets('muestra menú en lugar de Regresar y logout limpia la ruta', (
     tester,
   ) async {
     final repository = _FakePerfilRepository(addresses: 0);
@@ -98,10 +98,14 @@ void main() {
     await tester.pumpWidget(harness.widget);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('profile-back')));
+    expect(find.byTooltip('Open navigation menu'), findsOneWidget);
+    expect(find.text('Regresar'), findsNothing);
+    await tester.tap(find.byTooltip('Open navigation menu'));
     await tester.pumpAndSettle();
-    expect(find.text('Agregue una dirección para continuar'), findsOneWidget);
-    expect(find.text('Perfil'), findsOneWidget);
+    expect(find.text('Carburaciones'), findsOneWidget);
+    await tester.tap(find.text('Perfil').last);
+    await tester.pumpAndSettle();
+    expect(find.byType(Drawer), findsNothing);
 
     await tester.tap(find.byKey(const ValueKey('profile-logout')));
     await tester.pumpAndSettle();

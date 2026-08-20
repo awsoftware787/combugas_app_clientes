@@ -53,7 +53,7 @@ class _SeguimientoPedidoScreenState
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Pedido', style: TextStyle(color: AppColors.white)),
+        title: const Text('Seguimiento'),
       ),
       body: SafeArea(
         top: false,

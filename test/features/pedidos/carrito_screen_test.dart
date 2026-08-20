@@ -35,10 +35,7 @@ void main() {
     expect(find.text(r'$600.00'), findsNWidgets(2));
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.foregroundColor, AppColors.white);
-    expect(
-      tester.widget<Text>(find.text('Carrito')).style?.color,
-      AppColors.white,
-    );
+    expect(tester.widget<Text>(find.text('Carrito')).style, isNull);
     expect(
       tester.widget<Icon>(find.byIcon(Icons.delete_outline)).color,
       AppColors.accent,

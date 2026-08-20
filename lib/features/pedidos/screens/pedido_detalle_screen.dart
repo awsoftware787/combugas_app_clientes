@@ -46,10 +46,7 @@ class _PedidoDetalleScreenState extends ConsumerState<PedidoDetalleScreen> {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text(
-          'Mi Pedido',
-          style: TextStyle(color: AppColors.white),
-        ),
+        title: const Text('Detalle del pedido'),
         actions: [
           IconButton(
             tooltip: 'Recargar pedido',

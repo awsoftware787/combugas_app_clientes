@@ -61,10 +61,7 @@ void main() {
     );
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.foregroundColor, AppColors.white);
-    expect(
-      tester.widget<Text>(find.text('Mi Pedido')).style?.color,
-      AppColors.white,
-    );
+    expect(find.text('Detalle del pedido'), findsOneWidget);
   });
 
   testWidgets('confirma cancelación y actualiza pantalla sin reabrir', (

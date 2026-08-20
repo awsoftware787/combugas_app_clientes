@@ -16,6 +16,8 @@ import '../../features/pedidos/screens/seguimiento_pedido_screen.dart';
 import '../../features/pedidos/data/evaluacion_pendiente_service.dart';
 import '../../features/pedidos/screens/calificacion_screen.dart';
 import '../../features/perfil/screens/perfil_screen.dart';
+import '../../features/productos/screens/productos_screen.dart';
+import '../../features/carburaciones/screens/carburaciones_screen.dart';
 import '../../shared/widgets/migration_placeholder_screen.dart';
 
 final appRouter = GoRouter(
@@ -23,6 +25,10 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(path: '/', redirect: (context, state) => '/login'),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/productos',
+      builder: (context, state) => const ProductosRouteScreen(),
+    ),
     GoRoute(path: '/pedido', builder: (context, state) => const PedidoScreen()),
     GoRoute(
       path: '/carrito',
@@ -86,11 +92,7 @@ final appRouter = GoRouter(
     GoRoute(path: '/perfil', builder: (context, state) => const PerfilScreen()),
     GoRoute(
       path: '/carburaciones',
-      builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Carburaciones',
-            message: 'Carburaciones se migrará en un loop posterior.',
-          ),
+      builder: (context, state) => const CarburacionesScreen(),
     ),
     GoRoute(
       path: '/mis-pedidos',

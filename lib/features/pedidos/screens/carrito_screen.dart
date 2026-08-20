@@ -16,7 +16,7 @@ class CarritoScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Carrito', style: TextStyle(color: AppColors.white)),
+        title: const Text('Carrito'),
         actions: [
           TextButton(
             key: const ValueKey('clear-cart'),

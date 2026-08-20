@@ -6,6 +6,7 @@ import '../../../core/network/network_exception.dart';
 import '../models/catalogos_direccion.dart';
 import '../models/direccion.dart';
 import '../models/direccion_request.dart';
+import '../../carburaciones/models/carburacion.dart';
 
 final class DireccionesSoapParser {
   const DireccionesSoapParser();
@@ -54,6 +55,21 @@ final class DireccionesSoapParser {
     '_descripcionCerrada',
     (id, description) => Cerrada(id: id, descripcion: description),
   );
+
+  List<Carburacion> parseCarburaciones(XmlDocument document) {
+    final response = _response(document, 'getCarburaciones');
+    if (!response.succeeded) throw WebServiceException(response.message);
+    return _list(response.data)
+        .map(
+          (item) => Carburacion(
+            descripcion: _text(item['ec_descripcion']),
+            latitud: _double(item['ec_latitud']),
+            longitud: _double(item['ec_longitud']),
+            tipo: _int(item['ec_tipo']),
+          ),
+        )
+        .toList(growable: false);
+  }
 
   DireccionOperationResult parseOperation(XmlDocument document, String method) {
     final response = _response(document, method);

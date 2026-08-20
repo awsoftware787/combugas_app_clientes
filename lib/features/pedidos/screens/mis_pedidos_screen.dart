@@ -39,10 +39,7 @@ class _MisPedidosScreenState extends ConsumerState<MisPedidosScreen> {
       drawer: const PedidoDrawer(),
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text(
-          'Mis Pedidos',
-          style: TextStyle(color: AppColors.white),
-        ),
+        title: const Text('Mis Pedidos'),
         actions: [
           IconButton(
             tooltip: 'Recargar pedidos',

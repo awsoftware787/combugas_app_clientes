@@ -176,6 +176,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
+                      TextButton.icon(
+                        key: const ValueKey('view-public-products'),
+                        onPressed: () => context.push('/productos'),
+                        icon: const Icon(Icons.local_grocery_store),
+                        label: const Text('Ver productos'),
+                      ),
                       Wrap(
                         alignment: WrapAlignment.center,
                         crossAxisAlignment: WrapCrossAlignment.center,

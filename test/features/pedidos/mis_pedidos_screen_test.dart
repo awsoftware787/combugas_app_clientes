@@ -38,7 +38,7 @@ void main() {
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.foregroundColor, AppColors.white);
     final title = tester.widget<Text>(find.text('Mis Pedidos'));
-    expect(title.style?.color, AppColors.white);
+    expect(title.style, isNull);
     final refresh = appBar.actions!.whereType<IconButton>().single;
     expect(refresh.color, AppColors.white);
 

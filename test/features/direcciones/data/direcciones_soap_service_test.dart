@@ -66,6 +66,26 @@ void main() {
     expect((await service.desactivar(9, 12)).succeeded, isTrue);
     service.close();
   });
+
+  test('getCarburaciones usa direcciones.asmx sin parámetros', () async {
+    final service = _service(endpoint, (http.Request call) async {
+      expect(call.url, endpoint);
+      expect(
+        call.headers['SOAPAction'],
+        'awserver.noip.me:8888/getCarburaciones',
+      );
+      expect(call.body, contains('<getCarburaciones '));
+      expect(call.body, isNot(contains('<_int')));
+      return _response(
+        'getCarburaciones',
+        '[{"ec_descripcion":"CENTRO","ec_latitud":25.5,'
+            '"ec_longitud":-103.4,"ec_tipo":1}]',
+      );
+    });
+    final values = await service.getCarburaciones();
+    expect(values.single.descripcion, 'CENTRO');
+    service.close();
+  });
 }
 
 DireccionesSoapService _service(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../pedidos/widgets/pedido_drawer.dart';
 import '../controllers/perfil_controller.dart';
 import '../models/perfil_cliente.dart';
 
@@ -31,17 +32,8 @@ class _PerfilScreenState extends ConsumerState<PerfilScreen> {
         if (!didPop) _regresar();
       },
       child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: const Text('Perfil'),
-          actions: [
-            TextButton(
-              key: const ValueKey('profile-back'),
-              onPressed: _regresar,
-              child: const Text('Regresar'),
-            ),
-          ],
-        ),
+        drawer: const PedidoDrawer(),
+        appBar: AppBar(title: const Text('Perfil')),
         body: switch (state.status) {
           PerfilStatus.idle || PerfilStatus.loading when state.perfil == null =>
             const Center(child: CircularProgressIndicator()),
@@ -252,85 +244,120 @@ class _PerfilContent extends StatelessWidget {
     child: SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Center(child: Image.asset(AppAssets.profileImage, height: 80)),
-          const SizedBox(height: 20),
-          const _ProfileLabel('Nombre:'),
-          Text(perfil.nombre, key: const ValueKey('profile-name')),
-          const SizedBox(height: 14),
-          const _ProfileLabel('Teléfono:'),
-          Text(_formatPhone(perfil.telefono)),
-          const SizedBox(height: 14),
-          const _ProfileLabel('Correo electrónico:'),
-          Text(perfil.correo ?? 'No hay correo registrado'),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton(
-              key: const ValueKey('update-profile-email'),
-              onPressed: updatingEmail ? null : onUpdateEmail,
-              child: const Text('Actualizar correo electrónico'),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const _ProfileLabel('Direcciones:'),
-          const SizedBox(height: 6),
-          Row(
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 520),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onAddAddress,
-                  icon: const Icon(Icons.add_location_alt),
-                  label: const Text('Añadir dirección'),
+              Center(child: Image.asset(AppAssets.profileImage, height: 80)),
+              const SizedBox(height: 20),
+              const _ProfileLabel('Nombre:'),
+              Text(
+                perfil.nombre,
+                key: const ValueKey('profile-name'),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 14),
+              const _ProfileLabel('Teléfono:'),
+              Text(_formatPhone(perfil.telefono), textAlign: TextAlign.center),
+              const SizedBox(height: 14),
+              const _ProfileLabel('Correo electrónico:'),
+              Text(
+                perfil.correo ?? 'No hay correo registrado',
+                textAlign: TextAlign.center,
+              ),
+              Center(
+                child: TextButton(
+                  key: const ValueKey('update-profile-email'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.link),
+                  onPressed: updatingEmail ? null : onUpdateEmail,
+                  child: const Text('Actualizar correo electrónico'),
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: onViewAddresses,
-                  icon: const Icon(Icons.location_on),
-                  label: const Text('Ver direcciones'),
+              const SizedBox(height: 10),
+              const _ProfileLabel('Direcciones:'),
+              const SizedBox(height: 6),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final buttons = <Widget>[
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.quantityButtonBlue,
+                      ),
+                      onPressed: onAddAddress,
+                      icon: const Icon(Icons.add_location_alt),
+                      label: const Text('Añadir dirección'),
+                    ),
+                    FilledButton.icon(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.quantityButtonBlue,
+                      ),
+                      onPressed: onViewAddresses,
+                      icon: const Icon(Icons.location_on),
+                      label: const Text('Ver direcciones'),
+                    ),
+                  ];
+                  if (constraints.maxWidth < 390) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        buttons.first,
+                        const SizedBox(height: 10),
+                        buttons.last,
+                      ],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: buttons.first),
+                      const SizedBox(width: 10),
+                      Expanded(child: buttons.last),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 26),
+              Center(
+                child: SizedBox(
+                  width: 220,
+                  child: FilledButton(
+                    key: const ValueKey('profile-logout'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.quantityButtonBlue,
+                    ),
+                    onPressed: deletingAccount ? null : onLogout,
+                    child: const Text('Cerrar sesión'),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Center(
+                child: SizedBox(
+                  width: 220,
+                  child: FilledButton(
+                    key: const ValueKey('delete-account'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.danger,
+                      foregroundColor: AppColors.white,
+                    ),
+                    onPressed: deletingAccount ? null : onDelete,
+                    child:
+                        deletingAccount
+                            ? const SizedBox.square(
+                              dimension: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.white,
+                              ),
+                            )
+                            : const Text('Eliminar cuenta'),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 26),
-          Center(
-            child: SizedBox(
-              width: 220,
-              child: FilledButton(
-                key: const ValueKey('profile-logout'),
-                onPressed: deletingAccount ? null : onLogout,
-                child: const Text('Cerrar sesión'),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: SizedBox(
-              width: 220,
-              child: FilledButton(
-                key: const ValueKey('delete-account'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.danger,
-                  foregroundColor: AppColors.white,
-                ),
-                onPressed: deletingAccount ? null : onDelete,
-                child:
-                    deletingAccount
-                        ? const SizedBox.square(
-                          dimension: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.white,
-                          ),
-                        )
-                        : const Text('Eliminar cuenta'),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     ),
   );
@@ -342,6 +369,7 @@ class _ProfileLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Text(
     text,
+    textAlign: TextAlign.center,
     style: const TextStyle(
       color: AppColors.accent,
       fontWeight: FontWeight.bold,

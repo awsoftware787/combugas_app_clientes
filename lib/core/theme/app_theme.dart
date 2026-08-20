@@ -17,9 +17,25 @@ final class AppTheme {
       onError: AppColors.white,
     );
 
-    const roundedInputBorder = OutlineInputBorder(
+    const normalInputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(36)),
-      borderSide: BorderSide.none,
+      borderSide: BorderSide(color: AppColors.secondary),
+    );
+    const focusedInputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(36)),
+      borderSide: BorderSide(color: AppColors.link, width: 2),
+    );
+    const errorInputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(36)),
+      borderSide: BorderSide(color: AppColors.danger),
+    );
+    const focusedErrorInputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(36)),
+      borderSide: BorderSide(color: AppColors.danger, width: 2),
+    );
+    const disabledInputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(36)),
+      borderSide: BorderSide(color: AppColors.secondary),
     );
 
     return ThemeData(
@@ -30,6 +46,12 @@ final class AppTheme {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.menuBackgroundDark,
         elevation: 0,
+        centerTitle: true,
+        titleTextStyle: TextStyle(
+          color: AppColors.accent,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -49,9 +71,12 @@ final class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
         fillColor: AppColors.white,
-        border: roundedInputBorder,
-        enabledBorder: roundedInputBorder,
-        focusedBorder: roundedInputBorder,
+        border: normalInputBorder,
+        enabledBorder: normalInputBorder,
+        focusedBorder: focusedInputBorder,
+        errorBorder: errorInputBorder,
+        focusedErrorBorder: focusedErrorInputBorder,
+        disabledBorder: disabledInputBorder,
       ),
       dividerTheme: const DividerThemeData(color: AppColors.secondary),
       progressIndicatorTheme: const ProgressIndicatorThemeData(

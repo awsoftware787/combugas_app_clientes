@@ -14,6 +14,7 @@ import '../models/item_pedido.dart';
 import '../models/producto.dart';
 import '../presentation/producto_asset_resolver.dart';
 import '../widgets/pedido_drawer.dart';
+import '../widgets/product_display_card.dart';
 
 class PedidoScreen extends ConsumerStatefulWidget {
   const PedidoScreen({super.key});
@@ -67,7 +68,7 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
       drawer: const PedidoDrawer(),
       appBar: AppBar(
         foregroundColor: AppColors.white,
-        title: const Text('Pedido', style: TextStyle(color: AppColors.white)),
+        title: const Text('Pedido'),
         actions: [
           TextButton(
             key: const ValueKey('clear-order'),
@@ -414,22 +415,15 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
     final product = widget.products[_selected];
     final label =
         product.esCroqueta ? product.opcionCroqueta : product.descripcion;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          children: [
-            Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Expanded(
-              child: Image.asset(
-                ProductoAssetResolver.forProducto(product),
-                fit: BoxFit.contain,
-              ),
-            ),
-            if (widget.products.length > 1)
-              DropdownButtonFormField<int>(
+    return ProductDisplayCard(
+      product: product,
+      title: widget.title,
+      priceLabel:
+          'Importe: ${formatoMoneda(product.precioCentavos * _quantity)}',
+      priceKey: const ValueKey('product-amount'),
+      productSelector:
+          widget.products.length > 1
+              ? DropdownButtonFormField<int>(
                 value: _selected,
                 isExpanded: true,
                 items: List.generate(
@@ -446,81 +440,65 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
                 ),
                 onChanged: (value) => setState(() => _selected = value ?? 0),
               )
-            else
-              Text(label, textAlign: TextAlign.center),
-            const SizedBox(height: 8),
-            Text(
-              'Importe: ${formatoMoneda(product.precioCentavos * _quantity)}',
-              key: const ValueKey('product-amount'),
-              style: const TextStyle(
-                color: AppColors.accent,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              : Text(label, textAlign: TextAlign.center),
+      controls: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton.outlined(
+            key: const ValueKey('quantity-minus'),
+            style: IconButton.styleFrom(
+              foregroundColor: AppColors.quantityButtonBlue,
+              disabledForegroundColor: AppColors.quantityButtonBlue,
+              side: const BorderSide(color: AppColors.quantityButtonBlue),
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                IconButton.outlined(
-                  key: const ValueKey('quantity-minus'),
-                  style: IconButton.styleFrom(
-                    foregroundColor: AppColors.quantityButtonBlue,
-                    disabledForegroundColor: AppColors.quantityButtonBlue,
-                    side: const BorderSide(color: AppColors.quantityButtonBlue),
-                  ),
-                  onPressed:
-                      _quantity > 1 ? () => setState(() => _quantity--) : null,
-                  onLongPress: () => setState(() => _quantity = 1),
-                  icon: const Icon(Icons.remove),
-                ),
-                SizedBox(
-                  width: 58,
-                  child: Text(
-                    '$_quantity',
-                    key: const ValueKey('quantity-value'),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                ),
-                IconButton.outlined(
-                  key: const ValueKey('quantity-plus'),
-                  style: IconButton.styleFrom(
-                    foregroundColor: AppColors.quantityButtonBlue,
-                    side: const BorderSide(color: AppColors.quantityButtonBlue),
-                  ),
-                  onPressed: () => setState(() => _quantity++),
-                  onLongPress: () => setState(() => _quantity = 1),
-                  icon: const Icon(Icons.add),
-                ),
-                const SizedBox(width: 12),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.addButtonGreen,
-                    foregroundColor: AppColors.white,
-                  ),
-                  onPressed: () async {
-                    final result = await ref
-                        .read(carritoControllerProvider.notifier)
-                        .agregarProducto(
-                          producto: product,
-                          cantidad: _quantity,
-                          subcanalUsuario: widget.subchannel,
-                        );
-                    if (!context.mounted) return;
-                    if (result.agregado) {
-                      setState(() => _quantity = 1);
-                    }
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(result.mensaje)));
-                  },
-                  child: const Text('Agregar'),
-                ),
-              ],
+            onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
+            onLongPress: () => setState(() => _quantity = 1),
+            icon: const Icon(Icons.remove),
+          ),
+          SizedBox(
+            width: 58,
+            child: Text(
+              '$_quantity',
+              key: const ValueKey('quantity-value'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 20),
             ),
-          ],
-        ),
+          ),
+          IconButton.outlined(
+            key: const ValueKey('quantity-plus'),
+            style: IconButton.styleFrom(
+              foregroundColor: AppColors.quantityButtonBlue,
+              side: const BorderSide(color: AppColors.quantityButtonBlue),
+            ),
+            onPressed: () => setState(() => _quantity++),
+            onLongPress: () => setState(() => _quantity = 1),
+            icon: const Icon(Icons.add),
+          ),
+          const SizedBox(width: 12),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.addButtonGreen,
+              foregroundColor: AppColors.white,
+            ),
+            onPressed: () async {
+              final result = await ref
+                  .read(carritoControllerProvider.notifier)
+                  .agregarProducto(
+                    producto: product,
+                    cantidad: _quantity,
+                    subcanalUsuario: widget.subchannel,
+                  );
+              if (!context.mounted) return;
+              if (result.agregado) {
+                setState(() => _quantity = 1);
+              }
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(result.mensaje)));
+            },
+            child: const Text('Agregar'),
+          ),
+        ],
       ),
     );
   }

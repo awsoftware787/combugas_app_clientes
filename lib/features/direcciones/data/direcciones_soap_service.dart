@@ -4,6 +4,7 @@ import '../../../core/network/soap_service.dart';
 import '../models/catalogos_direccion.dart';
 import '../models/direccion.dart';
 import '../models/direccion_request.dart';
+import '../../carburaciones/models/carburacion.dart';
 import 'direcciones_soap_parser.dart';
 
 abstract interface class DireccionesService {
@@ -12,6 +13,7 @@ abstract interface class DireccionesService {
   Future<List<Colonia>> getColonias();
   Future<List<Calle>> getCalles(int coloniaId);
   Future<List<Cerrada>> getCerradas(int coloniaId);
+  Future<List<Carburacion>> getCarburaciones();
   Future<DireccionOperationResult> guardar(
     int clienteId,
     DireccionRequest request,
@@ -69,6 +71,12 @@ final class DireccionesSoapService implements DireccionesService {
         await _call(DireccionesSoapMethods.obtenerCerradas, {
           '_intIdColonia': coloniaId,
         }),
+      );
+
+  @override
+  Future<List<Carburacion>> getCarburaciones() async =>
+      _parser.parseCarburaciones(
+        await _call(DireccionesSoapMethods.obtenerCarburaciones),
       );
 
   @override
