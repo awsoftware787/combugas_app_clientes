@@ -146,9 +146,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('modo segmentos usa selección roja y scroll para tres opciones', (
-    tester,
-  ) async {
+  testWidgets('modo segmentos muestra tres opciones completas', (tester) async {
     var selected = 0;
     const products = [
       Producto(
@@ -195,10 +193,22 @@ void main() {
       ),
     );
 
-    expect(
-      tester.getSize(find.byKey(const ValueKey('product-option-20'))),
-      const Size(132, 48),
+    final firstSize = tester.getSize(
+      find.byKey(const ValueKey('product-option-20')),
     );
+    final thirdRect = tester.getRect(
+      find.byKey(const ValueKey('product-option-22')),
+    );
+    final selectorRect = tester.getRect(find.byType(ProductOptionSelector));
+
+    expect(firstSize.width, closeTo((280 - 12) / 3, 0.1));
+    expect(firstSize.height, 48);
+    expect(thirdRect.right, lessThanOrEqualTo(selectorRect.right));
+    expect(
+      find.byKey(const ValueKey('product-options-previous')),
+      findsNothing,
+    );
+    expect(find.byKey(const ValueKey('product-options-next')), findsNothing);
     expect(_color(tester, 20), AppColors.accent);
     expect(_color(tester, 21), AppColors.white);
     expect(find.byIcon(Icons.check_rounded), findsOneWidget);
@@ -209,6 +219,81 @@ void main() {
     expect(selected, 1);
     expect(_color(tester, 20), AppColors.white);
     expect(_color(tester, 21), AppColors.accent);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('modo segmentos muestra flechas y desplaza con cuatro opciones', (
+    tester,
+  ) async {
+    const products = [
+      Producto(
+        id: 20,
+        descripcion: 'BULTO DE ADULTO 20 KG',
+        presentacion: '20 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 40000,
+      ),
+      Producto(
+        id: 21,
+        descripcion: 'BULTO DE CACHORRO 20 KG',
+        presentacion: '20 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 42000,
+      ),
+      Producto(
+        id: 22,
+        descripcion: 'BULTO RAZA PEQUEÑA 10 KG',
+        presentacion: '10 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 38000,
+      ),
+      Producto(
+        id: 23,
+        descripcion: 'BULTO PREMIUM 15 KG',
+        presentacion: '15 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 45000,
+      ),
+    ];
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 280,
+              child: ProductOptionSelector(
+                products: products,
+                selectedIndex: 0,
+                layout: ProductOptionSelectorLayout.segments,
+                onSelected: _ignore,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final firstFinder = find.byKey(const ValueKey('product-option-20'));
+    final thirdRect = tester.getRect(
+      find.byKey(const ValueKey('product-option-22')),
+    );
+    final rightArrowRect = tester.getRect(
+      find.byKey(const ValueKey('product-options-next')),
+    );
+    final initialFirstX = tester.getTopLeft(firstFinder).dx;
+
+    expect(
+      find.byKey(const ValueKey('product-options-previous')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('product-options-next')), findsOneWidget);
+    expect(thirdRect.right, lessThanOrEqualTo(rightArrowRect.left));
+
+    await tester.tap(find.byKey(const ValueKey('product-options-next')));
+    await tester.pumpAndSettle();
+
+    expect(tester.getTopLeft(firstFinder).dx, lessThan(initialFirstX));
     expect(tester.takeException(), isNull);
   });
 }
