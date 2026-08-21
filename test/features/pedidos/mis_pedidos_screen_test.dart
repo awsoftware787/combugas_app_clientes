@@ -7,6 +7,7 @@ import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart'
 import 'package:combugas_clientes/features/pedidos/screens/mis_pedidos_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -14,6 +15,73 @@ import 'historial_test_support.dart';
 import 'pedido_historial_fixture.dart';
 
 void main() {
+  testWidgets('oculta navegación inferior y la restaura al salir', (
+    tester,
+  ) async {
+    final calls = <MethodCall>[];
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        calls.add(call);
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    final container = _container(
+      FakeHistorialRepository(getPedidosHandler: (_) async => const []),
+    );
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: MisPedidosScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      calls,
+      contains(
+        isA<MethodCall>()
+            .having(
+              (call) => call.method,
+              'method',
+              'SystemChrome.setEnabledSystemUIOverlays',
+            )
+            .having((call) => call.arguments, 'overlays', [
+              'SystemUiOverlay.top',
+            ]),
+      ),
+    );
+
+    calls.clear();
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+
+    expect(
+      calls,
+      contains(
+        isA<MethodCall>()
+            .having(
+              (call) => call.method,
+              'method',
+              'SystemChrome.setEnabledSystemUIMode',
+            )
+            .having(
+              (call) => call.arguments,
+              'mode',
+              'SystemUiMode.edgeToEdge',
+            ),
+      ),
+    );
+  });
+
   testWidgets('muestra loading y después lista respetando datos Android', (
     tester,
   ) async {
