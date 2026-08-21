@@ -7,6 +7,7 @@ Migración Flutter de la aplicación Android de clientes de Combugas.
 ```powershell
 flutter run --dart-define-from-file=config/dev_local.json
 flutter run --dart-define-from-file=config/dev.json
+flutter run --dart-define-from-file=config/prod.json
 ```
 
 ## Google Maps para Direcciones
