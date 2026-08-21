@@ -82,6 +82,69 @@ void main() {
     expect(find.text('ADULTO 20 KG'), findsOneWidget);
     expect(_color(tester, product.id), AppColors.accent);
   });
+
+  testWidgets('modo tarjetas soporta más de dos variantes', (tester) async {
+    var selected = 0;
+    const products = [
+      Producto(
+        id: 20,
+        descripcion: 'BULTO DE ADULTO 20 KG',
+        presentacion: '20 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 40000,
+      ),
+      Producto(
+        id: 21,
+        descripcion: 'BULTO DE CACHORRO 20 KG',
+        presentacion: '20 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 42000,
+      ),
+      Producto(
+        id: 22,
+        descripcion: 'BULTO RAZA PEQUEÑA 10 KG',
+        presentacion: '10 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 38000,
+      ),
+    ];
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 280,
+              child: StatefulBuilder(
+                builder:
+                    (context, setState) => ProductOptionSelector(
+                      products: products,
+                      selectedIndex: selected,
+                      layout: ProductOptionSelectorLayout.cards,
+                      onSelected: (value) => setState(() => selected = value),
+                    ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      tester.getSize(find.byKey(const ValueKey('product-option-20'))),
+      const Size(136, 58),
+    );
+    expect(_borderColor(tester, 20), AppColors.accent);
+    expect(_borderColor(tester, 21), AppColors.secondary);
+
+    await tester.tap(find.byKey(const ValueKey('product-option-21')));
+    await tester.pumpAndSettle();
+
+    expect(selected, 1);
+    expect(_borderColor(tester, 20), AppColors.secondary);
+    expect(_borderColor(tester, 21), AppColors.accent);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Color? _color(WidgetTester tester, int productId) {
@@ -89,6 +152,14 @@ Color? _color(WidgetTester tester, int productId) {
     find.byKey(ValueKey('product-option-$productId')),
   );
   return (container.decoration as BoxDecoration).color;
+}
+
+Color _borderColor(WidgetTester tester, int productId) {
+  final container = tester.widget<AnimatedContainer>(
+    find.byKey(ValueKey('product-option-$productId')),
+  );
+  final border = (container.decoration as BoxDecoration).border! as Border;
+  return border.top.color;
 }
 
 void _ignore(int _) {}
