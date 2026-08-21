@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +18,31 @@ typedef DireccionMapBuilder =
       required ValueChanged<LatLng> onPositionChanged,
     });
 
+typedef DireccionGeocoder = Future<LatLng?> Function(String address);
+typedef DireccionCameraMover =
+    Future<void> Function(LatLng position, double zoom);
+
+String buildDireccionGeocodingQuery({
+  required Colonia colonia,
+  required Calle calle,
+  required String numero,
+}) {
+  final parts = <String>[
+    '${calle.descripcion.trim()} ${numero.trim()}'.trim(),
+    'Colonia ${colonia.descripcion.trim()}',
+    colonia.ciudad.trim(),
+    colonia.estado.trim(),
+    'México',
+  ].where((part) => part.isNotEmpty);
+  return parts.join(', ');
+}
+
+Future<LatLng?> geocodeDireccion(String address) async {
+  final locations = await locationFromAddress(address);
+  if (locations.isEmpty) return null;
+  return LatLng(locations.first.latitude, locations.first.longitude);
+}
+
 class DireccionForm extends StatefulWidget {
   const DireccionForm({
     super.key,
@@ -27,6 +54,8 @@ class DireccionForm extends StatefulWidget {
     required this.onSave,
     this.onDeactivate,
     this.mapBuilder,
+    this.geocodeAddress,
+    this.moveCamera,
   });
   final Direccion? initial;
   final Future<List<Colonia>> Function() loadColonias;
@@ -36,6 +65,8 @@ class DireccionForm extends StatefulWidget {
   final Future<void> Function(DireccionRequest) onSave;
   final Future<void> Function()? onDeactivate;
   final DireccionMapBuilder? mapBuilder;
+  final DireccionGeocoder? geocodeAddress;
+  final DireccionCameraMover? moveCamera;
   @override
   State<DireccionForm> createState() => _DireccionFormState();
 }
@@ -45,6 +76,7 @@ class _DireccionFormState extends State<DireccionForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _description;
   late final TextEditingController _number;
+  late final FocusNode _numberFocus;
   List<Colonia> _colonias = const [];
   List<Calle> _calles = const [];
   List<Cerrada> _cerradas = const [];
@@ -53,7 +85,14 @@ class _DireccionFormState extends State<DireccionForm> {
   Cerrada? _cerrada;
   late LatLng _position;
   bool _loadingCatalogs = true;
+  bool _geocoding = false;
   GoogleMapController? _map;
+  Timer? _geocodeDebounce;
+  int _geocodeRequestId = 0;
+  int _addressRevision = 0;
+  int _lastRequestedRevision = -1;
+  int _dependentLoadId = 0;
+  late String _addressNumber;
 
   @override
   void initState() {
@@ -61,6 +100,9 @@ class _DireccionFormState extends State<DireccionForm> {
     final initial = widget.initial;
     _description = TextEditingController(text: initial?.descripcion ?? '');
     _number = TextEditingController(text: initial?.numeroExterior ?? '');
+    _addressNumber = _number.text.trim();
+    if (initial != null) _lastRequestedRevision = _addressRevision;
+    _numberFocus = FocusNode()..addListener(_onNumberFocusChanged);
     _position =
         initial != null && (initial.latitud != 0 || initial.longitud != 0)
             ? LatLng(initial.latitud, initial.longitud)
@@ -73,6 +115,11 @@ class _DireccionFormState extends State<DireccionForm> {
   void dispose() {
     _description.dispose();
     _number.dispose();
+    _numberFocus
+      ..removeListener(_onNumberFocusChanged)
+      ..dispose();
+    _geocodeDebounce?.cancel();
+    _geocodeRequestId++;
     _map?.dispose();
     super.dispose();
   }
@@ -94,13 +141,16 @@ class _DireccionFormState extends State<DireccionForm> {
         _colonias = colonias;
         _colonia = selected;
       });
-      if (selected != null) await _loadDependent(selected.id);
+      if (selected != null) {
+        await _loadDependent(selected.id, selectInitial: true);
+      }
     } finally {
       if (mounted) setState(() => _loadingCatalogs = false);
     }
   }
 
-  Future<void> _loadDependent(int id) async {
+  Future<void> _loadDependent(int id, {bool selectInitial = false}) async {
+    final loadId = ++_dependentLoadId;
     final values = await Future.wait([
       widget.loadCalles(id),
       widget.loadCerradas(id),
@@ -109,7 +159,7 @@ class _DireccionFormState extends State<DireccionForm> {
     final cerradas = values[1] as List<Cerrada>;
     Calle? calle;
     Cerrada? cerrada;
-    if (widget.initial != null) {
+    if (selectInitial && widget.initial != null) {
       for (final item in calles) {
         if (item.id == widget.initial!.idCalle) {
           calle = item;
@@ -123,7 +173,7 @@ class _DireccionFormState extends State<DireccionForm> {
         }
       }
     }
-    if (mounted) {
+    if (mounted && loadId == _dependentLoadId) {
       setState(() {
         _calles = calles;
         _cerradas = cerradas;
@@ -134,6 +184,7 @@ class _DireccionFormState extends State<DireccionForm> {
   }
 
   Future<void> _locate() async {
+    final requestId = _geocodeRequestId;
     try {
       var permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
@@ -144,9 +195,9 @@ class _DireccionFormState extends State<DireccionForm> {
         return;
       }
       final position = await Geolocator.getCurrentPosition();
-      if (!mounted) return;
+      if (!mounted || requestId != _geocodeRequestId) return;
       setState(() => _position = LatLng(position.latitude, position.longitude));
-      await _map?.animateCamera(CameraUpdate.newLatLngZoom(_position, 16));
+      await _moveCamera(_position, 16);
     } catch (_) {}
   }
 
@@ -154,20 +205,84 @@ class _DireccionFormState extends State<DireccionForm> {
     if (_colonia == null || _calle == null || _number.text.trim().isEmpty) {
       return;
     }
+    if (_lastRequestedRevision == _addressRevision) return;
+    _geocodeDebounce?.cancel();
+    _lastRequestedRevision = _addressRevision;
+    final requestId = ++_geocodeRequestId;
+    final query = buildDireccionGeocodingQuery(
+      colonia: _colonia!,
+      calle: _calle!,
+      numero: _number.text,
+    );
+    setState(() => _geocoding = true);
     try {
-      final query =
-          '${_calle!.descripcion} ${_number.text}, ${_colonia!.descripcion}, ${_colonia!.ciudad}, ${_colonia!.estado}';
-      final locations = await locationFromAddress(query);
-      if (locations.isEmpty || !mounted) return;
-      setState(
-        () =>
-            _position = LatLng(
-              locations.first.latitude,
-              locations.first.longitude,
-            ),
+      final position = await (widget.geocodeAddress ?? geocodeDireccion)(query);
+      if (!mounted || requestId != _geocodeRequestId) return;
+      if (position == null) {
+        setState(() => _geocoding = false);
+        _showGeocodingMessage(
+          'No encontramos esa dirección. Puedes ajustar el punto manualmente.',
+        );
+        return;
+      }
+      setState(() {
+        _position = position;
+        _geocoding = false;
+      });
+      await _moveCamera(position, 18);
+    } catch (_) {
+      if (!mounted || requestId != _geocodeRequestId) return;
+      setState(() => _geocoding = false);
+      _showGeocodingMessage(
+        'No fue posible ubicar la dirección. Puedes continuar y ajustar el punto manualmente.',
       );
-      await _map?.animateCamera(CameraUpdate.newLatLngZoom(_position, 16));
-    } catch (_) {}
+    }
+  }
+
+  Future<void> _moveCamera(LatLng position, double zoom) async {
+    final customMover = widget.moveCamera;
+    if (customMover != null) {
+      await customMover(position, zoom);
+      return;
+    }
+    await _map?.animateCamera(CameraUpdate.newLatLngZoom(position, zoom));
+  }
+
+  void _showGeocodingMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  void _onAddressChanged() {
+    _addressRevision++;
+    _geocodeRequestId++;
+    _geocodeDebounce?.cancel();
+    _geocoding = false;
+  }
+
+  void _onManualPositionChanged(LatLng value) {
+    _geocodeRequestId++;
+    _geocodeDebounce?.cancel();
+    setState(() {
+      _position = value;
+      _geocoding = false;
+    });
+  }
+
+  void _scheduleGeocode() {
+    _geocodeDebounce?.cancel();
+    if (_colonia == null || _calle == null || _number.text.trim().isEmpty) {
+      return;
+    }
+    _geocodeDebounce = Timer(const Duration(milliseconds: 650), _geocode);
+  }
+
+  void _onNumberFocusChanged() {
+    if (!_numberFocus.hasFocus) {
+      _geocodeDebounce?.cancel();
+      _geocode();
+    }
   }
 
   void _submit() {
@@ -219,6 +334,8 @@ class _DireccionFormState extends State<DireccionForm> {
                   labelText: 'Colonia',
                   enabled: !widget.saving,
                   onChanged: (value) async {
+                    if (value.id == _colonia?.id) return;
+                    _onAddressChanged();
                     setState(() {
                       _colonia = value;
                       _calle = null;
@@ -227,7 +344,6 @@ class _DireccionFormState extends State<DireccionForm> {
                       _cerradas = const [];
                     });
                     await _loadDependent(value.id);
-                    await _geocode();
                   },
                   validator:
                       (v) =>
@@ -270,7 +386,12 @@ class _DireccionFormState extends State<DireccionForm> {
                         labelText: 'Calle',
                         enabled: !widget.saving && _colonia != null,
                         onChanged: (value) {
-                          setState(() => _calle = value);
+                          if (value.id == _calle?.id) return;
+                          _onAddressChanged();
+                          setState(() {
+                            _calle = value;
+                            _geocoding = false;
+                          });
                           _geocode();
                         },
                         validator:
@@ -283,9 +404,19 @@ class _DireccionFormState extends State<DireccionForm> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: TextFormField(
+                        key: const ValueKey('direccion-numero'),
                         controller: _number,
+                        focusNode: _numberFocus,
                         decoration: const InputDecoration(labelText: 'Número'),
-                        onEditingComplete: _geocode,
+                        onChanged: (value) {
+                          final normalized = value.trim();
+                          if (normalized == _addressNumber) return;
+                          _addressNumber = normalized;
+                          _onAddressChanged();
+                          setState(() {});
+                          _scheduleGeocode();
+                        },
+                        onEditingComplete: _numberFocus.unfocus,
                         validator:
                             (v) =>
                                 v == null || v.trim().isEmpty
@@ -296,9 +427,21 @@ class _DireccionFormState extends State<DireccionForm> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Text(
-                  'Ubicación de entrega',
-                  style: Theme.of(context).textTheme.titleMedium,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Ubicación de entrega',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ),
+                    if (_geocoding)
+                      const SizedBox.square(
+                        key: ValueKey('direccion-geocoding-loading'),
+                        dimension: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
@@ -308,14 +451,12 @@ class _DireccionFormState extends State<DireccionForm> {
                     child:
                         widget.mapBuilder?.call(
                           position: _position,
-                          onPositionChanged:
-                              (value) => setState(() => _position = value),
+                          onPositionChanged: _onManualPositionChanged,
                         ) ??
                         _DireccionMap(
                           position: _position,
                           onMapCreated: (controller) => _map = controller,
-                          onPositionChanged:
-                              (value) => setState(() => _position = value),
+                          onPositionChanged: _onManualPositionChanged,
                         ),
                   ),
                 ),

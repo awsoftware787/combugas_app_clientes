@@ -116,7 +116,7 @@ void main() {
       'Perfil',
       'Carburaciones',
       'Mis direcciones',
-      'Mis Pedidos',
+      'Mis pedidos',
       'Cerrar sesión',
     ]) {
       expect(

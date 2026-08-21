@@ -266,9 +266,9 @@ void main() {
     await tester.pumpAndSettle();
     final labels = [
       'Pedido',
-      'Mis Pedidos',
-      'Perfil',
+      'Mis pedidos',
       'Mis direcciones',
+      'Perfil',
       'Carburaciones',
       'Aviso de privacidad',
       'Cerrar sesión',

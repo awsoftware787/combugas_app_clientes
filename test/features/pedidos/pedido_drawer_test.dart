@@ -61,7 +61,7 @@ void main() {
       expect(_drawerText('Pedido'), findsNothing);
       expect(_drawerText('Perfil'), findsNothing);
       expect(_drawerText('Mis direcciones'), findsNothing);
-      expect(_drawerText('Mis Pedidos'), findsNothing);
+      expect(_drawerText('Mis pedidos'), findsNothing);
       expect(_drawerText('Cerrar sesión'), findsNothing);
 
       await tester.tap(_drawerText('Carburaciones'));
@@ -104,7 +104,7 @@ void main() {
   });
 
   for (final screenSize in const [Size(320, 640), Size(430, 932)]) {
-    testWidgets('drawer ocupa el 75 por ciento en pantalla $screenSize', (
+    testWidgets('drawer ocupa el 60 por ciento en pantalla $screenSize', (
       tester,
     ) async {
       tester.view.devicePixelRatio = 1;
@@ -122,10 +122,84 @@ void main() {
 
       expect(
         tester.getSize(find.byType(Drawer)).width,
-        screenSize.width * 0.75,
+        screenSize.width * 0.60,
       );
       expect(_drawerText('Mis direcciones'), findsOneWidget);
       expect(_drawerText('Aviso de privacidad'), findsOneWidget);
+    });
+  }
+
+  testWidgets('menú autenticado respeta orden, separadores y logout inferior', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(390, 844);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final container = _container(() async => true);
+    addTearDown(container.dispose);
+    final router = _router(initialLocation: '/pedido');
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app(container, router));
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
+
+    final labels = [
+      'Pedido',
+      'Mis pedidos',
+      'Mis direcciones',
+      'Perfil',
+      'Carburaciones',
+      'Aviso de privacidad',
+      'Cerrar sesión',
+    ];
+    final positions =
+        labels
+            .map((label) => tester.getTopLeft(_drawerText(label)).dy)
+            .toList();
+    expect(positions, orderedEquals([...positions]..sort()));
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.byType(Divider)),
+      findsNWidgets(2),
+    );
+    final avatar = tester.widget<Image>(
+      find.descendant(of: find.byType(Drawer), matching: find.byType(Image)),
+    );
+    expect(avatar.width, 92);
+    expect(avatar.height, 92);
+    expect(
+      tester.getBottomRight(_drawerText('Cerrar sesión')).dy,
+      greaterThan(tester.getBottomRight(_drawerText('Aviso de privacidad')).dy),
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final entry
+      in const {
+        '/pedido': 'Pedido',
+        '/mis-pedidos': 'Mis pedidos',
+        '/direcciones': 'Mis direcciones',
+        '/perfil': 'Perfil',
+        '/carburaciones': 'Carburaciones',
+      }.entries) {
+    testWidgets('${entry.value} aparece como opción activa', (tester) async {
+      final container = _container(() async => true);
+      addTearDown(container.dispose);
+      final router = _router(initialLocation: entry.key);
+      addTearDown(router.dispose);
+      await tester.pumpWidget(_app(container, router));
+      await tester.pumpAndSettle();
+
+      await _openDrawer(tester);
+
+      final text = tester.widget<Text>(_drawerText(entry.value));
+      final decoration = _drawerItemDecoration(tester, entry.value);
+      final border = decoration.border! as Border;
+      expect(text.style?.fontWeight, FontWeight.w700);
+      expect(decoration.color, AppColors.white.withValues(alpha: 0.09));
+      expect(border.left.color, AppColors.primary);
+      expect(border.left.width, 4);
     });
   }
 
@@ -271,6 +345,14 @@ Future<void> _openDrawer(WidgetTester tester) async {
 
 Finder _drawerText(String label) =>
     find.descendant(of: find.byType(Drawer), matching: find.text(label));
+
+BoxDecoration _drawerItemDecoration(WidgetTester tester, String label) {
+  final container =
+      find
+          .ancestor(of: _drawerText(label), matching: find.byType(Container))
+          .first;
+  return tester.widget<Container>(container).decoration! as BoxDecoration;
+}
 
 class _DrawerPage extends StatelessWidget {
   const _DrawerPage({required this.label});
