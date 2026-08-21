@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/external_urls.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_version_text.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 final privacyNoticeLauncherProvider = Provider<Future<bool> Function()>(
@@ -98,6 +99,10 @@ class PedidoDrawer extends ConsumerWidget {
                                 onTap: () => _openPrivacy(context, ref),
                               ),
                               const Spacer(),
+                              const Padding(
+                                padding: EdgeInsets.only(bottom: 4),
+                                child: AppVersionText(),
+                              ),
                               _divider(),
                               _AuthenticatedDrawerItem(
                                 key: const ValueKey('drawer-logout'),
@@ -258,6 +263,10 @@ class _PublicDrawerContent extends StatelessWidget {
           onTap: onOpenPrivacy,
         ),
         const Spacer(),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: AppVersionText(),
+        ),
         const Divider(height: 1),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),

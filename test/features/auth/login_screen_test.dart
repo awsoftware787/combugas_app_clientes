@@ -2,6 +2,7 @@ import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/login_result.dart';
 import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/auth/screens/login_screen.dart';
+import 'package:combugas_clientes/shared/widgets/app_version_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,7 +15,10 @@ void main() {
     final repository = _FakeAuthRepository();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(repository),
+          appVersionProvider.overrideWithValue(Future.value('1.0.0')),
+        ],
         child: const MaterialApp(home: LoginScreen()),
       ),
     );
@@ -52,7 +56,10 @@ void main() {
     addTearDown(router.dispose);
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [authRepositoryProvider.overrideWithValue(repository)],
+        overrides: [
+          authRepositoryProvider.overrideWithValue(repository),
+          appVersionProvider.overrideWithValue(Future.value('1.0.0')),
+        ],
         child: MaterialApp.router(routerConfig: router),
       ),
     );
@@ -64,6 +71,33 @@ void main() {
 
     expect(repository.loginCalls, 1);
     expect(find.text('PEDIDO'), findsOneWidget);
+  });
+
+  testWidgets('muestra la versión abajo a la derecha sin mover el formulario', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(360, 640);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.view.resetPhysicalSize);
+    final repository = _FakeAuthRepository();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(repository),
+          appVersionProvider.overrideWithValue(Future.value('1.0.0')),
+        ],
+        child: const MaterialApp(home: LoginScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final versionRect = tester.getRect(find.text('Versión 1.0.0'));
+    expect(360 - versionRect.right, closeTo(16, 1));
+    expect(640 - versionRect.bottom, closeTo(10, 1));
+    expect(tester.getCenter(find.byType(Form)).dx, closeTo(180, 1));
+    expect(tester.takeException(), isNull);
   });
 }
 
