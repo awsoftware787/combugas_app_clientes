@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/auth/screens/verification_screen.dart';
+import '../../features/auth/screens/cuenta_suspendida_screen.dart';
 import '../../features/direcciones/screens/direccion_form_screen.dart';
 import '../../features/direcciones/screens/direcciones_screen.dart';
 import '../../features/pedidos/screens/carrito_screen.dart';
@@ -19,7 +20,6 @@ import '../../features/pedidos/screens/calificacion_screen.dart';
 import '../../features/perfil/screens/perfil_screen.dart';
 import '../../features/productos/screens/productos_screen.dart';
 import '../../features/carburaciones/screens/carburaciones_screen.dart';
-import '../../shared/widgets/migration_placeholder_screen.dart';
 import '../startup/session_gate_screen.dart';
 import 'session_route_guard.dart';
 
@@ -131,9 +131,8 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/cuenta-bloqueada',
       builder:
-          (context, state) => MigrationPlaceholderScreen(
-            title: 'Cuenta suspendida',
-            message: state.extra as String? ?? 'Cuenta suspendida.',
+          (context, state) => CuentaSuspendidaScreen(
+            reason: state.extra as String? ?? 'Cuenta suspendida.',
           ),
     ),
   ],
