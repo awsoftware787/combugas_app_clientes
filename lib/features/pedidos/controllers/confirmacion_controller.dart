@@ -12,6 +12,8 @@ import '../models/producto.dart';
 import 'carrito_controller.dart';
 import 'mis_pedidos_controller.dart';
 
+const activeOrderMessage = 'Ya existe un pedido activo para esta dirección.';
+
 enum ConfirmacionStatus { idle, loadingTime, ready, saving, success, error }
 
 final class ConfirmacionState {
@@ -124,8 +126,7 @@ final class ConfirmacionController extends Notifier<ConfirmacionState> {
       (true, _, _) => 'Debe añadir por lo menos un producto.',
       (_, null, _) => 'No existe una sesión activa.',
       (_, _, null) => 'Selecciona una dirección de entrega.',
-      (_, _, final address?) when address.tienePedido =>
-        'Ya existe un pedido activo para esta dirección.',
+      (_, _, final address?) when address.tienePedido => activeOrderMessage,
       _ when now.hour < 7 || now.hour > 19 =>
         'El horario para realizar pedidos es de 7:00 a 20:00 horas.',
       _ => null,

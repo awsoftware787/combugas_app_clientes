@@ -64,6 +64,7 @@ void main() {
       final clear = tester.widget<OutlinedButton>(
         find.byKey(const ValueKey('clear-confirmation')),
       );
+      expect(find.byKey(const ValueKey('active-order-warning')), findsNothing);
       expect(clear.style?.foregroundColor?.resolve(const {}), AppColors.accent);
       expect(clear.style?.side?.resolve(const {})?.color, AppColors.accent);
 
@@ -106,6 +107,55 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets('pedido activo reemplaza las acciones por aviso compacto', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_AuthRepository()),
+        direccionRepositoryProvider.overrideWithValue(
+          _DirectionRepository(address: _activeOrderAddress),
+        ),
+        pedidoRepositoryProvider.overrideWithValue(_PedidoRepository()),
+        carritoStoreProvider.overrideWithValue(_CartStore()),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(direccionControllerProvider.notifier).load();
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ConfirmacionScreen()),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byKey(const ValueKey('clear-confirmation')), findsNothing);
+    expect(find.byKey(const ValueKey('confirm-order')), findsNothing);
+    expect(find.byKey(const ValueKey('confirmation-message')), findsNothing);
+    final warningFinder = find.byKey(const ValueKey('active-order-warning'));
+    expect(warningFinder, findsOneWidget);
+    expect(
+      find.descendant(
+        of: warningFinder,
+        matching: find.text('Ya existe un pedido activo para esta dirección.'),
+      ),
+      findsOneWidget,
+    );
+
+    final warning = tester.widget<Container>(warningFinder);
+    final decoration = warning.decoration! as BoxDecoration;
+    expect(decoration.color, AppColors.primary);
+    expect(decoration.borderRadius, BorderRadius.circular(12));
+    final warningText = tester.widget<Text>(
+      find.descendant(of: warningFinder, matching: find.byType(Text)),
+    );
+    expect(warningText.style?.color, AppColors.accent);
+    expect(warningText.style?.fontWeight, FontWeight.w600);
+    expect(tester.getSize(warningFinder).height, lessThan(60));
+  });
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
@@ -130,12 +180,14 @@ final class _AuthRepository implements AuthRepositoryContract {
 }
 
 final class _DirectionRepository implements DireccionRepositoryContract {
+  const _DirectionRepository({this.address = _address});
+
+  final Direccion address;
+
   @override
-  Future<List<Direccion>> getDirecciones(int clienteId) async => const [
-    _address,
-  ];
+  Future<List<Direccion>> getDirecciones(int clienteId) async => [address];
   @override
-  Direccion? getSelected() => _address;
+  Direccion? getSelected() => address;
   @override
   Future<void> saveSelected(Direccion direccion) async {}
   @override
@@ -191,4 +243,38 @@ const _address = Direccion(
   clave: '',
   idRuta: 0,
   tienePedido: false,
+);
+
+const _activeOrderAddress = Direccion(
+  id: 9,
+  descripcion: 'CASA',
+  tipoCalle: 'CALLE',
+  idCalle: 2,
+  calle: 'HIDALGO',
+  numeroInterior: '',
+  numeroExterior: '123',
+  idColonia: 3,
+  colonia: 'CENTRO',
+  idCiudad: 1,
+  ciudad: 'TORREÓN',
+  idEstado: 5,
+  estado: 'COAHUILA',
+  idZona: 0,
+  zona: '',
+  idCodigoPostal: 0,
+  codigoPostal: '',
+  referencias: '',
+  activa: true,
+  latitud: 25.5,
+  longitud: -103.4,
+  observaciones: '',
+  entreCalle1: '',
+  entreCalle2: '',
+  entreCalle3: '',
+  idSegmento: 1,
+  cerrada: '',
+  requiereClave: false,
+  clave: '',
+  idRuta: 0,
+  tienePedido: true,
 );

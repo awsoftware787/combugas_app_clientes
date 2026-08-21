@@ -21,11 +21,15 @@ class ConfirmacionScreen extends ConsumerStatefulWidget {
 
 class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   String? _accessKey;
+  late final bool _hasActiveOrder;
 
   @override
   void initState() {
     super.initState();
+    _hasActiveOrder =
+        ref.read(direccionControllerProvider).selected?.tienePedido ?? false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       ref
           .read(confirmacionControllerProvider.notifier)
           .prepare(ref.read(carritoControllerProvider).items);
@@ -141,7 +145,8 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                 title: const Text('Tiempo estimado'),
                 subtitle: Text(confirmation.tiempoEntrega!),
               ),
-            if (confirmation.message != null)
+            if (confirmation.message != null &&
+                confirmation.message != activeOrderMessage)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
@@ -156,6 +161,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
         bottomNavigationBar: _ConfirmationActions(
           saving: confirmation.saving,
           enabled: cart.items.isNotEmpty,
+          hasActiveOrder: _hasActiveOrder,
           onClear: _clearCart,
           onConfirm: _confirm,
         ),
@@ -164,6 +170,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   }
 
   Future<void> _confirm() async {
+    if (_hasActiveOrder) return;
     final accepted = await showDialog<bool>(
       context: context,
       builder:
@@ -234,12 +241,14 @@ class _ConfirmationActions extends StatelessWidget {
   const _ConfirmationActions({
     required this.saving,
     required this.enabled,
+    required this.hasActiveOrder,
     required this.onClear,
     required this.onConfirm,
   });
 
   final bool saving;
   final bool enabled;
+  final bool hasActiveOrder;
   final VoidCallback onClear;
   final VoidCallback onConfirm;
 
@@ -249,49 +258,72 @@ class _ConfirmationActions extends StatelessWidget {
     elevation: 8,
     child: SafeArea(
       minimum: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-      child: Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 52,
-              child: OutlinedButton(
-                key: const ValueKey('clear-confirmation'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.accent,
-                  side: const BorderSide(color: AppColors.accent),
-                ),
-                onPressed: saving || !enabled ? null : onClear,
-                child: const Text('Limpiar'),
+      child:
+          hasActiveOrder
+              ? const _ActiveOrderWarning()
+              : Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: OutlinedButton(
+                        key: const ValueKey('clear-confirmation'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.accent,
+                          side: const BorderSide(color: AppColors.accent),
+                        ),
+                        onPressed: saving || !enabled ? null : onClear,
+                        child: const Text('Limpiar'),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: FilledButton(
+                        key: const ValueKey('confirm-order'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.addButtonGreen,
+                          foregroundColor: AppColors.white,
+                        ),
+                        onPressed: saving || !enabled ? null : onConfirm,
+                        child:
+                            saving
+                                ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.white,
+                                  ),
+                                )
+                                : const Text('Confirmar'),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: SizedBox(
-              height: 52,
-              child: FilledButton(
-                key: const ValueKey('confirm-order'),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.addButtonGreen,
-                  foregroundColor: AppColors.white,
-                ),
-                onPressed: saving || !enabled ? null : onConfirm,
-                child:
-                    saving
-                        ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppColors.white,
-                          ),
-                        )
-                        : const Text('Confirmar'),
-              ),
-            ),
-          ),
-        ],
-      ),
+    ),
+  );
+}
+
+class _ActiveOrderWarning extends StatelessWidget {
+  const _ActiveOrderWarning();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: const ValueKey('active-order-warning'),
+    width: double.infinity,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+    decoration: BoxDecoration(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: const Text(
+      activeOrderMessage,
+      textAlign: TextAlign.center,
+      style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
     ),
   );
 }
