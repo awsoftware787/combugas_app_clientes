@@ -1,6 +1,5 @@
 {
   "APP_ENV": "prod",
-  "APP_VERSION": "1.0.0",
   "SERVICE_BASE_URL_PROD": "http://cgtng.sytes.net:8889/wscli/",
   "SOAP_NAMESPACE": "awserver.noip.me:8888/"
 }

@@ -1,8 +1,8 @@
+import 'package:combugas_clientes/core/services/app_version_service.dart';
 import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/pedidos/widgets/pedido_drawer.dart';
-import 'package:combugas_clientes/shared/widgets/app_version_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -29,7 +29,7 @@ void main() {
       expect(_drawerText('Carburaciones'), findsOneWidget);
       expect(_drawerText('Aviso de privacidad'), findsOneWidget);
       expect(_drawerText('Iniciar sesión'), findsOneWidget);
-      expect(_drawerText('Versión 1.0.0'), findsOneWidget);
+      expect(_drawerText('v1.0.0'), findsOneWidget);
       expect(
         tester.widget<Text>(_drawerText('Carburaciones')).style?.color,
         AppColors.white,
@@ -174,9 +174,9 @@ void main() {
       tester.getBottomRight(_drawerText('Cerrar sesión')).dy,
       greaterThan(tester.getBottomRight(_drawerText('Aviso de privacidad')).dy),
     );
-    expect(_drawerText('Versión 1.0.0'), findsOneWidget);
+    expect(_drawerText('v1.0.0'), findsOneWidget);
     expect(
-      tester.getTopLeft(_drawerText('Versión 1.0.0')).dy,
+      tester.getTopLeft(_drawerText('v1.0.0')).dy,
       lessThan(tester.getTopLeft(_drawerText('Cerrar sesión')).dy),
     );
     expect(tester.takeException(), isNull);
@@ -304,7 +304,7 @@ ProviderContainer _container(
           : const _PublicAuthRepository(),
     ),
     privacyNoticeLauncherProvider.overrideWithValue(launcher),
-    appVersionProvider.overrideWithValue(Future.value('1.0.0')),
+    appVersionProvider.overrideWithValue(Future.value('v1.0.0')),
   ],
 );
 

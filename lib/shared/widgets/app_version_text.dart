@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/constants/app_environment.dart';
-
-final appVersionProvider = Provider<Future<String>>((ref) => loadAppVersion());
+import '../../core/services/app_version_service.dart';
 
 class AppVersionText extends ConsumerWidget {
   const AppVersionText({
@@ -24,7 +22,7 @@ class AppVersionText extends ConsumerWidget {
         return const SizedBox.shrink();
       }
       return Text(
-        'Versión $version',
+        version,
         key: const ValueKey('app-version'),
         textAlign: textAlign,
         style: TextStyle(
