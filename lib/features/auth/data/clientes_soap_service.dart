@@ -2,6 +2,7 @@ import '../../../core/constants/service_endpoints.dart';
 import '../../../core/constants/soap_constants.dart';
 import '../../../core/network/soap_service.dart';
 import '../models/login_result.dart';
+import '../models/password_recovery_result.dart';
 import '../models/register_request.dart';
 import '../models/register_result.dart';
 import '../models/verification_request.dart';
@@ -9,6 +10,7 @@ import '../models/verification_result.dart';
 import '../../perfil/data/perfil_soap_parser.dart';
 import '../../perfil/models/perfil_cliente.dart';
 import 'login_soap_parser.dart';
+import 'password_recovery_soap_parser.dart';
 import 'registration_soap_parser.dart';
 import 'verification_soap_parser.dart';
 
@@ -17,6 +19,10 @@ abstract interface class ClientesService {
     required String telefono,
     required String contrasena,
   });
+}
+
+abstract interface class PasswordRecoveryClientesService {
+  Future<PasswordRecoveryResult> recoverPassword(String telefono);
 }
 
 abstract interface class RegistrationClientesService {
@@ -42,17 +48,21 @@ abstract interface class PerfilClientesService {
 final class ClientesSoapService
     implements
         ClientesService,
+        PasswordRecoveryClientesService,
         RegistrationClientesService,
         PerfilClientesService {
   ClientesSoapService({
     SoapService? soapService,
     LoginSoapParser? loginParser,
+    PasswordRecoverySoapParser? passwordRecoveryParser,
     RegistrationSoapParser? registrationParser,
     VerificationSoapParser? verificationParser,
     PerfilSoapParser? perfilParser,
     Uri? endpoint,
   }) : _soapService = soapService ?? SoapService(),
        _loginParser = loginParser ?? const LoginSoapParser(),
+       _passwordRecoveryParser =
+           passwordRecoveryParser ?? const PasswordRecoverySoapParser(),
        _registrationParser =
            registrationParser ?? const RegistrationSoapParser(),
        _verificationParser =
@@ -62,6 +72,7 @@ final class ClientesSoapService
 
   final SoapService _soapService;
   final LoginSoapParser _loginParser;
+  final PasswordRecoverySoapParser _passwordRecoveryParser;
   final RegistrationSoapParser _registrationParser;
   final VerificationSoapParser _verificationParser;
   final PerfilSoapParser _perfilParser;
@@ -79,6 +90,17 @@ final class ClientesSoapService
       parameters: {'_strTelefono': telefono, '_strContrasena': contrasena},
     );
     return _loginParser.parse(response);
+  }
+
+  @override
+  Future<PasswordRecoveryResult> recoverPassword(String telefono) async {
+    final response = await _soapService.call(
+      endpoint: _endpoint ?? ServiceEndpoints.clientes,
+      namespace: SoapConstants.namespace,
+      methodName: ClientesSoapMethods.recuperarContrasena,
+      parameters: {'_strTelefono': telefono},
+    );
+    return _passwordRecoveryParser.parse(response);
   }
 
   @override

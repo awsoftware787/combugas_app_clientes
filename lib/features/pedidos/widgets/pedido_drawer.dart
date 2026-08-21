@@ -24,7 +24,7 @@ class PedidoDrawer extends ConsumerWidget {
     final session = ref.watch(authControllerProvider).session;
     if (session == null) {
       return Drawer(
-        width: MediaQuery.sizeOf(context).width * 0.75,
+        width: MediaQuery.sizeOf(context).width * 0.60,
         backgroundColor: AppColors.menuBackground,
         child: _PublicDrawerContent(
           onOpenPrivacy: () => _openPrivacy(context, ref),
@@ -32,7 +32,7 @@ class PedidoDrawer extends ConsumerWidget {
       );
     }
     return Drawer(
-      width: MediaQuery.sizeOf(context).width * 0.75,
+      width: MediaQuery.sizeOf(context).width * 0.60,
       backgroundColor: AppColors.menuBackground,
       child: SafeArea(
         child: Column(

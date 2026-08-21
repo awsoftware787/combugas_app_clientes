@@ -86,14 +86,6 @@ final appRouter = GoRouter(
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(
-      path: '/recuperar',
-      builder:
-          (context, state) => const MigrationPlaceholderScreen(
-            title: 'Recuperar contraseña',
-            message: 'La recuperación de contraseña aún no está migrada.',
-          ),
-    ),
-    GoRoute(
       path: '/registro-verificacion',
       builder:
           (context, state) => VerificationScreen(

@@ -10,6 +10,7 @@ import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
 import '../models/login_result.dart';
 import '../widgets/phone_input_formatter.dart';
+import '../widgets/password_recovery_dialog.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -81,6 +82,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SnackBar(content: Text('No fue posible abrir el aviso.')),
       );
     }
+  }
+
+  Future<void> _abrirRecuperarContrasena() {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const PasswordRecoveryDialog(),
+    );
   }
 
   @override
@@ -199,7 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             style: TextStyle(color: AppColors.white),
                           ),
                           TextButton(
-                            onPressed: () => context.push('/recuperar'),
+                            onPressed: _abrirRecuperarContrasena,
                             child: const Text('Recupérala'),
                           ),
                         ],
