@@ -1,4 +1,6 @@
+import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
+import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/pedidos/widgets/pedido_drawer.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,99 @@ import 'package:go_router/go_router.dart';
 import 'historial_test_support.dart';
 
 void main() {
+  testWidgets(
+    'menú público muestra solo opciones públicas y conserva regreso',
+    (tester) async {
+      final container = _container(() async => true, authenticated: false);
+      addTearDown(container.dispose);
+      final router = _router(initialLocation: '/productos');
+      addTearDown(router.dispose);
+      await tester.pumpWidget(_app(container, router));
+      await tester.pumpAndSettle();
+
+      await _openDrawer(tester);
+      expect(
+        tester.widget<Drawer>(find.byType(Drawer)).backgroundColor,
+        AppColors.menuBackground,
+      );
+      expect(_drawerText('Carburaciones'), findsOneWidget);
+      expect(_drawerText('Aviso de privacidad'), findsOneWidget);
+      expect(_drawerText('Iniciar sesión'), findsOneWidget);
+      expect(
+        tester.widget<Text>(_drawerText('Carburaciones')).style?.color,
+        AppColors.white,
+      );
+      expect(
+        tester.widget<Text>(_drawerText('Aviso de privacidad')).style?.color,
+        AppColors.white,
+      );
+      expect(
+        tester
+            .widget<Icon>(
+              find.descendant(
+                of: find.byType(Drawer),
+                matching: find.byIcon(Icons.local_gas_station),
+              ),
+            )
+            .color,
+        AppColors.white,
+      );
+      expect(
+        tester
+            .widget<Icon>(
+              find.descendant(
+                of: find.byType(Drawer),
+                matching: find.byIcon(Icons.privacy_tip_outlined),
+              ),
+            )
+            .color,
+        AppColors.white,
+      );
+      expect(_drawerText('Pedido'), findsNothing);
+      expect(_drawerText('Perfil'), findsNothing);
+      expect(_drawerText('Mis direcciones'), findsNothing);
+      expect(_drawerText('Mis Pedidos'), findsNothing);
+      expect(_drawerText('Cerrar sesión'), findsNothing);
+
+      await tester.tap(_drawerText('Carburaciones'));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/carburaciones');
+      expect(router.canPop(), isTrue);
+
+      router.pop();
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/productos');
+
+      await _openDrawer(tester);
+      await tester.tap(_drawerText('Iniciar sesión'));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/login');
+    },
+  );
+
+  testWidgets('aviso público cierra drawer y conserva Productos', (
+    tester,
+  ) async {
+    var calls = 0;
+    final container = _container(() async {
+      calls++;
+      return true;
+    }, authenticated: false);
+    addTearDown(container.dispose);
+    final router = _router(initialLocation: '/productos');
+    addTearDown(router.dispose);
+    await tester.pumpWidget(_app(container, router));
+    await tester.pumpAndSettle();
+
+    await _openDrawer(tester);
+    await tester.tap(_drawerText('Aviso de privacidad'));
+    await tester.pumpAndSettle();
+
+    expect(calls, 1);
+    expect(find.byType(Drawer), findsNothing);
+    expect(router.state.uri.path, '/productos');
+  });
+
   for (final screenSize in const [Size(320, 640), Size(430, 932)]) {
     testWidgets('drawer ocupa el 75 por ciento en pantalla $screenSize', (
       tester,
@@ -117,16 +212,22 @@ void main() {
   });
 }
 
-ProviderContainer _container(Future<bool> Function() launcher) =>
-    ProviderContainer(
-      overrides: [
-        authRepositoryProvider.overrideWithValue(FakeHistoryAuthRepository()),
-        privacyNoticeLauncherProvider.overrideWithValue(launcher),
-      ],
-    );
+ProviderContainer _container(
+  Future<bool> Function() launcher, {
+  bool authenticated = true,
+}) => ProviderContainer(
+  overrides: [
+    authRepositoryProvider.overrideWithValue(
+      authenticated
+          ? FakeHistoryAuthRepository()
+          : const _PublicAuthRepository(),
+    ),
+    privacyNoticeLauncherProvider.overrideWithValue(launcher),
+  ],
+);
 
-GoRouter _router() => GoRouter(
-  initialLocation: '/origen',
+GoRouter _router({String initialLocation = '/origen'}) => GoRouter(
+  initialLocation: initialLocation,
   routes: [
     GoRoute(
       path: '/origen',
@@ -142,7 +243,11 @@ GoRouter _router() => GoRouter(
     ),
     GoRoute(
       path: '/productos',
-      builder: (_, _) => const Scaffold(body: Text('PRODUCTOS')),
+      builder: (_, _) => const _DrawerPage(label: 'PRODUCTOS'),
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (_, _) => const Scaffold(body: Text('LOGIN')),
     ),
     for (final route in const [
       '/carburaciones',
@@ -177,4 +282,14 @@ class _DrawerPage extends StatelessWidget {
     drawer: const PedidoDrawer(),
     body: Center(child: Text(label)),
   );
+}
+
+final class _PublicAuthRepository implements AuthRepositoryContract {
+  const _PublicAuthRepository();
+
+  @override
+  SessionData? getSession() => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

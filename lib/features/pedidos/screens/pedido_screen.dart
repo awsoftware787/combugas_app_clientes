@@ -14,7 +14,6 @@ import '../controllers/pedido_controller.dart';
 import '../models/item_pedido.dart';
 import '../models/producto.dart';
 import '../presentation/product_catalog.dart';
-import '../presentation/producto_asset_resolver.dart';
 import '../widgets/pedido_drawer.dart';
 import '../widgets/product_display_card.dart';
 import '../widgets/product_option_selector.dart';
@@ -420,8 +419,7 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
     return ProductDisplayCard(
       product: product,
       title: widget.title,
-      priceLabel:
-          'Importe: ${formatoMoneda(product.precioCentavos * _quantity)}',
+      priceLabel: formatoMoneda(product.precioCentavos * _quantity),
       priceKey: const ValueKey('product-amount'),
       productSelector:
           ProductOptionSelector.supports(product)
@@ -429,69 +427,116 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
                 products: widget.products,
                 selectedIndex: _selected,
                 onSelected: (value) => setState(() => _selected = value),
+                layout: ProductOptionSelectorLayout.segments,
               )
               : Text(label, textAlign: TextAlign.center),
       controls: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton.outlined(
-            key: const ValueKey('quantity-minus'),
-            style: IconButton.styleFrom(
-              foregroundColor: AppColors.quantityButtonBlue,
-              disabledForegroundColor: AppColors.quantityButtonBlue,
-              side: const BorderSide(color: AppColors.quantityButtonBlue),
-            ),
-            onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
-            onLongPress: () => setState(() => _quantity = 1),
-            icon: const Icon(Icons.remove),
-          ),
-          SizedBox(
-            width: 58,
-            child: Text(
-              '$_quantity',
-              key: const ValueKey('quantity-value'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20),
+          Expanded(
+            flex: 5,
+            child: _QuantitySelector(
+              quantity: _quantity,
+              onDecrease:
+                  _quantity > 1 ? () => setState(() => _quantity--) : null,
+              onIncrease: () => setState(() => _quantity++),
+              onReset: () => setState(() => _quantity = 1),
             ),
           ),
-          IconButton.outlined(
-            key: const ValueKey('quantity-plus'),
-            style: IconButton.styleFrom(
-              foregroundColor: AppColors.quantityButtonBlue,
-              side: const BorderSide(color: AppColors.quantityButtonBlue),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 6,
+            child: SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                key: const ValueKey('product-add'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.addButtonGreen,
+                  foregroundColor: AppColors.white,
+                ),
+                onPressed: () async {
+                  final result = await ref
+                      .read(carritoControllerProvider.notifier)
+                      .agregarProducto(
+                        producto: product,
+                        cantidad: _quantity,
+                        subcanalUsuario: widget.subchannel,
+                      );
+                  if (!context.mounted) return;
+                  if (result.agregado) {
+                    setState(() => _quantity = 1);
+                  }
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(result.mensaje)));
+                },
+                icon: const Icon(Icons.shopping_cart_outlined, size: 20),
+                label: const Text('Agregar'),
+              ),
             ),
-            onPressed: () => setState(() => _quantity++),
-            onLongPress: () => setState(() => _quantity = 1),
-            icon: const Icon(Icons.add),
-          ),
-          const SizedBox(width: 12),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.addButtonGreen,
-              foregroundColor: AppColors.white,
-            ),
-            onPressed: () async {
-              final result = await ref
-                  .read(carritoControllerProvider.notifier)
-                  .agregarProducto(
-                    producto: product,
-                    cantidad: _quantity,
-                    subcanalUsuario: widget.subchannel,
-                  );
-              if (!context.mounted) return;
-              if (result.agregado) {
-                setState(() => _quantity = 1);
-              }
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(result.mensaje)));
-            },
-            child: const Text('Agregar'),
           ),
         ],
       ),
     );
   }
+}
+
+class _QuantitySelector extends StatelessWidget {
+  const _QuantitySelector({
+    required this.quantity,
+    required this.onDecrease,
+    required this.onIncrease,
+    required this.onReset,
+  });
+
+  final int quantity;
+  final VoidCallback? onDecrease;
+  final VoidCallback onIncrease;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 48,
+    decoration: BoxDecoration(
+      color: AppColors.white,
+      border: Border.all(color: AppColors.quantityButtonBlue),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Row(
+      children: [
+        IconButton(
+          key: const ValueKey('quantity-minus'),
+          style: IconButton.styleFrom(
+            foregroundColor: AppColors.quantityButtonBlue,
+            disabledForegroundColor: AppColors.quantityButtonBlue,
+          ),
+          constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+          padding: EdgeInsets.zero,
+          onPressed: onDecrease,
+          onLongPress: onReset,
+          icon: const Icon(Icons.remove, size: 20),
+        ),
+        Expanded(
+          child: Text(
+            '$quantity',
+            key: const ValueKey('quantity-value'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+        ),
+        IconButton(
+          key: const ValueKey('quantity-plus'),
+          style: IconButton.styleFrom(
+            foregroundColor: AppColors.quantityButtonBlue,
+          ),
+          constraints: const BoxConstraints(minWidth: 38, minHeight: 38),
+          padding: EdgeInsets.zero,
+          onPressed: onIncrease,
+          onLongPress: onReset,
+          icon: const Icon(Icons.add, size: 20),
+        ),
+      ],
+    ),
+  );
 }
 
 enum _StationaryMode { importe, litros }
@@ -520,85 +565,57 @@ class _StationaryPageState extends ConsumerState<_StationaryPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        children: [
-          Text(
-            'Gas estacionario',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 8),
-          Expanded(
-            child: Image.asset(
-              ProductoAssetResolver.forProducto(widget.product),
-              fit: BoxFit.contain,
+  Widget build(BuildContext context) => ProductDisplayCard(
+    product: widget.product,
+    title: 'Gas estacionario',
+    priceCaption: 'Importe por litro:',
+    priceLabel: formatoMoneda(widget.product.precioCentavos),
+    priceKey: const ValueKey('stationary-amount'),
+    productSelector: SegmentedButton<_StationaryMode>(
+      segments: const [
+        ButtonSegment(value: _StationaryMode.importe, label: Text('Importe')),
+        ButtonSegment(value: _StationaryMode.litros, label: Text('Litros')),
+      ],
+      selected: {_mode},
+      onSelectionChanged: (value) {
+        setState(() {
+          _mode = value.first;
+          _controller.clear();
+        });
+      },
+    ),
+    controls: Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+            ],
+            decoration: InputDecoration(
+              labelText:
+                  _mode == _StationaryMode.importe
+                      ? 'Monto en pesos'
+                      : 'Cantidad de litros',
+              prefixText: _mode == _StationaryMode.importe ? '\$ ' : null,
             ),
           ),
-          Text(
-            'Importe: ${formatoMoneda(widget.product.precioCentavos)} por litro',
-            key: const ValueKey('stationary-amount'),
-            style: const TextStyle(
-              color: AppColors.accent,
-              fontWeight: FontWeight.bold,
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          height: 48,
+          child: FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.addButtonGreen,
+              foregroundColor: AppColors.white,
             ),
+            onPressed: _add,
+            icon: const Icon(Icons.shopping_cart_outlined, size: 20),
+            label: const Text('Agregar'),
           ),
-          SegmentedButton<_StationaryMode>(
-            segments: const [
-              ButtonSegment(
-                value: _StationaryMode.importe,
-                label: Text('Importe'),
-              ),
-              ButtonSegment(
-                value: _StationaryMode.litros,
-                label: Text('Litros'),
-              ),
-            ],
-            selected: {_mode},
-            onSelectionChanged: (value) {
-              setState(() {
-                _mode = value.first;
-                _controller.clear();
-              });
-            },
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'^\d*\.?\d{0,2}'),
-                    ),
-                  ],
-                  decoration: InputDecoration(
-                    labelText:
-                        _mode == _StationaryMode.importe
-                            ? 'Monto en pesos'
-                            : 'Cantidad de litros',
-                    prefixText: _mode == _StationaryMode.importe ? '\$ ' : null,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.addButtonGreen,
-                  foregroundColor: AppColors.white,
-                ),
-                onPressed: _add,
-                child: const Text('Agregar'),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/producto.dart';
 
-enum ProductOptionSelectorLayout { circles, cards }
+enum ProductOptionSelectorLayout { circles, cards, segments }
 
 /// Selector visual compartido para presentaciones de cilindros y croquetas.
 class ProductOptionSelector extends StatelessWidget {
@@ -38,10 +38,107 @@ class ProductOptionSelector extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) =>
-      layout == ProductOptionSelectorLayout.cards
-          ? _buildCards(context)
-          : _buildCircles();
+  Widget build(BuildContext context) => switch (layout) {
+    ProductOptionSelectorLayout.circles => _buildCircles(),
+    ProductOptionSelectorLayout.cards => _buildCards(context),
+    ProductOptionSelectorLayout.segments => _buildSegments(),
+  };
+
+  Widget _buildSegments() => SizedBox(
+    height: 52,
+    child: LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = 8.0;
+        final availableWidth = constraints.maxWidth;
+        final itemWidth =
+            products.length <= 2
+                ? ((availableWidth - gap * (products.length - 1)) /
+                        products.length)
+                    .clamp(120.0, 220.0)
+                : 132.0;
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: availableWidth),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(products.length, (index) {
+                final product = products[index];
+                final selected = index == selectedIndex;
+                return Padding(
+                  padding: EdgeInsets.only(
+                    right: index == products.length - 1 ? 0 : gap,
+                  ),
+                  child: Semantics(
+                    button: true,
+                    selected: selected,
+                    label: labelFor(product),
+                    child: AnimatedContainer(
+                      key: ValueKey('product-option-${product.id}'),
+                      duration: const Duration(milliseconds: 180),
+                      width: itemWidth,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: selected ? AppColors.accent : AppColors.white,
+                        border: Border.all(
+                          color:
+                              selected ? AppColors.accent : AppColors.secondary,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                        clipBehavior: Clip.antiAlias,
+                        child: InkWell(
+                          onTap: () => onSelected(index),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (selected) ...[
+                                  const Icon(
+                                    Icons.check_rounded,
+                                    size: 17,
+                                    color: AppColors.white,
+                                  ),
+                                  const SizedBox(width: 5),
+                                ],
+                                Flexible(
+                                  child: Text(
+                                    labelFor(product),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color:
+                                          selected
+                                              ? AppColors.white
+                                              : AppColors.menuBackgroundDark,
+                                      fontWeight:
+                                          selected
+                                              ? FontWeight.w700
+                                              : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        );
+      },
+    ),
+  );
 
   Widget _buildCards(BuildContext context) => SizedBox(
     height: 64,

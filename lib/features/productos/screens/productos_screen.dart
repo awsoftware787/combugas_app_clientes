@@ -10,6 +10,7 @@ import '../../pedidos/models/item_pedido.dart';
 import '../../pedidos/models/producto.dart';
 import '../../pedidos/presentation/product_catalog.dart';
 import '../../pedidos/presentation/producto_asset_resolver.dart';
+import '../../pedidos/widgets/pedido_drawer.dart';
 import '../../pedidos/widgets/product_option_selector.dart';
 import '../controllers/productos_controller.dart';
 
@@ -61,6 +62,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
       _page = catalog.length - 1;
     }
     return Scaffold(
+      drawer: const PedidoDrawer(),
       appBar: AppBar(title: const BrandedAppBarTitle('Productos')),
       body: SafeArea(
         child: switch (state.status) {

@@ -73,7 +73,10 @@ void main() {
 
     final add = find.text('Agregar').hitTestable();
     final addButton = tester.widget<FilledButton>(
-      find.ancestor(of: add, matching: find.byType(FilledButton)),
+      find.ancestor(
+        of: add,
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      ),
     );
     expect(
       addButton.style?.backgroundColor?.resolve(const {}),
@@ -106,6 +109,99 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(carritoControllerProvider).lineas, 0);
   });
+
+  testWidgets('selector segmentado actualiza variante e importe', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+      directions: const [_address],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('30kg'), findsOneWidget);
+    expect(find.text('45kg'), findsOneWidget);
+    expect(_optionColor(tester, 2), AppColors.accent);
+    expect(_optionColor(tester, 3), AppColors.white);
+    expect(find.text(r'$600.00'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('product-option-3')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('product-image-3')), findsOneWidget);
+    expect(find.text(r'$900.00'), findsOneWidget);
+    expect(_optionColor(tester, 2), AppColors.white);
+    expect(_optionColor(tester, 3), AppColors.accent);
+  });
+
+  testWidgets('card de gas estacionario conserva captura y agregado', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+      directions: const [_address],
+      products: const [_stationaryProduct],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gas estacionario'), findsOneWidget);
+    expect(find.byKey(const ValueKey('product-image-9')), findsOneWidget);
+    expect(find.text('Importe por litro:'), findsOneWidget);
+    expect(find.text(r'$12.00'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '100');
+    await tester.tap(find.text('Agregar').hitTestable());
+    await tester.pumpAndSettle();
+
+    expect(
+      container.read(carritoControllerProvider).items.single.productoId,
+      9,
+    );
+  });
+
+  for (final screenSize in const [
+    Size(360, 640),
+    Size(390, 844),
+    Size(430, 932),
+  ]) {
+    testWidgets('card de Pedido no desborda en $screenSize', (tester) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = screenSize;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      final container = _container(
+        cart: _CartStore(),
+        directions: const [_address],
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: PedidoScreen()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.byKey(const ValueKey('product-add')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('quantity-minus')), findsOneWidget);
+      expect(find.byKey(const ValueKey('quantity-plus')), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('reinicia a uno cilindro, agua y croqueta tras agregar', (
     tester,
@@ -234,13 +330,16 @@ ProviderContainer _container({
   required _CartStore cart,
   required List<Direccion> directions,
   Future<List<Direccion>>? directionsFuture,
+  List<Producto>? products,
 }) => ProviderContainer(
   overrides: [
     authRepositoryProvider.overrideWithValue(_AuthRepository()),
     direccionRepositoryProvider.overrideWithValue(
       _DirectionRepository(directions, loadFuture: directionsFuture),
     ),
-    pedidoRepositoryProvider.overrideWithValue(_PedidoRepository()),
+    pedidoRepositoryProvider.overrideWithValue(
+      _PedidoRepository(products ?? _defaultProducts),
+    ),
     carritoStoreProvider.overrideWithValue(cart),
   ],
 );
@@ -263,6 +362,10 @@ final class _AuthRepository implements AuthRepositoryContract {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
+  const _PedidoRepository(this.products);
+
+  final List<Producto> products;
+
   @override
   Future<CalificacionResult> calificarServicio(CalificacionRequest request) =>
       throw UnimplementedError();
@@ -280,31 +383,56 @@ final class _PedidoRepository implements PedidoRepositoryContract {
   @override
   Future<List<TiempoFase>> getTiempos() async => const [];
   @override
-  Future<List<Producto>> getPrecios() async => const [
-    Producto(
-      id: 2,
-      descripcion: 'CILINDRO 30 KG',
-      presentacion: '30 KG',
-      servicioId: 1,
-      precioCentavos: 60000,
-    ),
-    Producto(
-      id: 4,
-      descripcion: 'GARRAFÓN NATURAL',
-      presentacion: '20 L',
-      servicioId: 3,
-      precioCentavos: 5000,
-    ),
-    Producto(
-      id: 20,
-      descripcion: 'BULTO DE ADULTO 20 KG',
-      presentacion: '20 KG',
-      servicioId: 9,
-      precioCentavos: 40000,
-    ),
-  ];
+  Future<List<Producto>> getPrecios() async => products;
+
   @override
   Future<MontosMinimos> getMontosMinimos() async => const MontosMinimos.empty();
+}
+
+const _defaultProducts = [
+  Producto(
+    id: 2,
+    descripcion: 'CILINDRO 30 KG',
+    presentacion: '30 KG',
+    servicioId: 1,
+    precioCentavos: 60000,
+  ),
+  Producto(
+    id: 3,
+    descripcion: 'CILINDRO 45 KG',
+    presentacion: '45 KG',
+    servicioId: 1,
+    precioCentavos: 90000,
+  ),
+  Producto(
+    id: 4,
+    descripcion: 'GARRAFÓN NATURAL',
+    presentacion: '20 L',
+    servicioId: 3,
+    precioCentavos: 5000,
+  ),
+  Producto(
+    id: 20,
+    descripcion: 'BULTO DE ADULTO 20 KG',
+    presentacion: '20 KG',
+    servicioId: 9,
+    precioCentavos: 40000,
+  ),
+];
+
+const _stationaryProduct = Producto(
+  id: 9,
+  descripcion: 'GAS ESTACIONARIO',
+  presentacion: 'LITRO',
+  servicioId: 1,
+  precioCentavos: 1200,
+);
+
+Color? _optionColor(WidgetTester tester, int productId) {
+  final container = tester.widget<AnimatedContainer>(
+    find.byKey(ValueKey('product-option-$productId')),
+  );
+  return (container.decoration as BoxDecoration).color;
 }
 
 final class _CartStore implements CarritoStore {
@@ -325,6 +453,7 @@ final class _DirectionRepository implements DireccionRepositoryContract {
     if (loadFuture != null) return loadFuture!;
     return directions;
   }
+
   @override
   Direccion? getSelected() => selected;
   @override

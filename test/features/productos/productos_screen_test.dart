@@ -11,6 +11,27 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  testWidgets('Productos público muestra acceso al menú público', (
+    tester,
+  ) async {
+    final harness = _Harness();
+    addTearDown(harness.dispose);
+    await tester.pumpWidget(harness.widget(initialLocation: '/productos'));
+    await tester.pumpAndSettle();
+
+    expect(find.byIcon(Icons.menu), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.menu));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Carburaciones'), findsOneWidget);
+    expect(find.text('Aviso de privacidad'), findsOneWidget);
+    expect(find.text('Iniciar sesión'), findsOneWidget);
+    expect(find.text('Pedido'), findsNothing);
+    expect(find.text('Perfil'), findsNothing);
+    expect(find.text('Mis Pedidos'), findsNothing);
+    expect(find.text('Cerrar sesión'), findsNothing);
+  });
+
   testWidgets('catálogo público muestra productos sin controles de pedido', (
     tester,
   ) async {

@@ -1,3 +1,6 @@
+import 'package:combugas_clientes/core/routes/app_router.dart';
+import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
+import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/carburaciones/data/carburaciones_repository.dart';
 import 'package:combugas_clientes/features/carburaciones/models/carburacion.dart';
 import 'package:combugas_clientes/features/carburaciones/screens/carburaciones_screen.dart';
@@ -8,6 +11,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:xml/xml.dart';
 
 void main() {
+  testWidgets('ruta real de Carburaciones permite acceso sin sesión', (
+    tester,
+  ) async {
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(const _PublicAuthRepository()),
+        carburacionesRepositoryProvider.overrideWithValue(
+          _EmptyCarburacionesRepository(),
+        ),
+        carburacionesLocationProvider.overrideWithValue(() async => null),
+      ],
+    );
+    addTearDown(container.dispose);
+    addTearDown(() => appRouter.go('/'));
+    appRouter.go('/carburaciones');
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: appRouter),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(appRouter.state.uri.path, '/carburaciones');
+    expect(find.byType(CarburacionesScreen), findsOneWidget);
+    expect(find.text('No hay carburaciones disponibles.'), findsOneWidget);
+  });
+
   test('parsea los campos reales de getCarburaciones', () {
     final document = XmlDocument.parse('''
       <Envelope><Body><getCarburacionesResponse><getCarburacionesResult>
@@ -92,4 +124,20 @@ final class _CarburacionesRepository
       tipo: 1,
     ),
   ];
+}
+
+final class _EmptyCarburacionesRepository
+    implements CarburacionesRepositoryContract {
+  @override
+  Future<List<Carburacion>> getCarburaciones() async => const [];
+}
+
+final class _PublicAuthRepository implements AuthRepositoryContract {
+  const _PublicAuthRepository();
+
+  @override
+  SessionData? getSession() => null;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

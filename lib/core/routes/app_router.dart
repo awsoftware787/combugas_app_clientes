@@ -110,7 +110,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/carburaciones',
-      builder: (context, state) => _private(const CarburacionesScreen()),
+      builder: (context, state) => const CarburacionesScreen(),
     ),
     GoRoute(
       path: '/mis-pedidos',
