@@ -60,27 +60,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
       _page = catalog.length - 1;
     }
     return Scaffold(
-      appBar: AppBar(
-        title: const BrandedAppBarTitle('Productos'),
-        actions: [
-          IconButton(
-            tooltip: 'Actualizar productos',
-            onPressed:
-                state.refreshing
-                    ? null
-                    : () => ref
-                        .read(productosControllerProvider.notifier)
-                        .load(refresh: true),
-            icon:
-                state.refreshing
-                    ? const SizedBox.square(
-                      dimension: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                    : const Icon(Icons.refresh),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const BrandedAppBarTitle('Productos')),
       body: SafeArea(
         child: switch (state.status) {
           ProductosStatus.idle || ProductosStatus.loading => const Center(

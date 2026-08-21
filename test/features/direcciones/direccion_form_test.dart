@@ -7,6 +7,24 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
+  testWidgets('Desactivar usa el mismo color para texto y borde', (
+    tester,
+  ) async {
+    await _pumpForm(tester, onDeactivate: () async {});
+
+    await tester.ensureVisible(find.text('Desactivar'));
+    final button = tester.widget<OutlinedButton>(
+      find.ancestor(
+        of: find.text('Desactivar'),
+        matching: find.byWidgetPredicate((widget) => widget is OutlinedButton),
+      ),
+    );
+    final foreground = button.style?.foregroundColor?.resolve(const {});
+
+    expect(foreground, isNotNull);
+    expect(button.style?.side?.resolve(const {})?.color, foreground);
+  });
+
   testWidgets('crear dirección permite cambiar el punto del mapa', (
     tester,
   ) async {
@@ -123,6 +141,7 @@ Future<void> _pumpForm(
   WidgetTester tester, {
   Direccion? initial,
   Future<void> Function(DireccionRequest)? onSave,
+  Future<void> Function()? onDeactivate,
   DireccionMapBuilder? mapBuilder,
 }) async {
   await tester.pumpWidget(
@@ -137,6 +156,7 @@ Future<void> _pumpForm(
                   coloniaId == 1 ? _centroCalles : _fuentesCalles,
           loadCerradas: (_) async => const [],
           onSave: onSave ?? (_) async {},
+          onDeactivate: onDeactivate,
           mapBuilder:
               mapBuilder ??
               ({required position, required onPositionChanged}) =>

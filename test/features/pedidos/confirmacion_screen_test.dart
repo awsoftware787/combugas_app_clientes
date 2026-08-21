@@ -68,6 +68,15 @@ void main() {
       expect(clear.style?.side?.resolve(const {})?.color, AppColors.accent);
 
       final accessButton = find.byKey(const ValueKey('access-key-button'));
+      final access = tester.widget<OutlinedButton>(accessButton);
+      expect(
+        access.style?.foregroundColor?.resolve(const {}),
+        AppColors.accessKeyBlue,
+      );
+      expect(
+        access.style?.side?.resolve(const {})?.color,
+        AppColors.accessKeyBlue,
+      );
       await tester.tap(accessButton);
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(TextButton, 'Cancelar'));

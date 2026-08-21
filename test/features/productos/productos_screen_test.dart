@@ -34,6 +34,7 @@ void main() {
     expect(find.byKey(const ValueKey('quantity-minus')), findsNothing);
     expect(find.text('Carrito'), findsNothing);
     expect(find.text('Limpiar'), findsNothing);
+    expect(find.byTooltip('Actualizar productos'), findsNothing);
   });
 
   testWidgets('Productos abre Login y Login no ofrece volver a Productos', (

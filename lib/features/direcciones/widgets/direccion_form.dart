@@ -334,6 +334,12 @@ class _DireccionFormState extends State<DireccionForm> {
                 children: [
                   if (widget.onDeactivate != null)
                     OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.primary,
+                        side: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
                       onPressed: widget.saving ? null : widget.onDeactivate,
                       icon: const Icon(Icons.block),
                       label: const Text('Desactivar'),

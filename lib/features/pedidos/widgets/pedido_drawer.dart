@@ -23,6 +23,7 @@ class PedidoDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final session = ref.watch(authControllerProvider).session;
     return Drawer(
+      width: MediaQuery.sizeOf(context).width * 0.75,
       backgroundColor: AppColors.menuBackground,
       child: SafeArea(
         child: Column(

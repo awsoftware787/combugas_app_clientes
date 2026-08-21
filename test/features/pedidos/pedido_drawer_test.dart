@@ -8,6 +8,32 @@ import 'package:go_router/go_router.dart';
 import 'historial_test_support.dart';
 
 void main() {
+  for (final screenSize in const [Size(320, 640), Size(430, 932)]) {
+    testWidgets('drawer ocupa el 75 por ciento en pantalla $screenSize', (
+      tester,
+    ) async {
+      tester.view.devicePixelRatio = 1;
+      tester.view.physicalSize = screenSize;
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.view.resetPhysicalSize);
+      final container = _container(() async => true);
+      addTearDown(container.dispose);
+      final router = _router();
+      addTearDown(router.dispose);
+      await tester.pumpWidget(_app(container, router));
+      await tester.pumpAndSettle();
+
+      await _openDrawer(tester);
+
+      expect(
+        tester.getSize(find.byType(Drawer)).width,
+        screenSize.width * 0.75,
+      );
+      expect(_drawerText('Mis direcciones'), findsOneWidget);
+      expect(_drawerText('Aviso de privacidad'), findsOneWidget);
+    });
+  }
+
   testWidgets('Pedido navega a la ruta principal sin duplicarla', (
     tester,
   ) async {

@@ -48,19 +48,6 @@ class _PedidoDetalleScreenState extends ConsumerState<PedidoDetalleScreen> {
       appBar: AppBar(
         foregroundColor: AppColors.white,
         title: const BrandedAppBarTitle('Detalle del pedido'),
-        actions: [
-          IconButton(
-            tooltip: 'Recargar pedido',
-            color: AppColors.white,
-            onPressed:
-                state.canceling
-                    ? null
-                    : () => ref
-                        .read(pedidoDetalleControllerProvider.notifier)
-                        .load(widget.pedidoId, refresh: true),
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
       ),
       body: switch (state.status) {
         PedidoDetalleStatus.idle || PedidoDetalleStatus.loading => const Center(

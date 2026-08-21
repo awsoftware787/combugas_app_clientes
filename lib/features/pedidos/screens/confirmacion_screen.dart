@@ -40,9 +40,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
     return PopScope(
       canPop: !confirmation.saving,
       child: Scaffold(
-        appBar: AppBar(
-          title: const BrandedAppBarTitle('Confirmar pedido'),
-        ),
+        appBar: AppBar(title: const BrandedAppBarTitle('Confirmar pedido')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -123,6 +121,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
               key: const ValueKey('access-key-button'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.accessKeyBlue,
+                side: const BorderSide(color: AppColors.accessKeyBlue),
               ),
               onPressed: confirmation.saving ? null : _editAccessKey,
               child: Text(
