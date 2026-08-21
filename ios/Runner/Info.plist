@@ -26,6 +26,21 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tu ubicación se utiliza para colocar el domicilio de entrega en el mapa.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>cgtng.sytes.net</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+		</dict>
+	</dict>
 	<key>GOOGLE_MAPS_API_KEY</key>
 	<string>$(GOOGLE_MAPS_API_KEY)</string>
 	<key>UILaunchStoryboardName</key>
