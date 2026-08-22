@@ -169,13 +169,13 @@ void main() {
       (modeSelector as dynamic).style?.side?.resolve({
         WidgetState.selected,
       })?.color,
-      AppColors.menuBackground,
+      AppColors.secondary,
     );
     expect(
       (modeSelector as dynamic).style?.side
           ?.resolve(const <WidgetState>{})
           ?.color,
-      AppColors.menuBackground,
+      AppColors.secondary,
     );
     await tester.enterText(find.byType(TextField), '100');
     await tester.tap(find.text('Agregar').hitTestable());

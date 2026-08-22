@@ -573,9 +573,7 @@ class _StationaryPageState extends ConsumerState<_StationaryPage> {
     priceKey: const ValueKey('stationary-amount'),
     productSelector: SegmentedButton<_StationaryMode>(
       style: const ButtonStyle(
-        side: WidgetStatePropertyAll(
-          BorderSide(color: AppColors.menuBackground),
-        ),
+        side: WidgetStatePropertyAll(BorderSide(color: AppColors.secondary)),
       ),
       segments: const [
         ButtonSegment(value: _StationaryMode.importe, label: Text('Importe')),
