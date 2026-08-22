@@ -56,10 +56,10 @@ class ProductOptionSelector extends StatelessWidget {
       builder: (context, constraints) {
         const gap = 8.0;
         final availableWidth = constraints.maxWidth;
+        final widthSlots = products.length == 1 ? 2 : products.length;
         final itemWidth =
             products.length <= 2
-                ? ((availableWidth - gap * (products.length - 1)) /
-                        products.length)
+                ? ((availableWidth - gap * (widthSlots - 1)) / widthSlots)
                     .clamp(120.0, 220.0)
                 : 136.0;
         return SingleChildScrollView(
@@ -266,7 +266,10 @@ class _SegmentOptionSelectorState extends State<_SegmentOptionSelector> {
         final showArrows = widget.products.length > 3;
         final selectorWidth =
             constraints.maxWidth - (showArrows ? _arrowWidth * 2 : 0);
-        final visibleItems = widget.products.length.clamp(1, 3);
+        final visibleItems =
+            widget.products.length == 1
+                ? 2
+                : widget.products.length.clamp(1, 3);
         final itemWidth =
             (selectorWidth - _gap * (visibleItems - 1)) / visibleItems;
         final scrollStep = itemWidth + _gap;

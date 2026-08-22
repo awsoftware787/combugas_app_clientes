@@ -222,6 +222,47 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets(
+    'modo segmentos centra una opción con el mismo ancho del caso de dos',
+    (tester) async {
+      const product = Producto(
+        id: 20,
+        descripcion: 'BULTO DE ADULTO 20 KG',
+        presentacion: '20 KG',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 40000,
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 280,
+                child: ProductOptionSelector(
+                  products: [product],
+                  selectedIndex: 0,
+                  layout: ProductOptionSelectorLayout.segments,
+                  onSelected: _ignore,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      final optionRect = tester.getRect(
+        find.byKey(const ValueKey('product-option-20')),
+      );
+      final selectorRect = tester.getRect(find.byType(ProductOptionSelector));
+
+      expect(optionRect.width, closeTo((280 - 6) / 2, 0.1));
+      expect(optionRect.height, 48);
+      expect(optionRect.center.dx, closeTo(selectorRect.center.dx, 0.1));
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+    },
+  );
+
   testWidgets('modo segmentos muestra flechas y desplaza con cuatro opciones', (
     tester,
   ) async {

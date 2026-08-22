@@ -1,5 +1,9 @@
 # Combugas Clientes
 
+### Versión de la flutter
+
+3.29.2
+
 Migración Flutter de la aplicación Android de clientes de Combugas.
 
 ## Ambientes

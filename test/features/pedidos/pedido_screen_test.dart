@@ -162,6 +162,21 @@ void main() {
     expect(find.byKey(const ValueKey('product-image-9')), findsOneWidget);
     expect(find.text('Importe por litro:'), findsOneWidget);
     expect(find.text(r'$12.00'), findsOneWidget);
+    final modeSelector = tester.widget(
+      find.byWidgetPredicate((widget) => widget is SegmentedButton),
+    );
+    expect(
+      (modeSelector as dynamic).style?.side?.resolve({
+        WidgetState.selected,
+      })?.color,
+      AppColors.menuBackground,
+    );
+    expect(
+      (modeSelector as dynamic).style?.side
+          ?.resolve(const <WidgetState>{})
+          ?.color,
+      AppColors.menuBackground,
+    );
     await tester.enterText(find.byType(TextField), '100');
     await tester.tap(find.text('Agregar').hitTestable());
     await tester.pumpAndSettle();

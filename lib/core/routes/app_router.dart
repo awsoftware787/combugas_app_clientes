@@ -20,11 +20,13 @@ import '../../features/pedidos/screens/calificacion_screen.dart';
 import '../../features/perfil/screens/perfil_screen.dart';
 import '../../features/productos/screens/productos_screen.dart';
 import '../../features/carburaciones/screens/carburaciones_screen.dart';
+import '../../shared/widgets/app_exit_guard.dart';
 import '../startup/session_gate_screen.dart';
 import 'session_route_guard.dart';
 
 Widget _private(Widget child) => SessionRouteGuard.private(child: child);
 Widget _publicOnly(Widget child) => SessionRouteGuard.publicOnly(child: child);
+Widget _root(Widget child) => AppExitGuard(child: child);
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -36,11 +38,11 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/productos',
-      builder: (context, state) => const ProductosRouteScreen(),
+      builder: (context, state) => _root(const ProductosRouteScreen()),
     ),
     GoRoute(
       path: '/pedido',
-      builder: (context, state) => _private(const PedidoScreen()),
+      builder: (context, state) => _private(_root(const PedidoScreen())),
     ),
     GoRoute(
       path: '/carrito',
@@ -66,7 +68,7 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/direcciones',
-      builder: (context, state) => _private(const DireccionesScreen()),
+      builder: (context, state) => _private(_root(const DireccionesScreen())),
     ),
     GoRoute(
       path: '/direcciones/nueva',
@@ -102,11 +104,11 @@ final appRouter = GoRouter(
     ),
     GoRoute(
       path: '/carburaciones',
-      builder: (context, state) => const CarburacionesScreen(),
+      builder: (context, state) => _root(const CarburacionesScreen()),
     ),
     GoRoute(
       path: '/mis-pedidos',
-      builder: (context, state) => _private(const MisPedidosScreen()),
+      builder: (context, state) => _private(_root(const MisPedidosScreen())),
       routes: [
         GoRoute(
           path: ':id',

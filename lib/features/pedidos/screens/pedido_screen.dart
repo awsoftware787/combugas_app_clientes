@@ -572,6 +572,11 @@ class _StationaryPageState extends ConsumerState<_StationaryPage> {
     priceLabel: formatoMoneda(widget.product.precioCentavos),
     priceKey: const ValueKey('stationary-amount'),
     productSelector: SegmentedButton<_StationaryMode>(
+      style: const ButtonStyle(
+        side: WidgetStatePropertyAll(
+          BorderSide(color: AppColors.menuBackground),
+        ),
+      ),
       segments: const [
         ButtonSegment(value: _StationaryMode.importe, label: Text('Importe')),
         ButtonSegment(value: _StationaryMode.litros, label: Text('Litros')),
