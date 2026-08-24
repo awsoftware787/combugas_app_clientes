@@ -33,6 +33,46 @@ MAPS_API_KEY=TU_CLAVE
 
 Alternativamente, Gradle acepta `-PMAPS_API_KEY=TU_CLAVE`. La clave debe tener habilitado **Maps SDK for Android** y autorizar el `applicationId`/SHA-1 de esta aplicación.
 
+
+## Compilación del apk
+
+Limpiamos archivos de compilaciones pasadas
+
+```PowerShell
+flutter clean
+```
+
+Se revisan las dependiencias declaradas en el pubspec.yml
+
+```PowerShell
+flutter pubget
+```
+
+Se analiza de forma estatica el proyecto para revisar si en el codigo cuenta con algun error 
+
+```PowerShell
+flutter analyze
+```
+
+Se ejecutan las pruebas automaticas configuradas en el proyecto
+
+```PowerShell
+flutter test
+```
+
+Con este comando se crea el apk en release con la configuración a producción.
+
+```PowerShell
+flutter build apk --release --dart-define-from-file=config/prod.json
+```
+
+Configuración a test
+
+```PowerShell
+flutter build apk --release --dart-define-from-file=config/dev.json
+```
+
+
 # IOS
 
 Para iOS, copia `ios/Flutter/Secrets.xcconfig.example` como
