@@ -14,6 +14,6 @@ void main() {
       buildSignature: '',
     );
 
-    expect(await AppVersionService.displayVersion, 'v9.9.9');
+    expect(await AppVersionService.displayVersion, 'v 9.9.9');
   });
 }

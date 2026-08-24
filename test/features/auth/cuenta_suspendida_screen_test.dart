@@ -32,8 +32,8 @@ void main() {
     expect(find.byIcon(Icons.phone), findsOneWidget);
     final logo = tester.widget<Image>(find.byType(Image));
     expect((logo.image as AssetImage).assetName, AppAssets.logo);
-    expect(logo.width, 280);
-    expect(logo.height, 110);
+    expect(logo.width, 400);
+    expect(logo.height, 120);
     expect(find.byType(AppBar), findsNothing);
     expect(
       tester.widget<Scaffold>(find.byType(Scaffold)).backgroundColor,
