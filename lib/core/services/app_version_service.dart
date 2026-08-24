@@ -9,7 +9,7 @@ abstract final class AppVersionService {
 
   static Future<String> _loadDisplayVersion() async {
     final packageInfo = await PackageInfo.fromPlatform();
-    return 'v${packageInfo.version}';
+    return 'v ${packageInfo.version}';
   }
 }
 
