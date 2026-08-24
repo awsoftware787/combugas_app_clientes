@@ -54,7 +54,7 @@ Se analiza de forma estatica el proyecto para revisar si en el codigo cuenta con
 flutter analyze
 ```
 
-Se ejecutan las pruebas automaticas configuradas en el proyecto
+Este comando ejecuta las pruebas automaticas que se encuentran en la carpeta de test
 
 ```PowerShell
 flutter test
