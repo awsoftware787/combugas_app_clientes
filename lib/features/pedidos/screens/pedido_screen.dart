@@ -240,9 +240,14 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     context.push('/confirmacion');
   }
 
+  // void _openCart() {
+  //   if (!_hasAddress()) return;
+  //   context.push('/carrito');
+  // }
+
   void _openCart() {
     if (!_hasAddress()) return;
-    context.push('/carrito');
+    context.push('/confirmacion');
   }
 
   bool _hasAddress() {
