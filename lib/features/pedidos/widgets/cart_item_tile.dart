@@ -43,7 +43,7 @@ class CartItemTile extends StatelessWidget {
               ),
               if (controls != null) ...[
                 const SizedBox(height: 4),
-                Align(alignment: Alignment.centerLeft, child: controls!),
+                Align(alignment: Alignment.centerRight, child: controls!),
               ],
             ],
           ),
