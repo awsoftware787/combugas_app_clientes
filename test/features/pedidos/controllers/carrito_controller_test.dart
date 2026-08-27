@@ -1,5 +1,6 @@
 import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
+import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,7 @@ void main() {
     expect(formatoMoneda(119010), r'$1190.10');
   });
 
-  test('productos normales crean líneas; croquetas iguales acumulan', () async {
+  test('productos iguales acumulan cantidad e importe en una línea', () async {
     final store = _Store();
     final container = _container(store);
     addTearDown(container.dispose);
@@ -50,10 +51,94 @@ void main() {
       subcanalUsuario: 1,
     );
     final state = container.read(carritoControllerProvider);
-    expect(state.lineas, 3);
-    expect(state.items.first.importeCentavos, 120000);
+    expect(state.lineas, 2);
+    expect(state.items.first.cantidad, 3);
+    expect(state.items.first.importeCentavos, 180000);
     expect(state.items.last.cantidad, 5);
     expect(state.items.last.importeCentavos, 250000);
+  });
+
+  test(
+    'garrafón agregado varias veces queda unificado en carrito y pedido',
+    () async {
+      final store = _Store();
+      final container = _container(store);
+      addTearDown(container.dispose);
+      final controller = container.read(carritoControllerProvider.notifier);
+      for (final cantidad in [1, 2, 3]) {
+        await controller.agregarProducto(
+          producto: _water,
+          cantidad: cantidad,
+          subcanalUsuario: 1,
+        );
+      }
+
+      final cart = container.read(carritoControllerProvider);
+      expect(cart.lineas, 1);
+      expect(cart.items.single.cantidad, 6);
+      expect(cart.items.single.importeCentavos, 24000);
+      expect(cart.totalCentavos, 24000);
+
+      final request = CreateOrderRequest.fromItems(
+        direccionId: 1,
+        clienteId: 2,
+        telefonoId: 3,
+        metodoPagoId: 1,
+        items: cart.items,
+      );
+      expect(request.detalles, hasLength(1));
+      expect(request.detalles.single.clave, _water.id);
+      expect(request.detalles.single.cantidad, 6);
+      expect(request.detalles.single.importe, 240);
+    },
+  );
+
+  test(
+    'productos o presentaciones diferentes conservan líneas separadas',
+    () async {
+      final store = _Store();
+      final container = _container(store);
+      addTearDown(container.dispose);
+      final controller = container.read(carritoControllerProvider.notifier);
+      for (final product in [_water, _croquettesSmall, _croquettes]) {
+        await controller.agregarProducto(
+          producto: product,
+          cantidad: 1,
+          subcanalUsuario: 1,
+        );
+      }
+
+      final items = container.read(carritoControllerProvider).items;
+      expect(items, hasLength(3));
+      expect(items.map((item) => item.presentacion), [
+        '20 L',
+        'BULTO ADULTO 10 KG',
+        'BULTO ADULTO 20 KG',
+      ]);
+    },
+  );
+
+  test('cantidad modificada con más se acumula al volver a agregar', () async {
+    final store = _Store();
+    final container = _container(store);
+    addTearDown(container.dispose);
+    final controller = container.read(carritoControllerProvider.notifier);
+    await controller.agregarProducto(
+      producto: _water,
+      cantidad: 3,
+      subcanalUsuario: 1,
+    );
+    await controller.incrementarLinea(0);
+    await controller.agregarProducto(
+      producto: _water,
+      cantidad: 2,
+      subcanalUsuario: 1,
+    );
+
+    final cart = container.read(carritoControllerProvider);
+    expect(cart.lineas, 1);
+    expect(cart.items.single.cantidad, 6);
+    expect(cart.items.single.importeCentavos, 24000);
   });
 
   test('AWA requiere subcanal 1 y conserva carrito al rechazar', () async {
@@ -85,9 +170,17 @@ void main() {
       minimos: minimums,
     );
     expect(added.agregado, isTrue);
-    final item = container.read(carritoControllerProvider).items.single;
-    expect(item.cantidad, 50);
-    expect(item.importeCentavos, 60000);
+    await controller.agregarEstacionarioPorImporte(
+      producto: _stationary,
+      importeCentavos: 60000,
+      minimos: minimums,
+    );
+    final items = container.read(carritoControllerProvider).items;
+    expect(items, hasLength(2));
+    expect(items.every((item) => item.cantidad == 50), isTrue);
+    expect(items.every((item) => item.importeCentavos == 60000), isTrue);
+    expect(items.first.descripcion, contains('litros gas estacionario'));
+    expect(items.last.descripcion, contains('gas estacionario ='));
   });
 
   test(
@@ -155,6 +248,13 @@ const _croquettes = Producto(
   presentacion: 'BULTO ADULTO 20 KG',
   servicioId: 9,
   precioCentavos: 50000,
+);
+const _croquettesSmall = Producto(
+  id: 20,
+  descripcion: 'BULTO ADULTO 10 KG',
+  presentacion: 'BULTO ADULTO 10 KG',
+  servicioId: 9,
+  precioCentavos: 30000,
 );
 const _stationary = Producto(
   id: 9,

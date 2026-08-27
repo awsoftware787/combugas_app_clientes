@@ -40,25 +40,20 @@ final class CarritoController extends Notifier<CarritoState> {
     }
     final now = DateTime.now();
     final importe = producto.precioCentavos * cantidad;
-    var items = [...state.items];
-    if (producto.esCroqueta) {
-      final index = items.indexWhere(
-        (item) => item.esCroqueta && item.productoId == producto.id,
+    final nuevo = _item(producto, cantidad.toDouble(), importe, now);
+    final items = [...state.items];
+    final index = items.indexWhere((item) => _esMismoProducto(item, nuevo));
+    if (index >= 0) {
+      final previous = items[index];
+      items[index] = previous.copyWith(
+        descripcion: producto.descripcion,
+        presentacion: producto.presentacion,
+        cantidad: previous.cantidad + cantidad,
+        importeCentavos: previous.importeCentavos + importe,
+        fecha: now,
       );
-      if (index >= 0) {
-        final previous = items[index];
-        items[index] = previous.copyWith(
-          descripcion: producto.descripcion,
-          presentacion: producto.presentacion,
-          cantidad: previous.cantidad + cantidad,
-          importeCentavos: previous.importeCentavos + importe,
-          fecha: now,
-        );
-      } else {
-        items.add(_item(producto, cantidad.toDouble(), importe, now));
-      }
     } else {
-      items.add(_item(producto, cantidad.toDouble(), importe, now));
+      items.add(nuevo);
     }
     await _replace(items);
     return AgregarResultado(
@@ -181,6 +176,18 @@ final class CarritoController extends Notifier<CarritoState> {
     servicioId: producto.servicioId,
     presentacion: producto.presentacion,
   );
+
+  bool _esMismoProducto(ItemPedido actual, ItemPedido nuevo) {
+    // Gas estacionario conserva líneas independientes porque las altas por
+    // importe y por litros representan modalidades distintas para el usuario.
+    if (nuevo.productoId == ProductoIds.estacionario) return false;
+    return actual.productoId == nuevo.productoId &&
+        actual.servicioId == nuevo.servicioId &&
+        _normalizarPresentacion(actual.presentacion) ==
+            _normalizarPresentacion(nuevo.presentacion);
+  }
+
+  String _normalizarPresentacion(String value) => value.trim().toUpperCase();
 
   Future<void> _agregarEstacionario(
     Producto producto,
