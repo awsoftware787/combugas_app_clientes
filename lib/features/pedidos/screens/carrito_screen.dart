@@ -73,7 +73,7 @@ class CarritoScreen extends ConsumerWidget {
         child: FilledButton(
           onPressed:
               cart.items.isEmpty ? null : () => context.push('/confirmacion'),
-          child: const Text('Continuar'),
+          child: const Text('Confirmar pedido'),
         ),
       ),
     );
