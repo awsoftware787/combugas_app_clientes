@@ -162,6 +162,29 @@ void main() {
     expect(find.byKey(const ValueKey('view-public-products')), findsNothing);
   });
 
+  testWidgets('Continuar abre Login aunque Productos tenga una ruta previa', (
+    tester,
+  ) async {
+    final harness = _Harness();
+    addTearDown(harness.dispose);
+    await tester.pumpWidget(harness.widget(initialLocation: '/carburaciones'));
+    await tester.pumpAndSettle();
+
+    harness.router.push('/productos');
+    await tester.pumpAndSettle();
+    expect(harness.router.canPop(), isTrue);
+    expect(find.text('Productos'), findsOneWidget);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -800));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('public-products-continue')));
+    await tester.pumpAndSettle();
+
+    expect(harness.router.state.uri.path, '/login');
+    expect(find.byType(LoginScreen), findsOneWidget);
+    expect(harness.router.canPop(), isFalse);
+  });
+
   testWidgets('usuario autenticado en /productos es redirigido a Pedido', (
     tester,
   ) async {
@@ -206,6 +229,11 @@ final class _Harness {
           GoRoute(
             path: '/recuperar',
             builder: (_, _) => const Scaffold(body: Text('RECUPERAR')),
+          ),
+          GoRoute(
+            path: '/carburaciones',
+            builder:
+                (_, _) => const Scaffold(body: Text('CARBURACIONES PÚBLICAS')),
           ),
         ],
       );

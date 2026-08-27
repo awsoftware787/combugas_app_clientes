@@ -253,6 +253,11 @@ class _PublicDrawerContent extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _PublicDrawerItem(
+          icon: Icons.shopping_cart_outlined,
+          label: 'Productos',
+          onTap: () => _openRoute(context, '/productos'),
+        ),
+        _PublicDrawerItem(
           icon: Icons.local_gas_station,
           label: 'Carburaciones',
           onTap: () => _openRoute(context, '/carburaciones'),

@@ -150,13 +150,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                onPressed: () {
-                  if (context.canPop()) {
-                    context.pop();
-                  } else {
-                    context.go('/login');
-                  }
-                },
+                onPressed: () => context.go('/login'),
                 iconAlignment: IconAlignment.end,
                 icon: const Icon(Icons.arrow_forward_rounded),
                 label: const Text(

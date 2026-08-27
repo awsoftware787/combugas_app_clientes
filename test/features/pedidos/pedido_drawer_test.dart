@@ -26,10 +26,22 @@ void main() {
         tester.widget<Drawer>(find.byType(Drawer)).backgroundColor,
         AppColors.menuBackground,
       );
+      expect(_drawerText('Productos'), findsOneWidget);
       expect(_drawerText('Carburaciones'), findsOneWidget);
       expect(_drawerText('Aviso de privacidad'), findsOneWidget);
       expect(_drawerText('Iniciar sesión'), findsOneWidget);
       expect(_drawerText('v1.0.0'), findsOneWidget);
+      final publicLabels = [
+        'Productos',
+        'Carburaciones',
+        'Aviso de privacidad',
+        'Iniciar sesión',
+      ];
+      final positions =
+          publicLabels
+              .map((label) => tester.getTopLeft(_drawerText(label)).dy)
+              .toList();
+      expect(positions, orderedEquals([...positions]..sort()));
       expect(
         tester.widget<Text>(_drawerText('Carburaciones')).style?.color,
         AppColors.white,
@@ -54,6 +66,17 @@ void main() {
             .widget<Icon>(
               find.descendant(
                 of: find.byType(Drawer),
+                matching: find.byIcon(Icons.shopping_cart_outlined),
+              ),
+            )
+            .color,
+        AppColors.white,
+      );
+      expect(
+        tester
+            .widget<Icon>(
+              find.descendant(
+                of: find.byType(Drawer),
                 matching: find.byIcon(Icons.privacy_tip_outlined),
               ),
             )
@@ -66,6 +89,13 @@ void main() {
       expect(_drawerText('Mis pedidos'), findsNothing);
       expect(_drawerText('Cerrar sesión'), findsNothing);
 
+      await tester.tap(_drawerText('Productos'));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/productos');
+      expect(router.canPop(), isFalse);
+      expect(find.byType(Drawer), findsNothing);
+
+      await _openDrawer(tester);
       await tester.tap(_drawerText('Carburaciones'));
       await tester.pumpAndSettle();
       expect(router.state.uri.path, '/carburaciones');
@@ -74,6 +104,12 @@ void main() {
       router.pop();
       await tester.pumpAndSettle();
       expect(router.state.uri.path, '/productos');
+
+      await _openDrawer(tester);
+      await tester.tap(_drawerText('Productos'));
+      await tester.pumpAndSettle();
+      expect(router.state.uri.path, '/productos');
+      expect(find.text('PRODUCTOS'), findsNWidgets(2));
 
       await _openDrawer(tester);
       await tester.tap(_drawerText('Iniciar sesión'));
