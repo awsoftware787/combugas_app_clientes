@@ -7,7 +7,7 @@ void main() {
 
   test('usa la versión del paquete sin mostrar el build number', () async {
     PackageInfo.setMockInitialValues(
-      appName: 'Combugas',
+      appName: 'Combugas APP',
       packageName: 'combugas_clientes',
       version: '9.9.9',
       buildNumber: '999',

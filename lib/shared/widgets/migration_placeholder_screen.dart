@@ -5,7 +5,7 @@ import 'branded_app_bar_title.dart';
 class MigrationPlaceholderScreen extends StatelessWidget {
   const MigrationPlaceholderScreen({
     super.key,
-    this.title = 'COMBUGAS',
+    this.title = 'COMBUGAS APP',
     this.message = 'Funcionalidad pendiente de migración.',
   });
 

@@ -10,7 +10,7 @@ class CombugasApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'COMBUGAS',
+      title: 'COMBUGAS APP',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: appRouter,
