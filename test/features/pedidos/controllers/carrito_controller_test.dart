@@ -91,20 +91,30 @@ void main() {
   });
 
   test(
-    'actualiza cantidad y elimina una línea persistiendo el cambio',
+    'incrementa, disminuye sin llegar a cero y elimina persistiendo',
     () async {
       final store = _Store([_item]);
       final container = _container(store);
       addTearDown(container.dispose);
       final controller = container.read(carritoControllerProvider.notifier);
-      await controller.actualizarCantidad(0, 3);
+      await controller.incrementarLinea(0);
       expect(
         container.read(carritoControllerProvider).items.single.cantidad,
-        3,
+        2,
       );
       expect(
         container.read(carritoControllerProvider).items.single.importeCentavos,
-        180000,
+        120000,
+      );
+      expect(await controller.disminuirLinea(0), isTrue);
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        1,
+      );
+      expect(await controller.disminuirLinea(0), isFalse);
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        1,
       );
       await controller.eliminarLinea(0);
       expect(store.items, isEmpty);

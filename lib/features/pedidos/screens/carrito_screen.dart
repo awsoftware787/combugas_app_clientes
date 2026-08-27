@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../controllers/carrito_controller.dart';
 import '../models/item_pedido.dart';
+import '../widgets/cart_item_controls.dart';
 import '../widgets/cart_item_tile.dart';
 
 class CarritoScreen extends ConsumerWidget {
@@ -63,17 +64,7 @@ class CarritoScreen extends ConsumerWidget {
                   final item = cart.items[index];
                   return CartItemTile(
                     item: item,
-                    trailing: IconButton(
-                      tooltip: 'Eliminar',
-                      onPressed:
-                          () => ref
-                              .read(carritoControllerProvider.notifier)
-                              .eliminarLinea(index),
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: AppColors.accent,
-                      ),
-                    ),
+                    controls: CartItemControls(item: item, index: index),
                   );
                 },
               ),

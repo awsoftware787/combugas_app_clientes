@@ -5,10 +5,12 @@ import 'package:combugas_clientes/features/auth/models/session_data.dart';
 import 'package:combugas_clientes/features/direcciones/controllers/direccion_controller.dart';
 import 'package:combugas_clientes/features/direcciones/data/direccion_repository.dart';
 import 'package:combugas_clientes/features/direcciones/models/direccion.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
+import 'package:combugas_clientes/features/pedidos/screens/carrito_screen.dart';
 import 'package:combugas_clientes/features/pedidos/screens/confirmacion_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,13 +45,21 @@ void main() {
         find.byKey(const ValueKey('producto-2-imagen')),
       );
       expect((image.image as AssetImage).assetName, AppAssets.productCylinder);
-      expect(find.text('Cantidad: 2'), findsOneWidget);
+      expect(
+        tester
+            .widget<Text>(find.byKey(const ValueKey('cart-item-quantity-0')))
+            .data,
+        '2',
+      );
+      expect(find.byKey(const ValueKey('cart-item-minus-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('cart-item-plus-0')), findsOneWidget);
+      expect(find.byKey(const ValueKey('cart-item-delete-0')), findsOneWidget);
       expect(find.text(r'$1,200.00'), findsNothing);
       expect(find.text(r'$1200.00'), findsNWidgets(2));
-      expect(find.text('Efectivo'), findsOneWidget);
-      expect(find.text('Tarjeta'), findsOneWidget);
       await tester.drag(find.byType(ListView), const Offset(0, -900));
       await tester.pumpAndSettle();
+      expect(find.text('Efectivo'), findsOneWidget);
+      expect(find.text('Tarjeta'), findsOneWidget);
       final confirmButton = find.byKey(const ValueKey('confirm-order'));
       expect(confirmButton, findsOneWidget);
       expect(
@@ -156,6 +166,78 @@ void main() {
     expect(warningText.style?.fontWeight, FontWeight.w600);
     expect(tester.getSize(warningFinder).height, lessThan(60));
   });
+
+  testWidgets('sincroniza cantidades con Carrito y permite quitar productos', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = _CartStore();
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_AuthRepository()),
+        direccionRepositoryProvider.overrideWithValue(_DirectionRepository()),
+        pedidoRepositoryProvider.overrideWithValue(_PedidoRepository()),
+        carritoStoreProvider.overrideWithValue(store),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(direccionControllerProvider.notifier).load();
+
+    Future<void> show(Widget screen) async {
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(home: screen),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    await show(const ConfirmacionScreen());
+    expect(tester.takeException(), isNull);
+    await tester.tap(find.byKey(const ValueKey('cart-item-plus-0')));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 3);
+    expect(container.read(carritoControllerProvider).totalCentavos, 180000);
+
+    await show(const CarritoScreen());
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('cart-item-quantity-0')))
+          .data,
+      '3',
+    );
+    await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 2);
+
+    await show(const ConfirmacionScreen());
+    expect(
+      tester
+          .widget<Text>(find.byKey(const ValueKey('cart-item-quantity-0')))
+          .data,
+      '2',
+    );
+    await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Quitar producto'), findsOneWidget);
+    await tester.tap(find.widgetWithText(TextButton, 'No'));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
+
+    await tester.tap(find.byKey(const ValueKey('cart-item-delete-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Sí, quitar'));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items, isEmpty);
+    expect(find.text('Tu carrito está vacío.'), findsOneWidget);
+    expect(find.text(r'$600.00'), findsNothing);
+  });
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
@@ -195,10 +277,12 @@ final class _DirectionRepository implements DireccionRepositoryContract {
 }
 
 final class _CartStore implements CarritoStore {
+  List<ItemPedido> items = [_item];
+
   @override
-  List<ItemPedido> read() => [_item];
+  List<ItemPedido> read() => items;
   @override
-  Future<void> save(List<ItemPedido> items) async {}
+  Future<void> save(List<ItemPedido> value) async => items = [...value];
 }
 
 final _item = ItemPedido(

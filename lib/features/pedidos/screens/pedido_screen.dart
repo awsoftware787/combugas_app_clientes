@@ -72,19 +72,6 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         foregroundColor: AppColors.white,
         title: const BrandedAppBarTitle('Pedido'),
         actions: [
-          TextButton(
-            key: const ValueKey('clear-order'),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.accent,
-              disabledForegroundColor: Colors.white54,
-            ),
-            onPressed:
-                carrito.items.isEmpty
-                    ? null
-                    : () =>
-                        ref.read(carritoControllerProvider.notifier).clear(),
-            child: const Text('Limpiar'),
-          ),
           IconButton(
             tooltip: 'Actualizar productos',
             color: AppColors.white,
@@ -240,15 +227,15 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     context.push('/confirmacion');
   }
 
-  // void _openCart() {
-  //   if (!_hasAddress()) return;
-  //   context.push('/carrito');
-  // }
-
   void _openCart() {
     if (!_hasAddress()) return;
-    context.push('/confirmacion');
+    context.push('/carrito');
   }
+
+  // void _openCart() {
+  //   if (!_hasAddress()) return;
+  //   context.push('/confirmacion');
+  // }
 
   bool _hasAddress() {
     if (ref.read(direccionControllerProvider).selected != null) return true;

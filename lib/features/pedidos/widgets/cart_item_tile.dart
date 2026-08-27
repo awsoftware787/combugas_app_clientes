@@ -4,10 +4,10 @@ import '../models/item_pedido.dart';
 import '../presentation/producto_asset_resolver.dart';
 
 class CartItemTile extends StatelessWidget {
-  const CartItemTile({super.key, required this.item, this.trailing});
+  const CartItemTile({super.key, required this.item, this.controls});
 
   final ItemPedido item;
-  final Widget? trailing;
+  final Widget? controls;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -41,10 +41,13 @@ class CartItemTile extends StatelessWidget {
                 formatoMoneda(item.importeCentavos),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
+              if (controls != null) ...[
+                const SizedBox(height: 4),
+                Align(alignment: Alignment.centerLeft, child: controls!),
+              ],
             ],
           ),
         ),
-        if (trailing != null) trailing!,
       ],
     ),
   );

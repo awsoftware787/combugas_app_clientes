@@ -133,6 +133,24 @@ final class CarritoController extends Notifier<CarritoState> {
     await _replace(items);
   }
 
+  Future<void> incrementarLinea(int index) async {
+    if (index < 0 || index >= state.items.length) return;
+    await actualizarCantidad(index, state.items[index].cantidad + 1);
+  }
+
+  /// Decrementa la línea sin permitir que su cantidad llegue a cero.
+  ///
+  /// Devuelve `false` cuando la línea no existe o requiere confirmación para
+  /// eliminarse. La interfaz puede entonces solicitar esa confirmación y usar
+  /// [eliminarLinea] si el usuario la acepta.
+  Future<bool> disminuirLinea(int index) async {
+    if (index < 0 || index >= state.items.length) return false;
+    final cantidad = state.items[index].cantidad;
+    if (cantidad <= 1) return false;
+    await actualizarCantidad(index, cantidad - 1);
+    return true;
+  }
+
   Future<void> actualizarCantidad(int index, double cantidad) async {
     if (index < 0 || index >= state.items.length || cantidad <= 0) return;
     final items = [...state.items];

@@ -22,7 +22,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('muestra selector, producto, agrega, badge y limpia', (
+  testWidgets('muestra selector, producto, agrega y actualiza badge', (
     tester,
   ) async {
     final cart = _CartStore();
@@ -43,11 +43,8 @@ void main() {
       AppColors.accent,
     );
 
-    final clear = tester.widget<TextButton>(
-      find.byKey(const ValueKey('clear-order')),
-    );
-    expect(clear.onPressed, isNull);
-    expect(clear.style?.foregroundColor?.resolve(const {}), AppColors.accent);
+    expect(find.byKey(const ValueKey('clear-order')), findsNothing);
+    expect(find.text('Limpiar'), findsNothing);
 
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.foregroundColor, AppColors.white);
@@ -96,18 +93,8 @@ void main() {
       '1',
     );
 
-    final enabledClear = tester.widget<TextButton>(
-      find.byKey(const ValueKey('clear-order')),
-    );
-    expect(enabledClear.onPressed, isNotNull);
-    expect(
-      enabledClear.style?.foregroundColor?.resolve({WidgetState.pressed}),
-      AppColors.accent,
-    );
-
-    await tester.tap(find.text('Limpiar'));
-    await tester.pumpAndSettle();
-    expect(container.read(carritoControllerProvider).lineas, 0);
+    expect(find.byKey(const ValueKey('clear-order')), findsNothing);
+    expect(container.read(carritoControllerProvider).lineas, 1);
   });
 
   testWidgets('selector segmentado actualiza variante e importe', (

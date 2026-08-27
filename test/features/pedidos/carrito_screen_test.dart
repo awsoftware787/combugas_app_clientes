@@ -1,5 +1,6 @@
 import 'package:combugas_clientes/core/constants/app_assets.dart';
 import 'package:combugas_clientes/core/theme/app_colors.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
 import 'package:combugas_clientes/features/pedidos/screens/carrito_screen.dart';
@@ -70,6 +71,60 @@ void main() {
       clear.style?.foregroundColor?.resolve({WidgetState.disabled}),
       Colors.white54,
     );
+  });
+
+  testWidgets('modifica cantidades y confirma antes de quitar una línea', (
+    tester,
+  ) async {
+    final store = _Store([
+      _item.copyWith(cantidad: 2, importeCentavos: 120000),
+    ]);
+    final container = ProviderContainer(
+      overrides: [carritoStoreProvider.overrideWithValue(store)],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: CarritoScreen()),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('cart-item-plus-0')));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 3);
+    expect(container.read(carritoControllerProvider).totalCentavos, 180000);
+    expect(find.text(r'$1800.00'), findsNWidgets(2));
+
+    await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 2);
+
+    await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
+    await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+    await tester.pumpAndSettle();
+    expect(find.text('Quitar producto'), findsOneWidget);
+    expect(
+      find.text('¿Deseas quitar este producto del pedido?'),
+      findsOneWidget,
+    );
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
+
+    await tester.tap(find.widgetWithText(TextButton, 'No'));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
+    expect(find.text('Tu carrito está vacío.'), findsNothing);
+
+    await tester.tap(find.byKey(const ValueKey('cart-item-delete-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Sí, quitar'));
+    await tester.pumpAndSettle();
+    expect(container.read(carritoControllerProvider).items, isEmpty);
+    expect(store.items, isEmpty);
+    expect(find.text('Tu carrito está vacío.'), findsOneWidget);
+    expect(find.text('Total'), findsNothing);
   });
 }
 

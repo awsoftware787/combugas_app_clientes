@@ -10,6 +10,7 @@ import '../controllers/carrito_controller.dart';
 import '../controllers/confirmacion_controller.dart';
 import '../models/item_pedido.dart';
 import '../models/metodo_pago.dart';
+import '../widgets/cart_item_controls.dart';
 import '../widgets/cart_item_tile.dart';
 
 class ConfirmacionScreen extends ConsumerStatefulWidget {
@@ -79,11 +80,18 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                 ),
               )
             else
-              ...cart.items.map(
-                (item) => Card(
+              ...cart.items.asMap().entries.map(
+                (entry) => Card(
                   child: Padding(
                     padding: const EdgeInsets.all(12),
-                    child: CartItemTile(item: item),
+                    child: CartItemTile(
+                      item: entry.value,
+                      controls: CartItemControls(
+                        item: entry.value,
+                        index: entry.key,
+                        enabled: !confirmation.saving,
+                      ),
+                    ),
                   ),
                 ),
               ),
