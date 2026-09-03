@@ -48,6 +48,9 @@ final class CarritoController extends Notifier<CarritoState> {
       items[index] = previous.copyWith(
         descripcion: producto.descripcion,
         presentacion: producto.presentacion,
+        tipoProductoId: producto.tipoProductoId,
+        tipoProducto: producto.tipoProducto,
+        urlIcono: producto.urlIcono,
         cantidad: previous.cantidad + cantidad,
         importeCentavos: previous.importeCentavos + importe,
         fecha: now,
@@ -175,6 +178,9 @@ final class CarritoController extends Notifier<CarritoState> {
     fecha: fecha,
     servicioId: producto.servicioId,
     presentacion: producto.presentacion,
+    tipoProductoId: producto.tipoProductoId,
+    tipoProducto: producto.tipoProducto,
+    urlIcono: producto.urlIcono,
   );
 
   bool _esMismoProducto(ItemPedido actual, ItemPedido nuevo) {
@@ -203,6 +209,9 @@ final class CarritoController extends Notifier<CarritoState> {
       fecha: DateTime.now(),
       servicioId: producto.servicioId,
       presentacion: producto.presentacion,
+      tipoProductoId: producto.tipoProductoId,
+      tipoProducto: producto.tipoProducto,
+      urlIcono: producto.urlIcono,
     );
     await _replace([...state.items, item]);
   }

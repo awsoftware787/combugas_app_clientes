@@ -21,6 +21,11 @@ final class Producto {
     required this.presentacion,
     required this.servicioId,
     required this.precioCentavos,
+    this.tipoProductoId,
+    this.tipoProducto,
+    this.urlIcono,
+    this.montoMinimoEstCentavos = 0,
+    this.litroMinimoEst = 0,
   });
 
   final int id;
@@ -28,9 +33,15 @@ final class Producto {
   final String presentacion;
   final int servicioId;
   final int precioCentavos;
+  final int? tipoProductoId;
+  final String? tipoProducto;
+  final String? urlIcono;
+  final int montoMinimoEstCentavos;
+  final double litroMinimoEst;
 
   bool get esAgua => servicioId == ServicioIds.agua;
   bool get esCroqueta => servicioId == ServicioIds.croquetas;
+  bool get esEstacionario => id == ProductoIds.estacionario;
   bool get esBulto => _texto.contains('BULTO');
   bool get esBolsa => _texto.contains('BOLSA');
   String get _texto => '$presentacion $descripcion'.toUpperCase();

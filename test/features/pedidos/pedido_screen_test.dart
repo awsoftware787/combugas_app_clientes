@@ -22,6 +22,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('producto nuevo aparece y puede agregarse sin reconocer su ID', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+      directions: const [_address],
+      products: const [_dynamicProduct],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Alimento para mascota'), findsOneWidget);
+    expect(find.byKey(const ValueKey('product-image-25')), findsOneWidget);
+    expect(find.text(r'$340.00'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('product-add')));
+    await tester.pumpAndSettle();
+
+    final item = container.read(carritoControllerProvider).items.single;
+    expect(item.productoId, 25);
+    expect(item.urlIcono, contains('croquetas_gato.png'));
+  });
+
   testWidgets('muestra selector, producto, agrega y actualiza badge', (
     tester,
   ) async {
@@ -421,6 +449,17 @@ const _defaultProducts = [
     precioCentavos: 40000,
   ),
 ];
+
+const _dynamicProduct = Producto(
+  id: 25,
+  descripcion: 'CROQUETAS PARA GATO 15 KG',
+  presentacion: '15 KG',
+  servicioId: 9,
+  precioCentavos: 34000,
+  tipoProductoId: 4,
+  tipoProducto: 'Alimento para mascota',
+  urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
+);
 
 const _stationaryProduct = Producto(
   id: 9,

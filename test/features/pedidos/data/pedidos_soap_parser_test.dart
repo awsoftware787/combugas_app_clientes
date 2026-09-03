@@ -16,6 +16,14 @@ void main() {
     expect(products.last.esCroqueta, isTrue);
     expect(products.last.esBulto, isTrue);
     expect(products.last.opcionCroqueta, 'ADULTO 20 KG');
+    expect(products.last.tipoProductoId, 4);
+    expect(products.last.tipoProducto, 'Alimento para mascota');
+    expect(
+      products.last.urlIcono,
+      'https://servidor/Images/productos/croquetas.png',
+    );
+    expect(products.last.montoMinimoEstCentavos, 60000);
+    expect(products.last.litroMinimoEst, 60);
   });
 
   test('parsea montos mínimos para dinero y litros', () {
@@ -192,7 +200,7 @@ String _envelope(
 final _prices = _envelope(
   'getPrecios',
   'true',
-  '[{"_idProducto":2,"_precioProducto":635.50,"_idServicio":1,"_descripcionProducto":"CILINDRO 30 KG"},{"_idProducto":20,"_precioProducto":499.99,"_idServicio":9,"_descripcionProducto":"BULTO DE ADULTO 20 KG"}]',
+  '[{"_idProducto":2,"_precioProducto":635.50,"_idServicio":1,"_descripcionProducto":"CILINDRO 30 KG","_idTipoProducto":null,"_montoMinimoEst":null,"_litroMinimoEst":null},{"_idProducto":20,"_precioProducto":499.99,"_idServicio":9,"_idTipoProducto":4,"_tipoProducto":"Alimento para mascota","_descripcionProducto":"BULTO DE ADULTO 20 KG","_urlIcono":"https://servidor/Images/productos/croquetas.png","_montoMinimoEst":600,"_litroMinimoEst":60}]',
 );
 final _minimums = _envelope(
   'getMontosMinimos',

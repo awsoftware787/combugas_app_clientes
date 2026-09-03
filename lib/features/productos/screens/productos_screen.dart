@@ -9,9 +9,9 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../pedidos/models/item_pedido.dart';
 import '../../pedidos/models/producto.dart';
 import '../../pedidos/presentation/product_catalog.dart';
-import '../../pedidos/presentation/producto_asset_resolver.dart';
 import '../../pedidos/widgets/pedido_drawer.dart';
 import '../../pedidos/widgets/product_option_selector.dart';
+import '../../pedidos/widgets/producto_icono.dart';
 import '../controllers/productos_controller.dart';
 
 class ProductosRouteScreen extends ConsumerWidget {
@@ -126,13 +126,13 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                 ),
               ),
             ),
-            // const SizedBox(height: 14),
-            // Center(
-            //   child: SizedBox(
-            //     width: contentWidth,
-            //     child: const _ProductBenefits(),
-            //   ),
-            // ),
+            const SizedBox(height: 14),
+            Center(
+              child: SizedBox(
+                width: contentWidth,
+                child: const _ProductBenefits(),
+              ),
+            ),
             const SizedBox(height: 28),
             _ProductIndicator(current: _page + 1, total: catalog.length),
           ],
@@ -275,9 +275,9 @@ class _PublicProductCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Image.asset(
-                    ProductoAssetResolver.forProducto(product),
-                    key: ValueKey('product-image-${product.id}'),
+                  child: ProductoIcono.producto(
+                    producto: product,
+                    imageKey: ValueKey('product-image-${product.id}'),
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -291,7 +291,8 @@ class _PublicProductCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (ProductOptionSelector.supports(product))
+          if (ProductOptionSelector.supports(product) ||
+              group.products.length > 1)
             ProductOptionSelector(
               products: group.products,
               selectedIndex: selectedIndex,

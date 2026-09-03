@@ -46,4 +46,23 @@ void main() {
     expect(catalog.expand((group) => group.products).toSet(), products.toSet());
     expect(catalog[1].isStationary, isTrue);
   });
+
+  test('muestra un producto nuevo sin reconocer su ID', () {
+    const product = Producto(
+      id: 25,
+      descripcion: 'CROQUETAS PARA GATO 15 KG',
+      presentacion: '15 KG',
+      servicioId: 9,
+      precioCentavos: 34000,
+      tipoProductoId: 4,
+      tipoProducto: 'Alimento para mascota',
+      urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
+    );
+
+    final catalog = buildProductCatalog(const [product]);
+
+    expect(catalog, hasLength(1));
+    expect(catalog.single.title, 'Alimento para mascota');
+    expect(catalog.single.products.single, same(product));
+  });
 }

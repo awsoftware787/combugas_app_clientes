@@ -25,6 +25,12 @@ final class PedidosSoapParser {
             ),
             servicioId: _int(item['_idServicio']),
             precioCentavos: (_double(item['_precioProducto']) * 100).round(),
+            tipoProductoId: _nullableInt(item['_idTipoProducto']),
+            tipoProducto: _nullableText(item['_tipoProducto']),
+            urlIcono: _nullableText(item['_urlIcono']),
+            montoMinimoEstCentavos:
+                (_double(item['_montoMinimoEst']) * 100).round(),
+            litroMinimoEst: _double(item['_litroMinimoEst']),
           ),
         )
         .toList(growable: false);
@@ -229,12 +235,23 @@ final class PedidosSoapParser {
 
   int _int(Object? value) =>
       value is num ? value.toInt() : int.tryParse('$value') ?? 0;
+  int? _nullableInt(Object? value) {
+    if (value == null || value == 'null' || '$value'.trim().isEmpty) {
+      return null;
+    }
+    return value is num ? value.toInt() : int.tryParse('$value');
+  }
+
   double _double(Object? value) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
   bool _bool(Object? value) =>
       value == true || value == 1 || '$value'.toLowerCase() == 'true';
   String _text(Object? value) =>
       value == null || value == 'null' ? '' : '$value';
+  String? _nullableText(Object? value) {
+    final text = _text(value).trim();
+    return text.isEmpty ? null : text;
+  }
 }
 
 final class _SoapPayload {

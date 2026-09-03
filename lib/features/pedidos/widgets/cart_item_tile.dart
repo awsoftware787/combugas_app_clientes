@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../models/item_pedido.dart';
-import '../presentation/producto_asset_resolver.dart';
+import '../models/producto.dart';
+import 'producto_icono.dart';
 
 class CartItemTile extends StatelessWidget {
-  const CartItemTile({super.key, required this.item, this.controls});
+  const CartItemTile({
+    super.key,
+    required this.item,
+    this.controls,
+    this.productoCatalogo,
+    this.historicalFallback = false,
+  });
 
   final ItemPedido item;
   final Widget? controls;
+  final Producto? productoCatalogo;
+  final bool historicalFallback;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -18,9 +27,11 @@ class CartItemTile extends StatelessWidget {
         SizedBox(
           width: 72,
           height: 72,
-          child: Image.asset(
-            ProductoAssetResolver.forItem(item),
-            key: ValueKey('producto-${item.productoId}-imagen'),
+          child: ProductoIcono.item(
+            item: item,
+            productoCatalogo: productoCatalogo,
+            genericFallback: historicalFallback && productoCatalogo == null,
+            imageKey: ValueKey('producto-${item.productoId}-imagen'),
             fit: BoxFit.contain,
           ),
         ),

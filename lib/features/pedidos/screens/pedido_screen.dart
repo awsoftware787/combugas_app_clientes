@@ -202,10 +202,20 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     final subchannel = session?.subcanalUsuario ?? 0;
     return buildProductCatalog(state.productos).map((group) {
       if (group.isStationary) {
+        final product = group.products.single;
         return _StationaryPage(
           key: ValueKey(group.key),
-          product: group.products.single,
-          minimums: state.montosMinimos,
+          product: product,
+          minimums: MontosMinimos(
+            dineroCentavos:
+                product.montoMinimoEstCentavos > 0
+                    ? product.montoMinimoEstCentavos
+                    : state.montosMinimos.dineroCentavos,
+            litros:
+                product.litroMinimoEst > 0
+                    ? product.litroMinimoEst
+                    : state.montosMinimos.litros,
+          ),
         );
       }
       return _ProductPage(
@@ -414,7 +424,7 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
       priceLabel: formatoMoneda(product.precioCentavos * _quantity),
       priceKey: const ValueKey('product-amount'),
       productSelector:
-          ProductOptionSelector.supports(product)
+          ProductOptionSelector.supports(product) || widget.products.length > 1
               ? ProductOptionSelector(
                 products: widget.products,
                 selectedIndex: _selected,

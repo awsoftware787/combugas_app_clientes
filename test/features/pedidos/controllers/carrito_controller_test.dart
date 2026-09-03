@@ -213,6 +213,28 @@ void main() {
       expect(store.items, isEmpty);
     },
   );
+
+  test('producto dinámico conserva metadatos e icono en carrito', () async {
+    final store = _Store();
+    final container = _container(store);
+    addTearDown(container.dispose);
+
+    final result = await container
+        .read(carritoControllerProvider.notifier)
+        .agregarProducto(
+          producto: _dynamicProduct,
+          cantidad: 2,
+          subcanalUsuario: 1,
+        );
+
+    final item = container.read(carritoControllerProvider).items.single;
+    expect(result.agregado, isTrue);
+    expect(item.productoId, 25);
+    expect(item.importeCentavos, 68000);
+    expect(item.tipoProductoId, 4);
+    expect(item.tipoProducto, 'Alimento para mascota');
+    expect(item.urlIcono, contains('croquetas_gato.png'));
+  });
 }
 
 ProviderContainer _container(_Store store) => ProviderContainer(
@@ -262,6 +284,16 @@ const _stationary = Producto(
   presentacion: 'LITRO',
   servicioId: 1,
   precioCentavos: 1200,
+);
+const _dynamicProduct = Producto(
+  id: 25,
+  descripcion: 'CROQUETAS PARA GATO 15 KG',
+  presentacion: '15 KG',
+  servicioId: 9,
+  precioCentavos: 34000,
+  tipoProductoId: 4,
+  tipoProducto: 'Alimento para mascota',
+  urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
 );
 final _item = ItemPedido(
   productoId: 2,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../models/producto.dart';
-import '../presentation/producto_asset_resolver.dart';
+import 'producto_icono.dart';
 
 /// Presentación común de un producto para Pedido y el catálogo público.
 class ProductDisplayCard extends StatelessWidget {
@@ -59,9 +59,9 @@ class ProductDisplayCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: Image.asset(
-              ProductoAssetResolver.forProducto(product),
-              key: ValueKey('product-image-${product.id}'),
+            child: ProductoIcono.producto(
+              producto: product,
+              imageKey: ValueKey('product-image-${product.id}'),
               fit: BoxFit.contain,
             ),
           ),

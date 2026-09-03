@@ -54,10 +54,10 @@ void main() {
     final croquettes = tester.widget<Image>(
       find.byKey(const ValueKey('producto-20-imagen')),
     );
-    expect((cylinder.image as AssetImage).assetName, AppAssets.productCylinder);
+    expect((cylinder.image as AssetImage).assetName, AppAssets.productFallback);
     expect(
       (croquettes.image as AssetImage).assetName,
-      AppAssets.productDogFoodBulk,
+      AppAssets.productFallback,
     );
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
     expect(appBar.foregroundColor, AppColors.white);
