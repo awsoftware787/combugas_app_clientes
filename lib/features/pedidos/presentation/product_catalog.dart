@@ -94,9 +94,9 @@ List<ProductCatalogGroup> buildProductCatalog(List<Producto> products) {
     final typeName = product.tipoProducto?.trim();
     final key =
         product.tipoProductoId != null
-            ? 'tipo-${product.tipoProductoId}'
+            ? 'servicio-${product.servicioId}-tipo-${product.tipoProductoId}'
             : typeName?.isNotEmpty == true
-            ? 'tipo-${typeName!.toLowerCase()}'
+            ? 'servicio-${product.servicioId}-tipo-${typeName!.toLowerCase()}'
             : 'servicio-${product.servicioId}';
     dynamicGroups.putIfAbsent(key, () => <Producto>[]).add(product);
     dynamicTitles[key] = typeName?.isNotEmpty == true ? typeName! : 'Productos';
@@ -105,5 +105,14 @@ List<ProductCatalogGroup> buildProductCatalog(List<Producto> products) {
     add(entry.key, dynamicTitles[entry.key]!, entry.value);
   }
 
-  return groups;
+  // El catálogo se presenta por servicio. El índice original desempata para
+  // conservar el orden visual de los grupos que pertenecen al mismo servicio.
+  final indexedGroups =
+      groups.indexed.toList()..sort((left, right) {
+        final byService = left.$2.products.first.servicioId.compareTo(
+          right.$2.products.first.servicioId,
+        );
+        return byService != 0 ? byService : left.$1.compareTo(right.$1);
+      });
+  return indexedGroups.map((item) => item.$2).toList(growable: false);
 }

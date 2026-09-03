@@ -65,4 +65,63 @@ void main() {
     expect(catalog.single.title, 'Alimento para mascota');
     expect(catalog.single.products.single, same(product));
   });
+
+  test('ordena los grupos por servicio y conserva el orden dentro de cada uno', () {
+    const products = [
+      Producto(
+        id: 90,
+        descripcion: 'Producto del servicio 9',
+        presentacion: 'Unidad',
+        servicioId: 9,
+        precioCentavos: 100,
+        tipoProductoId: 51,
+        tipoProducto: 'Servicio nueve',
+      ),
+      Producto(
+        id: 50,
+        descripcion: 'Segundo producto del servicio 2',
+        presentacion: 'Unidad',
+        servicioId: 2,
+        precioCentavos: 100,
+        tipoProductoId: 51,
+        tipoProducto: 'Segundo grupo',
+      ),
+      Producto(
+        id: ProductoIds.cilindro30,
+        descripcion: 'Cilindro 30 kg',
+        presentacion: '30 kg',
+        servicioId: ServicioIds.gas,
+        precioCentavos: 100,
+      ),
+      Producto(
+        id: 40,
+        descripcion: 'Primer producto del servicio 2',
+        presentacion: 'Unidad',
+        servicioId: 2,
+        precioCentavos: 100,
+        tipoProductoId: 41,
+        tipoProducto: 'Primer grupo',
+      ),
+      Producto(
+        id: ProductoIds.garrafonNatural,
+        descripcion: 'Garrafón natural',
+        presentacion: '20 L',
+        servicioId: ServicioIds.agua,
+        precioCentavos: 100,
+      ),
+    ];
+
+    final catalog = buildProductCatalog(products);
+
+    expect(
+      catalog.map((group) => group.products.first.servicioId),
+      [1, 2, 2, 3, 9],
+    );
+    expect(
+      catalog.where((group) => group.products.first.servicioId == 2).map(
+        (group) => group.title,
+      ),
+      ['Segundo grupo', 'Primer grupo'],
+    );
+  });
 }
