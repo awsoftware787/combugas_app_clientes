@@ -75,16 +75,12 @@ List<ProductCatalogGroup> buildProductCatalog(List<Producto> products) {
   );
   add('six-natural', 'Six de agua natural', ids([ProductoIds.sixNatural]));
   add('six-alcalino', 'Six de agua alkalina', ids([ProductoIds.sixAlcalino]));
-  add(
-    'bultos',
-    'Croquetas por bulto',
-    ordered.where((product) => product.esCroqueta && product.esBulto).toList(),
-  );
-  add(
-    'bolsas',
-    'Croquetas por bolsa',
-    ordered.where((product) => product.esCroqueta && product.esBolsa).toList(),
-  );
+  // Cada croqueta es un producto seleccionable independiente. El servicio
+  // conserva la clasificación existente, pero no agrupa registros en una
+  // sola tarjeta.
+  for (final product in ordered.where((item) => item.esCroqueta)) {
+    add('producto-${product.id}', product.descripcion, <Producto>[product]);
+  }
 
   // Los productos futuros se agrupan con los metadatos del servicio. Si el
   // backend aún no los envía, se conserva un grupo genérico sin ocultarlos.

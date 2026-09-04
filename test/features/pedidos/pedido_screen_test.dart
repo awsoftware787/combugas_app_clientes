@@ -39,7 +39,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Alimento para mascota'), findsOneWidget);
+    expect(find.text('CROQUETAS PARA GATO 15 KG'), findsOneWidget);
+    expect(find.text('15 KG'), findsOneWidget);
     expect(find.byKey(const ValueKey('product-image-25')), findsOneWidget);
     expect(find.text(r'$340.00'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('product-add')));
@@ -354,6 +355,53 @@ void main() {
     expect(skeleton, findsNothing);
     expect(find.byType(DropdownButtonFormField<Direccion>), findsOneWidget);
   });
+
+  testWidgets('cada croqueta conserva una cantidad independiente', (
+    tester,
+  ) async {
+    final cart = _CartStore();
+    final container = _container(
+      cart: cart,
+      directions: const [_address],
+      products: const [_dynamicProduct, _secondDynamicProduct],
+    );
+    addTearDown(container.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('quantity-plus')).hitTestable());
+    await tester.tap(find.byKey(const ValueKey('quantity-plus')).hitTestable());
+    await tester.pump();
+    expect(find.text('3'), findsOneWidget);
+
+    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('product-image-26')), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('quantity-plus')).hitTestable());
+    final secondAdd = find.text('Agregar');
+    await tester.ensureVisible(secondAdd);
+    await tester.tap(secondAdd.hitTestable());
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(PageView), const Offset(500, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('3'), findsOneWidget);
+    final firstAdd = find.text('Agregar');
+    await tester.ensureVisible(firstAdd);
+    await tester.tap(firstAdd.hitTestable());
+    await tester.pumpAndSettle();
+
+    final items = container.read(carritoControllerProvider).items;
+    expect(items.map((item) => item.productoId), [26, 25]);
+    expect(items.map((item) => item.cantidad), [2, 3]);
+  });
 }
 
 ProviderContainer _container({
@@ -459,6 +507,16 @@ const _dynamicProduct = Producto(
   tipoProductoId: 4,
   tipoProducto: 'Alimento para mascota',
   urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
+);
+
+const _secondDynamicProduct = Producto(
+  id: 26,
+  descripcion: 'CROQUETAS PARA CACHORRO 12 KG',
+  presentacion: '12 KG',
+  servicioId: 9,
+  precioCentavos: 36000,
+  tipoProductoId: 4,
+  tipoProducto: 'Alimento para mascota',
 );
 
 const _stationaryProduct = Producto(

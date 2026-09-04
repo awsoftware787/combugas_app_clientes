@@ -190,7 +190,11 @@ class _PublicProductPageState extends State<_PublicProductPage> {
     if (_selected >= widget.group.products.length) _selected = 0;
     final product = widget.group.products[_selected];
     final label =
-        product.esCroqueta ? product.opcionCroqueta : product.descripcion;
+        product.esCroqueta && widget.group.products.length == 1
+            ? product.presentacion
+            : product.esCroqueta
+            ? product.opcionCroqueta
+            : product.descripcion;
     return _PublicProductCard(
       group: widget.group,
       product: product,
@@ -291,8 +295,7 @@ class _PublicProductCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (ProductOptionSelector.supports(product) ||
-              group.products.length > 1)
+          if (group.products.length > 1)
             ProductOptionSelector(
               products: group.products,
               selectedIndex: selectedIndex,

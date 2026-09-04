@@ -405,26 +405,35 @@ class _ProductPage extends ConsumerStatefulWidget {
   ConsumerState<_ProductPage> createState() => _ProductPageState();
 }
 
-class _ProductPageState extends ConsumerState<_ProductPage> {
+class _ProductPageState extends ConsumerState<_ProductPage>
+    with AutomaticKeepAliveClientMixin<_ProductPage> {
   int _quantity = 1;
   int _selected = 0;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (widget.products.isEmpty) {
       return const Center(child: Text('Producto no disponible.'));
     }
     if (_selected >= widget.products.length) _selected = 0;
     final product = widget.products[_selected];
     final label =
-        product.esCroqueta ? product.opcionCroqueta : product.descripcion;
+        product.esCroqueta && widget.products.length == 1
+            ? product.presentacion
+            : product.esCroqueta
+            ? product.opcionCroqueta
+            : product.descripcion;
     return ProductDisplayCard(
       product: product,
       title: widget.title,
       priceLabel: formatoMoneda(product.precioCentavos * _quantity),
       priceKey: const ValueKey('product-amount'),
       productSelector:
-          ProductOptionSelector.supports(product) || widget.products.length > 1
+          widget.products.length > 1
               ? ProductOptionSelector(
                 products: widget.products,
                 selectedIndex: _selected,

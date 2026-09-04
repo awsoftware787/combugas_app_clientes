@@ -118,6 +118,38 @@ void main() {
     },
   );
 
+  test('croquetas del mismo tipo conservan identidad por producto', () async {
+    final store = _Store();
+    final container = _container(store);
+    addTearDown(container.dispose);
+    final controller = container.read(carritoControllerProvider.notifier);
+
+    await controller.agregarProducto(
+      producto: _dynamicProduct,
+      cantidad: 1,
+      subcanalUsuario: 1,
+    );
+    await controller.agregarProducto(
+      producto: _anotherDynamicProduct,
+      cantidad: 2,
+      subcanalUsuario: 1,
+    );
+
+    expect(container.read(carritoControllerProvider).items, hasLength(2));
+    expect(
+      container
+          .read(carritoControllerProvider)
+          .items
+          .map((item) => item.productoId),
+      [25, 26],
+    );
+
+    await controller.eliminarLinea(0);
+    final remaining = container.read(carritoControllerProvider).items.single;
+    expect(remaining.productoId, 26);
+    expect(remaining.cantidad, 2);
+  });
+
   test('cantidad modificada con más se acumula al volver a agregar', () async {
     final store = _Store();
     final container = _container(store);
@@ -294,6 +326,15 @@ const _dynamicProduct = Producto(
   tipoProductoId: 4,
   tipoProducto: 'Alimento para mascota',
   urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
+);
+const _anotherDynamicProduct = Producto(
+  id: 26,
+  descripcion: 'CROQUETAS PARA CACHORRO 12 KG',
+  presentacion: '12 KG',
+  servicioId: 9,
+  precioCentavos: 36000,
+  tipoProductoId: 4,
+  tipoProducto: 'Alimento para mascota',
 );
 final _item = ItemPedido(
   productoId: 2,

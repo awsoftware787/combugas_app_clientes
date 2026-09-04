@@ -80,7 +80,7 @@ void main() {
     expect(find.byTooltip('Actualizar productos'), findsNothing);
   });
 
-  testWidgets('recorre los ocho grupos sin overflow en teléfono pequeño', (
+  testWidgets('recorre cada producto, incluidas croquetas, sin overflow', (
     tester,
   ) async {
     tester.view.devicePixelRatio = 1;
@@ -92,10 +92,10 @@ void main() {
     await tester.pumpWidget(harness.widget(initialLocation: '/productos'));
     await tester.pumpAndSettle();
 
-    const expectedProductIds = [2, 9, 4, 7, 8, 14, 20, 30];
+    const expectedProductIds = [2, 9, 4, 7, 8, 14, 20, 22, 23, 30];
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('1 / 8'), findsOneWidget);
+    expect(find.text('1 / 10'), findsOneWidget);
     await tester.drag(find.byType(ListView), const Offset(0, 500));
     await tester.pumpAndSettle();
     for (var index = 0; index < expectedProductIds.length; index++) {
@@ -103,10 +103,6 @@ void main() {
         find.byKey(ValueKey('product-image-${expectedProductIds[index]}')),
         findsOneWidget,
       );
-      if (index == 6) {
-        expect(find.byKey(const ValueKey('product-option-22')), findsOneWidget);
-        expect(find.byKey(const ValueKey('product-option-23')), findsOneWidget);
-      }
       expect(tester.takeException(), isNull);
       if (index < expectedProductIds.length - 1) {
         await tester.tap(find.byTooltip('Producto siguiente'));
@@ -116,7 +112,7 @@ void main() {
 
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
-    expect(find.text('8 / 8'), findsOneWidget);
+    expect(find.text('10 / 10'), findsOneWidget);
   });
 
   for (final screenSize in const [Size(390, 844), Size(430, 932)]) {
