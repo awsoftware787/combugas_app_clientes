@@ -126,15 +126,15 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 14),
-            Center(
-              child: SizedBox(
-                width: contentWidth,
-                child: const _ProductBenefits(),
-              ),
-            ),
-            const SizedBox(height: 28),
-            _ProductIndicator(current: _page + 1, total: catalog.length),
+            // const SizedBox(height: 14),
+            // Center(
+            //   child: SizedBox(
+            //     width: contentWidth,
+            //     child: const _ProductBenefits(),
+            //   ),
+            // ),
+            // const SizedBox(height: 28),
+            // _ProductIndicator(current: _page + 1, total: catalog.length),
           ],
           const SizedBox(height: 16),
           Center(
