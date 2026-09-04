@@ -71,6 +71,7 @@ flutter:
     - assets/app_icon/
     - assets/images/logos/
     - assets/images/products/
+    - assets/images/products/default.webp
     - assets/images/icons/
     - assets/images/map/
     - assets/images/misc/

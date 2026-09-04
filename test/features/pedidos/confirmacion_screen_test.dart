@@ -44,7 +44,7 @@ void main() {
       final image = tester.widget<Image>(
         find.byKey(const ValueKey('producto-2-imagen')),
       );
-      expect((image.image as AssetImage).assetName, AppAssets.productCylinder);
+      expect((image.image as AssetImage).assetName, AppAssets.productFallback);
       expect(
         tester
             .widget<Text>(find.byKey(const ValueKey('cart-item-quantity-0')))

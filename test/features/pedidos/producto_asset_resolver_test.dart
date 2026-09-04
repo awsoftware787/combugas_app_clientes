@@ -4,47 +4,33 @@ import 'package:combugas_clientes/features/pedidos/presentation/producto_asset_r
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('resuelve productos conocidos y fallback centralizado', () {
-    expect(_asset(ProductoIds.cilindro30), AppAssets.productCylinder);
-    expect(_asset(ProductoIds.cilindro45), AppAssets.productCylinder);
-    expect(_asset(ProductoIds.estacionario), AppAssets.productStationaryTank);
-    expect(_asset(ProductoIds.garrafonNatural), AppAssets.productWater);
-    expect(
-      _asset(ProductoIds.garrafonAlcalino),
-      AppAssets.productAlkalineWater,
-    );
-    expect(_asset(ProductoIds.sixNatural), AppAssets.productSixPack);
-    expect(_asset(ProductoIds.sixAlcalino), AppAssets.productAlkalineSixPack);
-    expect(_asset(999), AppAssets.productFallback);
-  });
+  test('todos los productos sin URL usan default.webp', () {
+    for (final id in <int>[
+      ProductoIds.cilindro30,
+      ProductoIds.cilindro45,
+      ProductoIds.estacionario,
+      ProductoIds.garrafonNatural,
+      ProductoIds.garrafonAlcalino,
+      ProductoIds.sixNatural,
+      ProductoIds.sixAlcalino,
+      999,
+    ]) {
+      expect(
+        ProductoAssetResolver.resolve(
+          productoId: id,
+          servicioId: ServicioIds.gas,
+        ),
+        AppAssets.productFallback,
+      );
+    }
 
-  test('croquetas dinámicas usan servicio y presentación', () {
     expect(
       ProductoAssetResolver.resolve(
         productoId: 20,
         servicioId: ServicioIds.croquetas,
         presentacion: 'BULTO ADULTO 20 KG',
       ),
-      AppAssets.productDogFoodBulk,
-    );
-    expect(
-      ProductoAssetResolver.resolve(
-        productoId: 21,
-        servicioId: ServicioIds.croquetas,
-        presentacion: 'BOLSA CACHORRO',
-      ),
-      AppAssets.productDogFoodBag,
-    );
-    expect(
-      ProductoAssetResolver.resolve(
-        productoId: 999,
-        servicioId: 0,
-        descripcion: 'BULTO DE 20KG',
-      ),
-      AppAssets.productDogFoodBulk,
+      AppAssets.productFallback,
     );
   });
 }
-
-String _asset(int id) =>
-    ProductoAssetResolver.resolve(productoId: id, servicioId: ServicioIds.gas);

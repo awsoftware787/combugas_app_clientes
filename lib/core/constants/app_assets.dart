@@ -36,8 +36,8 @@ abstract final class AppAssets {
   static const iconPaypal = 'assets/images/icons/ico_paypal.png';
   static const iconCard = 'assets/images/icons/ico_tarjeta.png';
 
-  /// Recurso seguro para productos dinámicos que todavía no tienen imagen.
-  static const productFallback = iconCart;
+  /// Recurso seguro para productos sin una imagen remota disponible.
+  static const productFallback = 'assets/images/products/default.webp';
 
   static const mapBothFuelTypes =
       'assets/images/map/marker_carburacionambos.png';
@@ -60,6 +60,7 @@ abstract final class AppAssets {
     productStationaryTank,
     productSixPack,
     productAlkalineSixPack,
+    productFallback,
     iconAlert,
     iconArrowRight,
     iconCall,

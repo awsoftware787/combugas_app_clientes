@@ -31,7 +31,7 @@ void main() {
     final image = tester.widget<Image>(
       find.byKey(const ValueKey('producto-2-imagen')),
     );
-    expect((image.image as AssetImage).assetName, AppAssets.productCylinder);
+    expect((image.image as AssetImage).assetName, AppAssets.productFallback);
     expect(find.text('CILINDRO 30 KG'), findsOneWidget);
     expect(find.text(r'$600.00'), findsNWidgets(2));
     final appBar = tester.widget<AppBar>(find.byType(AppBar));
