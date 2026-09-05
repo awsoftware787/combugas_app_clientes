@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:combugas_clientes/core/constants/app_assets.dart';
 import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
@@ -10,6 +12,7 @@ import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
+import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:combugas_clientes/features/pedidos/screens/carrito_screen.dart';
 import 'package:combugas_clientes/features/pedidos/screens/confirmacion_screen.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +20,87 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets(
+    'bloquea confirmar hasta actualizar precios y persistir el recálculo',
+    (tester) async {
+      final repository = _PedidoRepository();
+      final prices = Completer<List<Producto>>();
+      repository.prices = prices.future;
+      final store = _CartStore();
+      final saved = Completer<void>();
+      store.pendingSave = saved.future;
+      final container = ProviderContainer(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(_AuthRepository()),
+          direccionRepositoryProvider.overrideWithValue(_DirectionRepository()),
+          pedidoRepositoryProvider.overrideWithValue(repository),
+          carritoStoreProvider.overrideWithValue(store),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(direccionControllerProvider.notifier).load();
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: ConfirmacionScreen()),
+        ),
+      );
+      final button = find.byKey(const ValueKey('confirm-order'));
+      expect(tester.widget<FilledButton>(button).onPressed, isNull);
+      prices.complete(const [
+        Producto(
+          id: 2,
+          descripcion: 'CILINDRO 30 KG',
+          presentacion: '30 KG',
+          servicioId: 1,
+          precioCentavos: 65000,
+        ),
+      ]);
+      await tester.pump();
+      expect(tester.widget<FilledButton>(button).onPressed, isNull);
+      saved.complete();
+      await tester.pumpAndSettle();
+      expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+      expect(container.read(carritoControllerProvider).totalCentavos, 130000);
+      expect(store.items.single.cantidad, 2);
+      expect(store.items.single.importeCentavos, 130000);
+    },
+  );
+
+  testWidgets('consulta fallida conserva carrito y permite reintentar', (
+    tester,
+  ) async {
+    final repository = _PedidoRepository();
+    final prices = Completer<List<Producto>>();
+    repository.prices = prices.future;
+    final store = _CartStore();
+    final container = ProviderContainer(
+      overrides: [
+        authRepositoryProvider.overrideWithValue(_AuthRepository()),
+        direccionRepositoryProvider.overrideWithValue(_DirectionRepository()),
+        pedidoRepositoryProvider.overrideWithValue(repository),
+        carritoStoreProvider.overrideWithValue(store),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(direccionControllerProvider.notifier).load();
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ConfirmacionScreen()),
+      ),
+    );
+    prices.completeError(StateError('sin conexión'));
+    await tester.pumpAndSettle();
+    final button = find.byKey(const ValueKey('confirm-order'));
+    expect(tester.widget<FilledButton>(button).onPressed, isNull);
+    expect(store.items, [_item]);
+    repository.prices = null;
+    await tester.scrollUntilVisible(find.text('Reintentar'), 300);
+    await tester.tap(find.text('Reintentar'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+  });
   testWidgets(
     'muestra dirección, producto con icono, total, pago y confirmar',
     (tester) async {
@@ -241,6 +325,19 @@ void main() {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
+  Future<List<Producto>>? prices;
+  @override
+  Future<List<Producto>> getPrecios() async =>
+      prices ??
+      Future.value(const [
+        Producto(
+          id: 2,
+          descripcion: 'CILINDRO 30 KG',
+          presentacion: '30 KG',
+          servicioId: 1,
+          precioCentavos: 60000,
+        ),
+      ]);
   @override
   Future<List<TiempoFase>> getTiempos() async => const [
     TiempoFase(id: 2, tiempo: '45', unidad: 'Minutos'),
@@ -277,12 +374,16 @@ final class _DirectionRepository implements DireccionRepositoryContract {
 }
 
 final class _CartStore implements CarritoStore {
+  Future<void>? pendingSave;
   List<ItemPedido> items = [_item];
 
   @override
   List<ItemPedido> read() => items;
   @override
-  Future<void> save(List<ItemPedido> value) async => items = [...value];
+  Future<void> save(List<ItemPedido> value) async {
+    await pendingSave;
+    items = [...value];
+  }
 }
 
 final _item = ItemPedido(

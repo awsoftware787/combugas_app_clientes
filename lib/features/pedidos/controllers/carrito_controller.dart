@@ -125,6 +125,27 @@ final class CarritoController extends Notifier<CarritoState> {
 
   Future<void> clear() => _replace(const []);
 
+  Future<void> actualizarPrecios(List<Producto> productos) async {
+    final porId = {for (final producto in productos) producto.id: producto};
+    final items = state.items
+        .map((item) {
+          final producto = porId[item.productoId];
+          if (producto == null || producto.precioCentavos <= 0) {
+            throw StateError('Precio no disponible para ${item.productoId}');
+          }
+          final importe = (item.cantidad * producto.precioCentavos).round();
+          return item.copyWith(
+            importeCentavos: importe,
+            descripcion:
+                producto.esEstacionario
+                    ? '${item.cantidad.toStringAsFixed(2)} litros gas estacionario = ${formatoMoneda(importe)}'
+                    : producto.descripcion,
+          );
+        })
+        .toList(growable: false);
+    await _replace(items);
+  }
+
   Future<void> eliminarLinea(int index) async {
     if (index < 0 || index >= state.items.length) return;
     final items = [...state.items]..removeAt(index);

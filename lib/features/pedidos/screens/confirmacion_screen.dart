@@ -23,6 +23,8 @@ class ConfirmacionScreen extends ConsumerStatefulWidget {
 
 class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   String? _accessKey;
+  bool _preparing = true;
+  String? _preparationError;
   late final bool _hasActiveOrder;
 
   @override
@@ -32,11 +34,37 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
         ref.read(direccionControllerProvider).selected?.tienePedido ?? false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.read(catalogoProductosControllerProvider.notifier).load(refresh: true);
-      ref
+      _prepare();
+    });
+  }
+
+  Future<void> _prepare() async {
+    setState(() {
+      _preparing = true;
+      _preparationError = null;
+    });
+    try {
+      await ref
+          .read(catalogoProductosControllerProvider.notifier)
+          .load(refresh: true);
+      if (!mounted) return;
+      final catalog = ref.read(catalogoProductosControllerProvider);
+      if (catalog.error != null) throw StateError(catalog.error!);
+      await ref
+          .read(carritoControllerProvider.notifier)
+          .actualizarPrecios(catalog.productos);
+      if (!mounted) return;
+      await ref
           .read(confirmacionControllerProvider.notifier)
           .prepare(ref.read(carritoControllerProvider).items);
-    });
+    } catch (_) {
+      if (mounted) {
+        _preparationError =
+            'No se pudieron actualizar los precios. Intenta nuevamente.';
+      }
+    } finally {
+      if (mounted) setState(() => _preparing = false);
+    }
   }
 
   @override
@@ -91,7 +119,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                       controls: CartItemControls(
                         item: entry.value,
                         index: entry.key,
-                        enabled: !confirmation.saving,
+                        enabled: !confirmation.saving && !_preparing,
                       ),
                     ),
                   ),
@@ -144,7 +172,8 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                     : 'Clave de acceso: $_accessKey',
               ),
             ),
-            if (confirmation.status == ConfirmacionStatus.loadingTime)
+            if (_preparing ||
+                confirmation.status == ConfirmacionStatus.loadingTime)
               const Padding(
                 padding: EdgeInsets.all(12),
                 child: Center(child: CircularProgressIndicator()),
@@ -165,12 +194,17 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
+            if (_preparationError != null) ...[
+              Text(_preparationError!),
+              TextButton(onPressed: _prepare, child: const Text('Reintentar')),
+            ],
             const SizedBox(height: 8),
           ],
         ),
         bottomNavigationBar: _ConfirmationActions(
           saving: confirmation.saving,
-          enabled: cart.items.isNotEmpty,
+          enabled:
+              cart.items.isNotEmpty && !_preparing && _preparationError == null,
           hasActiveOrder: _hasActiveOrder,
           onClear: _clearCart,
           onConfirm: _confirm,
@@ -180,7 +214,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   }
 
   Future<void> _confirm() async {
-    if (_hasActiveOrder) return;
+    if (_hasActiveOrder || _preparing || _preparationError != null) return;
     final accepted = await showDialog<bool>(
       context: context,
       builder:
