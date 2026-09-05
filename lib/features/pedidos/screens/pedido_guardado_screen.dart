@@ -33,7 +33,7 @@ class PedidoGuardadoScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               const Text(
-                'Tu pedido ha sido guardado correctamente.',
+                'Tu pedido ha sido generado correctamente.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.white, fontSize: 20),
               ),
