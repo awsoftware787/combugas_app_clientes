@@ -44,7 +44,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
   void initState() {
     super.initState();
     Future.microtask(
-      () => ref.read(productosControllerProvider.notifier).load(),
+      () => ref.read(productosControllerProvider.notifier).load(refresh: true),
     );
   }
 

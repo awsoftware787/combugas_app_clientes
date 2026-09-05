@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../controllers/carrito_controller.dart';
+import '../controllers/catalogo_productos_controller.dart';
 import '../controllers/confirmacion_controller.dart';
 import '../models/item_pedido.dart';
 import '../models/metodo_pago.dart';
@@ -31,6 +32,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
         ref.read(direccionControllerProvider).selected?.tienePedido ?? false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
+      ref.read(catalogoProductosControllerProvider.notifier).load(refresh: true);
       ref
           .read(confirmacionControllerProvider.notifier)
           .prepare(ref.read(carritoControllerProvider).items);

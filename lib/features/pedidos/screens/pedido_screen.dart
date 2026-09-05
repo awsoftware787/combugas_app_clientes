@@ -35,7 +35,7 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     Future.microtask(() async {
       await Future.wait([
         ref.read(direccionControllerProvider.notifier).load(),
-        ref.read(pedidoControllerProvider.notifier).load(),
+        ref.read(pedidoControllerProvider.notifier).load(refresh: true),
       ]);
       if (!mounted) return;
       final hour = DateTime.now().hour;
@@ -229,17 +229,26 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
 
   Future<void> _addAddress() async {
     await context.push('/direcciones/nueva');
+    if (mounted) {
+      await ref.read(pedidoControllerProvider.notifier).load(refresh: true);
+    }
     if (mounted) await ref.read(direccionControllerProvider.notifier).load();
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     if (!_hasAddress()) return;
-    context.push('/confirmacion');
+    await context.push('/confirmacion');
+    if (mounted) {
+      await ref.read(pedidoControllerProvider.notifier).load(refresh: true);
+    }
   }
 
-  void _openCart() {
+  Future<void> _openCart() async {
     if (!_hasAddress()) return;
-    context.push('/carrito');
+    await context.push('/carrito');
+    if (mounted) {
+      await ref.read(pedidoControllerProvider.notifier).load(refresh: true);
+    }
   }
 
   // void _openCart() {
