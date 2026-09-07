@@ -37,7 +37,7 @@ abstract final class AppAssets {
   static const iconCard = 'assets/images/icons/ico_tarjeta.png';
 
   /// Recurso seguro para productos sin una imagen remota disponible.
-  static const productFallback = 'assets/images/products/default.webp';
+  static const productFallback = 'assets/images/products/default.png';
 
   static const mapBothFuelTypes =
       'assets/images/map/marker_carburacionambos.png';

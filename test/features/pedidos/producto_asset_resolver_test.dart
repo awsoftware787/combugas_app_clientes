@@ -4,7 +4,7 @@ import 'package:combugas_clientes/features/pedidos/presentation/producto_asset_r
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('todos los productos sin URL usan default.webp', () {
+  test('todos los productos sin URL usan default.png', () {
     for (final id in <int>[
       ProductoIds.cilindro30,
       ProductoIds.cilindro45,

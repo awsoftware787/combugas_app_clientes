@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   for (final url in const <String?>[null, '', '   ', 'imagen-invalida']) {
-    testWidgets('usa default.webp cuando la URL es ${url ?? 'null'}', (
+    testWidgets('usa default.png cuando la URL es ${url ?? 'null'}', (
       tester,
     ) async {
       await tester.pumpWidget(
