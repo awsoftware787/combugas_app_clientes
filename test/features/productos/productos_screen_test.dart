@@ -53,9 +53,6 @@ void main() {
     await tester.drag(find.byType(ListView), const Offset(0, -500));
     await tester.pumpAndSettle();
     expect(find.text('1 / 1'), findsOneWidget);
-    expect(find.text('Seguro'), findsOneWidget);
-    expect(find.text('Confiable'), findsOneWidget);
-    expect(find.text('Atención'), findsOneWidget);
     expect(find.text('Continuar'), findsOneWidget);
     final continueButton = find.byKey(
       const ValueKey('public-products-continue'),

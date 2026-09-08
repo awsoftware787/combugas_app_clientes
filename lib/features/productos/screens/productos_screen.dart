@@ -126,6 +126,8 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 28),
+            _ProductIndicator(current: _page + 1, total: catalog.length),
           ],
           const SizedBox(height: 16),
           Center(
@@ -378,6 +380,43 @@ class _CarouselArrow extends StatelessWidget {
         child: Image.asset(asset, width: 22, height: 22),
       ),
     ),
+  );
+}
+
+class _ProductIndicator extends StatelessWidget {
+  const _ProductIndicator({required this.current, required this.total});
+
+  final int current;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      const _IndicatorDot(color: AppColors.accent),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Text(
+          '$current / $total',
+          key: const ValueKey('public-products-indicator'),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+      const _IndicatorDot(color: AppColors.secondary),
+    ],
+  );
+}
+
+class _IndicatorDot extends StatelessWidget {
+  const _IndicatorDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 9,
+    height: 9,
+    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
   );
 }
 
