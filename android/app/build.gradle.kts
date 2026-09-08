@@ -1,4 +1,6 @@
 import java.util.Properties
+import com.android.build.api.dsl.ApplicationExtension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
@@ -20,19 +22,23 @@ val mapsApiKey = providers
     .orElse(localProperties.getProperty("MAPS_API_KEY") ?: "MISSING_API_KEY")
     .get()
 
+// Keep the android block discoverable by Flutter while using the public AGP API.
+fun android(configure: ApplicationExtension.() -> Unit) {
+    extensions.configure<ApplicationExtension>(configure)
+}
+
 android {
     namespace = "com.example.combugas_clientes"
     compileSdk = flutter.compileSdkVersion
-    // ndkVersion = flutter.ndkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
+
+    buildFeatures {
+        resValues = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     defaultConfig {
@@ -53,6 +59,12 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
