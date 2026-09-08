@@ -353,7 +353,7 @@ class _DireccionFormState extends State<DireccionForm> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<Cerrada>(
-                  value: _cerrada,
+                  initialValue: _cerrada,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Cerrada (opcional)',

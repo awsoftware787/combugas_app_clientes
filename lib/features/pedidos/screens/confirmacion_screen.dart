@@ -133,29 +133,34 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            ...MetodoPago.values.map(
-              (payment) => Card(
-                child: RadioListTile<MetodoPago>(
-                  value: payment,
-                  groupValue: confirmation.metodoPago,
-                  onChanged:
-                      confirmation.saving
-                          ? null
-                          : (value) {
-                            if (value != null) {
-                              ref
-                                  .read(confirmacionControllerProvider.notifier)
-                                  .selectPayment(value);
-                            }
-                          },
-                  secondary: Image.asset(
-                    payment.asset,
-                    width: 46,
-                    height: 46,
-                    fit: BoxFit.contain,
-                  ),
-                  title: Text(payment.descripcion),
-                ),
+            RadioGroup<MetodoPago>(
+              groupValue: confirmation.metodoPago,
+              onChanged: (value) {
+                if (!confirmation.saving && value != null) {
+                  ref
+                      .read(confirmacionControllerProvider.notifier)
+                      .selectPayment(value);
+                }
+              },
+              child: Column(
+                children:
+                    MetodoPago.values
+                        .map(
+                          (payment) => Card(
+                            child: RadioListTile<MetodoPago>(
+                              value: payment,
+                              enabled: !confirmation.saving,
+                              secondary: Image.asset(
+                                payment.asset,
+                                width: 46,
+                                height: 46,
+                                fit: BoxFit.contain,
+                              ),
+                              title: Text(payment.descripcion),
+                            ),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
             const SizedBox(height: 8),

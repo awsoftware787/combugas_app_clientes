@@ -324,7 +324,7 @@ class _DireccionSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<Direccion>(
-          value: state.selected,
+          initialValue: state.selected,
           isExpanded: true,
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.home, color: AppColors.accent),
