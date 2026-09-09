@@ -25,6 +25,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   String? _accessKey;
   bool _preparing = true;
   String? _preparationError;
+  Set<int> _unavailableProductIds = {};
   late final bool _hasActiveOrder;
 
   @override
@@ -42,6 +43,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
     setState(() {
       _preparing = true;
       _preparationError = null;
+      _unavailableProductIds = {};
     });
     try {
       await ref
@@ -50,6 +52,17 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
       if (!mounted) return;
       final catalog = ref.read(catalogoProductosControllerProvider);
       if (catalog.error != null) throw StateError(catalog.error!);
+      final availableIds = catalog.productos.map((product) => product.id).toSet();
+      _unavailableProductIds = ref
+          .read(carritoControllerProvider)
+          .items
+          .map((item) => item.productoId)
+          .where((id) => !availableIds.contains(id))
+          .toSet();
+      if (_unavailableProductIds.isNotEmpty) {
+        _preparationError = 'Un producto no se encuentra disponible.';
+        return;
+      }
       await ref
           .read(carritoControllerProvider.notifier)
           .actualizarPrecios(catalog.productos);
@@ -112,6 +125,10 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
             else
               ...cart.items.asMap().entries.map(
                 (entry) => Card(
+                  color:
+                      _unavailableProductIds.contains(entry.value.productoId)
+                          ? Colors.red.shade100
+                          : null,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: CartItemTile(
