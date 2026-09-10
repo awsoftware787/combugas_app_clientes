@@ -82,23 +82,9 @@ List<ProductCatalogGroup> buildProductCatalog(List<Producto> products) {
     add('producto-${product.id}', product.descripcion, <Producto>[product]);
   }
 
-  // Los productos futuros se agrupan con los metadatos del servicio. Si el
-  // backend aún no los envía, se conserva un grupo genérico sin ocultarlos.
-  final dynamicGroups = <String, List<Producto>>{};
-  final dynamicTitles = <String, String>{};
+  // Cada producto dinamico conserva una tarjeta independiente por ID.
   for (final product in ordered.where((item) => !consumed.contains(item.id))) {
-    final typeName = product.tipoProducto?.trim();
-    final key =
-        product.tipoProductoId != null
-            ? 'servicio-${product.servicioId}-tipo-${product.tipoProductoId}'
-            : typeName?.isNotEmpty == true
-            ? 'servicio-${product.servicioId}-tipo-${typeName!.toLowerCase()}'
-            : 'servicio-${product.servicioId}';
-    dynamicGroups.putIfAbsent(key, () => <Producto>[]).add(product);
-    dynamicTitles[key] = typeName?.isNotEmpty == true ? typeName! : 'Productos';
-  }
-  for (final entry in dynamicGroups.entries) {
-    add(entry.key, dynamicTitles[entry.key]!, entry.value);
+    add('producto-${product.id}', product.descripcion, <Producto>[product]);
   }
 
   // El catálogo se presenta por servicio. El índice original desempata para
