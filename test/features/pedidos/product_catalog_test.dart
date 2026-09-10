@@ -115,7 +115,7 @@ void main() {
   });
 
   test(
-    'ordena los grupos por servicio y conserva el orden dentro de cada uno',
+    'ordena productos independientes por servicio y conserva su orden original',
     () {
       const products = [
         Producto(
@@ -163,6 +163,12 @@ void main() {
 
       final catalog = buildProductCatalog(products);
 
+      expect(
+        catalog
+            .where((group) => group.key != 'cilindros')
+            .map((group) => group.products.length),
+        everyElement(1),
+      );
       expect(catalog.map((group) => group.products.first.servicioId), [
         1,
         2,
@@ -174,7 +180,10 @@ void main() {
         catalog
             .where((group) => group.products.first.servicioId == 2)
             .map((group) => group.title),
-        ['Segundo grupo', 'Primer grupo'],
+        [
+          'Segundo producto del servicio 2',
+          'Primer producto del servicio 2',
+        ],
       );
     },
   );
