@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:xml/xml.dart';
+
+import '../../../core/network/network_exception.dart';
 import '../../../core/constants/service_endpoints.dart';
 import '../../../core/constants/soap_constants.dart';
 import '../../../core/network/soap_service.dart';
@@ -77,6 +82,55 @@ final class ClientesSoapService
   final VerificationSoapParser _verificationParser;
   final PerfilSoapParser _perfilParser;
   final Uri? _endpoint;
+
+  Future<({bool permiteEntrega, String? mensaje})> validarFechaEntrega() async {
+    final response = await _soapService.call(
+      endpoint: _endpoint ?? ServiceEndpoints.clientes,
+      namespace: SoapConstants.namespace,
+      methodName: 'ValidarFechaEntrega',
+    );
+    try {
+      final result = response.descendants.whereType<XmlElement>().firstWhere(
+        (element) => element.name.local == 'ValidarFechaEntregaResult',
+      );
+      String? value(String name) {
+        final matches = result.descendants.whereType<XmlElement>().where(
+          (element) => element.name.local == name,
+        );
+        return matches.isEmpty ? null : matches.first.innerText.trim();
+      }
+
+      final succeeded = value('Result');
+      if (succeeded != null && succeeded.toLowerCase() != 'true') {
+        throw WebServiceException(
+          value('Message') ?? 'No fue posible validar la entrega.',
+        );
+      }
+      final data = value('Data');
+      final payload =
+          data != null
+              ? jsonDecode(data) as Map<String, dynamic>
+              : result.childElements.isEmpty
+              ? jsonDecode(result.innerText) as Map<String, dynamic>
+              : <String, dynamic>{
+                'permite_entrega': value('permite_entrega'),
+                'mensaje': value('mensaje'),
+              };
+      final allowed = '${payload['permite_entrega']}'.toLowerCase();
+      if (allowed != 'true' && allowed != 'false') {
+        throw const InvalidSoapResponseException();
+      }
+      final message = payload['mensaje'] as String?;
+      return (
+        permiteEntrega: allowed == 'true',
+        mensaje: message?.trim().isNotEmpty == true ? message : null,
+      );
+    } on NetworkException {
+      rethrow;
+    } catch (error) {
+      throw InvalidSoapResponseException(error);
+    }
+  }
 
   @override
   Future<LoginResult> login({

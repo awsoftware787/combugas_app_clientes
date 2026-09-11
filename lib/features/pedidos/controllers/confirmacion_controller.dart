@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/network/network_exception.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../data/pedido_repository.dart';
 import '../data/ultimo_pedido_storage.dart';
@@ -152,6 +153,17 @@ final class ConfirmacionController extends Notifier<ConfirmacionState> {
       clearMessage: true,
     );
     try {
+      final delivery =
+          await ref.read(clientesSoapServiceProvider).validarFechaEntrega();
+      if (!delivery.permiteEntrega) {
+        state = state.copyWith(
+          status: ConfirmacionStatus.error,
+          message:
+              delivery.mensaje ??
+              'Hoy no contamos con servicio de entrega de pedidos.',
+        );
+        return null;
+      }
       final result = await ref
           .read(pedidoRepositoryProvider)
           .createOrder(request);

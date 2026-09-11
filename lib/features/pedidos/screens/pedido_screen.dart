@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
+import '../../../core/network/network_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../../direcciones/models/direccion.dart';
 import '../controllers/carrito_controller.dart';
@@ -32,6 +34,9 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _validarFechaEntrega();
+    });
     Future.microtask(() async {
       await Future.wait([
         ref.read(direccionControllerProvider.notifier).load(),
@@ -49,6 +54,40 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _validarFechaEntrega() async {
+    try {
+      final validation =
+          await ref.read(clientesSoapServiceProvider).validarFechaEntrega();
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      if (!validation.permiteEntrega) {
+        await showDialog<void>(
+          context: context,
+          builder:
+              (dialogContext) => AlertDialog(
+                title: const Text('Importante'),
+                content: Text(
+                  validation.mensaje ??
+                      'Hoy no contamos con servicio de entrega de pedidos.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Aceptar'),
+                  ),
+                ],
+              ),
+        );
+      }
+    } catch (error) {
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+      _message(
+        error is NetworkException
+            ? error.message
+            : 'Ocurrió un error inesperado. Inténtalo nuevamente.',
+      );
+    }
   }
 
   @override
