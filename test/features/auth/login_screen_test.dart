@@ -49,8 +49,8 @@ void main() {
     final router = GoRouter(
       initialLocation: '/login',
       routes: [
-        GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
-        GoRoute(path: '/pedido', builder: (_, __) => const Text('PEDIDO')),
+        GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
+        GoRoute(path: '/pedido', builder: (_, _) => const Text('PEDIDO')),
       ],
     );
     addTearDown(router.dispose);
