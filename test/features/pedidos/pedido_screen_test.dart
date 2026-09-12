@@ -1,5 +1,8 @@
 import 'dart:async';
 
+import 'package:combugas_clientes/core/network/soap_http_client.dart';
+import 'package:combugas_clientes/core/network/soap_service.dart';
+import 'package:combugas_clientes/features/auth/data/clientes_soap_service.dart';
 import 'package:combugas_clientes/core/theme/app_colors.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
 import 'package:combugas_clientes/features/auth/models/login_result.dart';
@@ -20,6 +23,8 @@ import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 void main() {
   testWidgets('producto nuevo aparece y puede agregarse sin reconocer su ID', (
@@ -43,6 +48,8 @@ void main() {
     expect(find.text('15 KG'), findsOneWidget);
     expect(find.byKey(const ValueKey('product-image-25')), findsOneWidget);
     expect(find.text(r'$340.00'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('product-add')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('product-add')));
     await tester.pumpAndSettle();
 
@@ -97,7 +104,7 @@ void main() {
       );
     }
 
-    final add = find.text('Agregar').hitTestable();
+    final add = find.text('Agregar');
     final addButton = tester.widget<FilledButton>(
       find.ancestor(
         of: add,
@@ -109,6 +116,7 @@ void main() {
       AppColors.addButtonGreen,
     );
     await tester.ensureVisible(add);
+    await tester.pumpAndSettle();
     await tester.tap(add);
     await tester.pumpAndSettle();
     expect(container.read(carritoControllerProvider).lineas, 1);
@@ -194,6 +202,8 @@ void main() {
       AppColors.secondary,
     );
     await tester.enterText(find.byType(TextField), '100');
+    await tester.ensureVisible(find.text('Agregar'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Agregar').hitTestable());
     await tester.pumpAndSettle();
 
@@ -250,9 +260,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byType(PageView));
+    await tester.pumpAndSettle();
+
     for (var page = 0; page < 3; page++) {
-      final plus = find.byKey(const ValueKey('quantity-plus')).hitTestable();
-      await tester.ensureVisible(plus);
+      final plus = find.byKey(const ValueKey('quantity-plus'));
       for (var index = 0; index < 3; index++) {
         await tester.tap(plus);
         await tester.pump();
@@ -374,7 +386,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byKey(const ValueKey('quantity-plus')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('quantity-plus')).hitTestable());
+    await tester.ensureVisible(find.byKey(const ValueKey('quantity-plus')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('quantity-plus')).hitTestable());
     await tester.pump();
     expect(find.text('3'), findsOneWidget);
@@ -384,6 +400,8 @@ void main() {
     expect(find.byKey(const ValueKey('product-image-26')), findsOneWidget);
     expect(find.text('1'), findsOneWidget);
 
+    await tester.ensureVisible(find.byKey(const ValueKey('quantity-plus')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('quantity-plus')).hitTestable());
     final secondAdd = find.text('Agregar');
     await tester.ensureVisible(secondAdd);
@@ -412,6 +430,25 @@ ProviderContainer _container({
 }) => ProviderContainer(
   overrides: [
     authRepositoryProvider.overrideWithValue(_AuthRepository()),
+    clientesSoapServiceProvider.overrideWith((ref) {
+      final service = ClientesSoapService(
+        endpoint: Uri.parse('https://example.test/clientes.asmx'),
+        soapService: SoapService(
+          httpClient: SoapHttpClient(
+            client: MockClient(
+              (request) async => http.Response(
+                '<ValidarFechaEntregaResult>'
+                '<permite_entrega>true</permite_entrega>'
+                '</ValidarFechaEntregaResult>',
+                200,
+              ),
+            ),
+          ),
+        ),
+      );
+      ref.onDispose(service.close);
+      return service;
+    }),
     direccionRepositoryProvider.overrideWithValue(
       _DirectionRepository(directions, loadFuture: directionsFuture),
     ),

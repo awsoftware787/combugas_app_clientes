@@ -38,7 +38,8 @@ String buildDireccionGeocodingQuery({
 }
 
 Future<LatLng?> geocodeDireccion(String address) async {
-  final locations = await locationFromAddress(address);
+  final geocoding = Geocoding();
+  final locations = await geocoding.locationFromAddress(address);
   if (locations.isEmpty) return null;
   return LatLng(locations.first.latitude, locations.first.longitude);
 }

@@ -56,7 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           context: context,
           builder:
               (context) => AlertDialog(
-                title: const Text('Importante'),
+                title: const Text('Aviso'),
                 content: Text(result.message),
                 actions: [
                   TextButton(

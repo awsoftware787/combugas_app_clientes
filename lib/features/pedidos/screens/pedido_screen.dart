@@ -66,10 +66,10 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
           context: context,
           builder:
               (dialogContext) => AlertDialog(
-                title: const Text('Importante'),
+                title: const Text('Aviso'),
                 content: Text(
                   validation.mensaje ??
-                      'Hoy no contamos con servicio de entrega de pedidos.',
+                      'El día de hoy no contamos con servicio de entrega de pedidos.',
                 ),
                 actions: [
                   TextButton(
