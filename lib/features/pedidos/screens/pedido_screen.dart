@@ -56,32 +56,136 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     super.dispose();
   }
 
+  // Future<void> _validarFechaEntrega() async {
+  //   try {
+  //     final validation =
+  //         await ref.read(clientesSoapServiceProvider).validarFechaEntrega();
+  //     if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+  //     if (!validation.permiteEntrega) {
+  //       await showDialog<void>(
+  //         context: context,
+  //         builder:
+  //             (dialogContext) => AlertDialog(
+  //               title: const Text(
+  //                 '¡Aviso!',
+  //                 textAlign: TextAlign.center,
+  //                 style: TextStyle(
+  //                   color: Colors.blueAccent,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               content: Text(
+  //                 validation.mensaje ??
+  //                     'El día de hoy no contamos con servicio de entrega de pedidos.',
+  //                 textAlign: TextAlign.center,
+  //               ),
+  //               actions: [
+  //                 TextButton(
+  //                   onPressed: () => Navigator.pop(dialogContext),
+  //                   child: const Text('Aceptar'),
+  //                 ),
+  //               ],
+  //             ),
+  //       );
+  //     }
+  //   } catch (error) {
+  //     if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+  //     _message(
+  //       error is NetworkException
+  //           ? error.message
+  //           : 'Ocurrió un error inesperado. Inténtalo nuevamente.',
+  //     );
+  //   }
+  // }
+
   Future<void> _validarFechaEntrega() async {
     try {
       final validation =
           await ref.read(clientesSoapServiceProvider).validarFechaEntrega();
+
       if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+
       if (!validation.permiteEntrega) {
         await showDialog<void>(
           context: context,
+          barrierDismissible: true,
           builder:
-              (dialogContext) => AlertDialog(
-                title: const Text('Aviso'),
-                content: Text(
-                  validation.mensaje ??
-                      'El día de hoy no contamos con servicio de entrega de pedidos.',
+              (dialogContext) => Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(dialogContext),
-                    child: const Text('Aceptar'),
+                insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFF3E0),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.event_busy_rounded,
+                          color: Color(0xFFE65100),
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Sin servicio por hoy',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2D2D2D),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        validation.mensaje ??
+                            'Hoy no contamos con servicio de entrega de pedidos. Te invitamos a intentarlo nuevamente en otro momento.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFB71C1C),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Entendido',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
         );
       }
     } catch (error) {
       if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+
       _message(
         error is NetworkException
             ? error.message
