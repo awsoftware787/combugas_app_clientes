@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -42,10 +41,6 @@ class _CarburacionesScreenState extends ConsumerState<CarburacionesScreen> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: const [SystemUiOverlay.top],
-    );
     Future.microtask(() async {
       await ref.read(carburacionesControllerProvider.notifier).load();
       try {
@@ -55,12 +50,6 @@ class _CarburacionesScreenState extends ConsumerState<CarburacionesScreen> {
         // La ubicación es opcional; los puntos deben seguir visibles.
       }
     });
-  }
-
-  @override
-  void dispose() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    super.dispose();
   }
 
   @override
