@@ -61,6 +61,7 @@ class ProductDisplayCard extends StatelessWidget {
           Expanded(
             child: ProductoIcono.producto(
               producto: product,
+              showLoadingSkeleton: true,
               imageKey: ValueKey('product-image-${product.id}'),
               fit: BoxFit.contain,
             ),
