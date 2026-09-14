@@ -2,5 +2,5 @@
     "gradle.nestedProjects": [
         "android"
     ],
-    "cmake.sourceDirectory": "C:/Users/Carlitos/Documents/Proyectos/Combugas/Proyects/combugas_app_clientes/windows"
+    "java.import.gradle.enabled": false
 }
