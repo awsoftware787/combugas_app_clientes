@@ -31,7 +31,12 @@ final class CarritoController extends Notifier<CarritoState> {
     required Producto producto,
     required int cantidad,
     required int subcanalUsuario,
+    MontosMinimos minimos = const MontosMinimos.empty(),
   }) async {
+    final error = minimos.validarCantidad(producto, cantidad);
+    if (error != null) {
+      return AgregarResultado(agregado: false, mensaje: error);
+    }
     if (producto.esAgua && subcanalUsuario != 1) {
       return const AgregarResultado(
         agregado: false,

@@ -366,6 +366,8 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         title: group.title,
         products: group.products,
         subchannel: subchannel,
+        minimums: state.montosMinimos,
+        pricesRevision: state.revisionPrecios,
       );
     }).toList();
   }
@@ -548,10 +550,14 @@ class _ProductPage extends ConsumerStatefulWidget {
     required this.title,
     required this.products,
     required this.subchannel,
+    required this.minimums,
+    required this.pricesRevision,
   });
   final String title;
   final List<Producto> products;
   final int subchannel;
+  final MontosMinimos minimums;
+  final int pricesRevision;
 
   @override
   ConsumerState<_ProductPage> createState() => _ProductPageState();
@@ -561,6 +567,40 @@ class _ProductPageState extends ConsumerState<_ProductPage>
     with AutomaticKeepAliveClientMixin<_ProductPage> {
   int _quantity = 1;
   int _selected = 0;
+
+  int get _initialQuantity =>
+      widget.products.isEmpty
+          ? 1
+          : widget.minimums.cantidadInicial(widget.products[_selected]);
+
+  @override
+  void initState() {
+    super.initState();
+    _quantity = _initialQuantity;
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProductPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_selected >= widget.products.length) _selected = 0;
+    if (oldWidget.pricesRevision != widget.pricesRevision &&
+        widget.products.isNotEmpty &&
+        widget.products[_selected].esCroqueta2Kg) {
+      _quantity = _initialQuantity;
+    }
+  }
+
+  void _decrease(Producto product) {
+    final quantity = _quantity - widget.minimums.incremento(product);
+    final error = widget.minimums.validarCantidad(product, quantity);
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    if (quantity > 0) setState(() => _quantity = quantity);
+  }
 
   @override
   bool get wantKeepAlive => true;
@@ -589,7 +629,11 @@ class _ProductPageState extends ConsumerState<_ProductPage>
               ? ProductOptionSelector(
                 products: widget.products,
                 selectedIndex: _selected,
-                onSelected: (value) => setState(() => _selected = value),
+                onSelected:
+                    (value) => setState(() {
+                      _selected = value;
+                      _quantity = _initialQuantity;
+                    }),
                 layout: ProductOptionSelectorLayout.segments,
               )
               : Text(label, textAlign: TextAlign.center),
@@ -600,9 +644,14 @@ class _ProductPageState extends ConsumerState<_ProductPage>
             child: _QuantitySelector(
               quantity: _quantity,
               onDecrease:
-                  _quantity > 1 ? () => setState(() => _quantity--) : null,
-              onIncrease: () => setState(() => _quantity++),
-              onReset: () => setState(() => _quantity = 1),
+                  product.esCroqueta2Kg || _quantity > 1
+                      ? () => _decrease(product)
+                      : null,
+              onIncrease:
+                  () => setState(
+                    () => _quantity += widget.minimums.incremento(product),
+                  ),
+              onReset: () => setState(() => _quantity = _initialQuantity),
             ),
           ),
           const SizedBox(width: 8),
@@ -623,10 +672,11 @@ class _ProductPageState extends ConsumerState<_ProductPage>
                         producto: product,
                         cantidad: _quantity,
                         subcanalUsuario: widget.subchannel,
+                        minimos: widget.minimums,
                       );
                   if (!context.mounted) return;
                   if (result.agregado) {
-                    setState(() => _quantity = 1);
+                    setState(() => _quantity = _initialQuantity);
                   }
                   ScaffoldMessenger.of(
                     context,

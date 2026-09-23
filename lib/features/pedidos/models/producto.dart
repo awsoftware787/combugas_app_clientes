@@ -41,6 +41,8 @@ final class Producto {
 
   bool get esAgua => servicioId == ServicioIds.agua;
   bool get esCroqueta => servicioId == ServicioIds.croquetas;
+  bool get esCroqueta2Kg =>
+      esCroqueta && RegExp(r'\b2\s*KG\b').hasMatch(_texto);
   bool get esEstacionario => id == ProductoIds.estacionario;
   bool get esBulto => _texto.contains('BULTO');
   bool get esBolsa => _texto.contains('BOLSA');
@@ -56,10 +58,44 @@ final class Producto {
 }
 
 final class MontosMinimos {
-  const MontosMinimos({required this.dineroCentavos, required this.litros});
+  const MontosMinimos({
+    required this.dineroCentavos,
+    required this.litros,
+    this.unidades = 1,
+    this.isMultiploCroquetas = false,
+    this.valorMultiploCroquetas = 1,
+  });
 
-  const MontosMinimos.empty() : dineroCentavos = 0, litros = 0;
+  const MontosMinimos.empty()
+    : dineroCentavos = 0,
+      litros = 0,
+      unidades = 1,
+      isMultiploCroquetas = false,
+      valorMultiploCroquetas = 1;
 
   final int dineroCentavos;
   final double litros;
+  final int unidades;
+  final bool isMultiploCroquetas;
+  final int valorMultiploCroquetas;
+
+  int cantidadInicial(Producto producto) =>
+      producto.esCroqueta2Kg && unidades > 0 ? unidades : 1;
+
+  int incremento(Producto producto) =>
+      producto.esCroqueta2Kg &&
+              isMultiploCroquetas &&
+              valorMultiploCroquetas > 0
+          ? valorMultiploCroquetas
+          : 1;
+
+  String? validarCantidad(Producto producto, int cantidad) {
+    if (!producto.esCroqueta2Kg) return null;
+    final minimo = cantidadInicial(producto);
+    final multiplo = incremento(producto);
+    if (cantidad >= minimo && cantidad % multiplo == 0) return null;
+    return multiplo > 1
+        ? 'La cantidad mínima es $minimo bolsas y debe ser múltiplo de $multiplo.'
+        : 'La cantidad mínima es $minimo bolsas.';
+  }
 }

@@ -45,6 +45,11 @@ final class PedidosSoapParser {
       dineroCentavos:
           (_double(values.first['montominimo_dinero']) * 100).round(),
       litros: _double(values.first['montominimo_litros']),
+      unidades: _int(values.first['montominimo_unidades'] ?? 1),
+      isMultiploCroquetas: _bool(values.first['is_multiplo_croquetas']),
+      valorMultiploCroquetas: _int(
+        values.first['valor_multiplo_croquetas'] ?? 1,
+      ),
     );
   }
 
@@ -245,7 +250,10 @@ final class PedidosSoapParser {
   double _double(Object? value) =>
       value is num ? value.toDouble() : double.tryParse('$value') ?? 0;
   bool _bool(Object? value) =>
-      value == true || value == 1 || '$value'.toLowerCase() == 'true';
+      value == true ||
+      value == 1 ||
+      '$value'.trim() == '1' ||
+      '$value'.trim().toLowerCase() == 'true';
   String _text(Object? value) =>
       value == null || value == 'null' ? '' : '$value';
   String? _nullableText(Object? value) {

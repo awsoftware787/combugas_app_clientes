@@ -23,6 +23,7 @@ import 'package:combugas_clientes/features/direcciones/models/direccion.dart';
 import 'package:combugas_clientes/features/direcciones/models/direccion_request.dart';
 
 import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/pedido_controller.dart';
 
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
 
@@ -39,6 +40,7 @@ import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart'
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 
 import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
+import 'package:combugas_clientes/features/pedidos/widgets/cart_item_controls.dart';
 
 import 'package:flutter/material.dart';
 
@@ -51,6 +53,179 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 void main() {
+  for (final hasRule in [true, false]) {
+    testWidgets('recarga actualiza cantidad solo con regla: $hasRule', (
+      tester,
+    ) async {
+      final container = _container(
+        cart: _CartStore(),
+        directions: const [_address],
+        products: [
+          Producto(
+            id: 90,
+            descripcion: hasRule ? 'CROQUETAS 2 KG' : 'CROQUETAS 15 KG',
+            presentacion: 'BOLSA',
+            servicioId: ServicioIds.croquetas,
+            precioCentavos: 5000,
+          ),
+        ],
+        minimums: const MontosMinimos(
+          dineroCentavos: 60000,
+          litros: 60,
+          unidades: 10,
+          isMultiploCroquetas: true,
+          valorMultiploCroquetas: 10,
+        ),
+      );
+      addTearDown(container.dispose);
+      final repository =
+          container.read(pedidoRepositoryProvider) as _PedidoRepository;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: PedidoScreen()),
+        ),
+      );
+      await _pumpUi(tester);
+      await tester.ensureVisible(find.byType(PageView));
+      await _pumpUi(tester);
+      String? quantity() =>
+          tester
+              .widget<Text>(find.byKey(const ValueKey('quantity-value')))
+              .data;
+      expect(quantity(), hasRule ? '10' : '1');
+      for (final minimum in [20, 5, 5]) {
+        await tester.tap(find.byKey(const ValueKey('quantity-plus')));
+        await tester.pump();
+        final previous = quantity();
+        repository.minimums = MontosMinimos(
+          dineroCentavos: 60000,
+          litros: 60,
+          unidades: minimum,
+          isMultiploCroquetas: true,
+          valorMultiploCroquetas: minimum,
+        );
+        await container
+            .read(pedidoControllerProvider.notifier)
+            .load(refresh: true);
+        await _pumpUi(tester);
+        expect(quantity(), hasRule ? '$minimum' : previous);
+        final amount = int.parse(quantity()!) * 50;
+        expect(find.text('\$${amount.toStringAsFixed(2)}'), findsOneWidget);
+      }
+      await tester.tap(find.byKey(const ValueKey('quantity-plus')));
+      await tester.pump();
+      final previous = quantity();
+      repository.failMinimums = true;
+      await container
+          .read(pedidoControllerProvider.notifier)
+          .load(refresh: true);
+      await _pumpUi(tester);
+      expect(quantity(), previous);
+    });
+  }
+
+  for (final multiples in [true, false]) {
+    testWidgets('croquetas 2 kg respetan mínimo y múltiplos: $multiples', (
+      tester,
+    ) async {
+      final container = _container(
+        cart: _CartStore(),
+        directions: const [_address],
+        products: const [
+          Producto(
+            id: 90,
+            descripcion: 'BOLSA DE CROQUETAS 2kg',
+            presentacion: 'BOLSA',
+            servicioId: ServicioIds.croquetas,
+            precioCentavos: 5000,
+          ),
+        ],
+        minimums: MontosMinimos(
+          dineroCentavos: 60000,
+          litros: 60,
+          unidades: 10,
+          isMultiploCroquetas: multiples,
+          valorMultiploCroquetas: 10,
+        ),
+      );
+      addTearDown(container.dispose);
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: PedidoScreen()),
+        ),
+      );
+      await _pumpUi(tester);
+      await tester.ensureVisible(find.byType(PageView));
+      await _pumpUi(tester);
+      String? quantity() =>
+          tester
+              .widget<Text>(find.byKey(const ValueKey('quantity-value')))
+              .data;
+      expect(quantity(), '10');
+      await tester.tap(find.byKey(const ValueKey('quantity-minus')));
+      await tester.pump();
+      expect(quantity(), '10');
+      expect(
+        find.text(
+          multiples
+              ? 'La cantidad mínima es 10 bolsas y debe ser múltiplo de 10.'
+              : 'La cantidad mínima es 10 bolsas.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('quantity-plus')));
+      await tester.pump();
+      expect(quantity(), multiples ? '20' : '11');
+      await tester.tap(find.byKey(const ValueKey('quantity-minus')));
+      await tester.pump();
+      expect(quantity(), '10');
+      await tester.tap(find.byKey(const ValueKey('product-add')));
+      await _pumpUi(tester);
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        10,
+      );
+      expect(quantity(), '10');
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Consumer(
+                builder:
+                    (context, ref, child) => CartItemControls(
+                      item: ref.watch(carritoControllerProvider).items.single,
+                      index: 0,
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        10,
+      );
+      await tester.tap(find.byKey(const ValueKey('cart-item-plus-0')));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        multiples ? 20 : 11,
+      );
+      await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        10,
+      );
+    });
+  }
+
   testWidgets('producto nuevo aparece y puede agregarse sin reconocer su ID', (
     tester,
   ) async {
@@ -674,6 +849,7 @@ ProviderContainer _container({
   Future<List<Direccion>>? directionsFuture,
 
   List<Producto>? products,
+  MontosMinimos minimums = const MontosMinimos.empty(),
 }) => ProviderContainer(
   overrides: [
     authRepositoryProvider.overrideWithValue(_AuthRepository()),
@@ -707,7 +883,7 @@ ProviderContainer _container({
     ),
 
     pedidoRepositoryProvider.overrideWithValue(
-      _PedidoRepository(products ?? _defaultProducts),
+      _PedidoRepository(products ?? _defaultProducts, minimums),
     ),
 
     carritoStoreProvider.overrideWithValue(cart),
@@ -738,7 +914,10 @@ final class _AuthRepository implements AuthRepositoryContract {
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
-  const _PedidoRepository(this.products);
+  _PedidoRepository(this.products, this.minimums);
+
+  MontosMinimos minimums;
+  bool failMinimums = false;
 
   final List<Producto> products;
 
@@ -768,7 +947,10 @@ final class _PedidoRepository implements PedidoRepositoryContract {
   Future<List<Producto>> getPrecios() async => products;
 
   @override
-  Future<MontosMinimos> getMontosMinimos() async => const MontosMinimos.empty();
+  Future<MontosMinimos> getMontosMinimos() async {
+    if (failMinimums) throw StateError('No se pudieron cargar los mínimos');
+    return minimums;
+  }
 }
 
 const _defaultProducts = [

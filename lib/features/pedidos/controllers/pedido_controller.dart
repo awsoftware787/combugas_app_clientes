@@ -14,6 +14,7 @@ final class PedidoState {
     this.montosMinimos = const MontosMinimos.empty(),
     this.error,
     this.refreshing = false,
+    this.revisionPrecios = 0,
   });
 
   final PedidoStatus status;
@@ -21,6 +22,7 @@ final class PedidoState {
   final MontosMinimos montosMinimos;
   final String? error;
   final bool refreshing;
+  final int revisionPrecios;
 
   Producto? producto(int id) {
     for (final item in productos) {
@@ -52,6 +54,7 @@ final class PedidoController extends Notifier<PedidoState> {
       productos: state.productos,
       montosMinimos: state.montosMinimos,
       refreshing: refresh && hasCatalog,
+      revisionPrecios: state.revisionPrecios,
     );
     try {
       final catalogController = ref.read(
@@ -69,6 +72,7 @@ final class PedidoController extends Notifier<PedidoState> {
         status: PedidoStatus.ready,
         productos: productos,
         montosMinimos: minimos,
+        revisionPrecios: state.revisionPrecios + 1,
         error: catalog.error,
       );
     } catch (error) {
@@ -78,6 +82,7 @@ final class PedidoController extends Notifier<PedidoState> {
           status: PedidoStatus.ready,
           productos: state.productos,
           montosMinimos: state.montosMinimos,
+          revisionPrecios: state.revisionPrecios,
           error:
               'No se pudieron actualizar los productos. Se conserva la lista anterior.',
         );

@@ -7,6 +7,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+    'rechaza bolsas de 2 kg debajo del mínimo o fuera del múltiplo',
+    () async {
+      final store = _Store();
+      final container = _container(store);
+      addTearDown(container.dispose);
+      final controller = container.read(carritoControllerProvider.notifier);
+      const product = Producto(
+        id: 90,
+        descripcion: 'CROQUETAS 2 KG',
+        presentacion: 'BOLSA',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 5000,
+      );
+      const minimums = MontosMinimos(
+        dineroCentavos: 60000,
+        litros: 60,
+        unidades: 10,
+        isMultiploCroquetas: true,
+        valorMultiploCroquetas: 10,
+      );
+      for (final quantity in [0, 1, 9, 11, 15]) {
+        final result = await controller.agregarProducto(
+          producto: product,
+          cantidad: quantity,
+          subcanalUsuario: 1,
+          minimos: minimums,
+        );
+        expect(result.agregado, isFalse);
+        expect(
+          result.mensaje,
+          'La cantidad mínima es 10 bolsas y debe ser múltiplo de 10.',
+        );
+        expect(store.items, isEmpty);
+      }
+      for (final quantity in [10, 20]) {
+        final result = await controller.agregarProducto(
+          producto: product,
+          cantidad: quantity,
+          subcanalUsuario: 1,
+          minimos: minimums,
+        );
+        expect(result.agregado, isTrue);
+      }
+      expect(store.items.single.cantidad, 30);
+      expect(store.items.single.importeCentavos, 150000);
+    },
+  );
+
   test('restaura, persiste y limpia el carrito', () async {
     final store = _Store([_item]);
     final container = _container(store);
