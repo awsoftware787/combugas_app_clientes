@@ -1,192 +1,153 @@
 import 'dart:async';
 
+import 'package:combugas_clientes/core/network/soap_http_client.dart';
+
+import 'package:combugas_clientes/core/network/soap_service.dart';
+
+import 'package:combugas_clientes/features/auth/data/clientes_soap_service.dart';
+
 import 'package:combugas_clientes/core/theme/app_colors.dart';
+
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
+
 import 'package:combugas_clientes/features/auth/models/login_result.dart';
+
 import 'package:combugas_clientes/features/auth/models/session_data.dart';
+
 import 'package:combugas_clientes/features/direcciones/data/direccion_repository.dart';
+
 import 'package:combugas_clientes/features/direcciones/models/catalogos_direccion.dart';
+
 import 'package:combugas_clientes/features/direcciones/models/direccion.dart';
+
 import 'package:combugas_clientes/features/direcciones/models/direccion_request.dart';
+
 import 'package:combugas_clientes/features/pedidos/controllers/carrito_controller.dart';
+import 'package:combugas_clientes/features/pedidos/controllers/pedido_controller.dart';
+
 import 'package:combugas_clientes/features/pedidos/data/carrito_storage.dart';
+
 import 'package:combugas_clientes/features/pedidos/data/pedido_repository.dart';
+
 import 'package:combugas_clientes/features/pedidos/models/item_pedido.dart';
+
 import 'package:combugas_clientes/features/pedidos/models/create_order.dart';
+
 import 'package:combugas_clientes/features/pedidos/models/calificacion.dart';
+
 import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart';
+
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
+
 import 'package:combugas_clientes/features/pedidos/screens/pedido_screen.dart';
+import 'package:combugas_clientes/features/pedidos/widgets/cart_item_controls.dart';
+
 import 'package:flutter/material.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:http/http.dart' as http;
+
+import 'package:http/testing.dart';
+
 void main() {
-  testWidgets('muestra selector, producto, agrega y actualiza badge', (
-    tester,
-  ) async {
-    final cart = _CartStore();
-    final container = _container(cart: cart, directions: const [_address]);
-    addTearDown(container.dispose);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(home: PedidoScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Dirección de entrega'), findsOneWidget);
-    expect(find.text('Gas en cilindro'), findsOneWidget);
-    expect(find.text('CASA'), findsWidgets);
-    expect(
-      tester.widget<Icon>(find.byIcon(Icons.home)).color,
-      AppColors.accent,
-    );
-
-    expect(find.byKey(const ValueKey('clear-order')), findsNothing);
-    expect(find.text('Limpiar'), findsNothing);
-
-    final appBar = tester.widget<AppBar>(find.byType(AppBar));
-    expect(appBar.foregroundColor, AppColors.white);
-    expect(tester.widget<Text>(find.text('Pedido')).style, isNull);
-    expect(
-      appBar.actions!.whereType<IconButton>().single.color,
-      AppColors.white,
-    );
-    expect(
-      tester
-          .widget<Text>(find.byKey(const ValueKey('product-amount')))
-          .style
-          ?.color,
-      AppColors.accent,
-    );
-    for (final key in const ['quantity-minus', 'quantity-plus']) {
-      final button = tester.widget<IconButton>(find.byKey(ValueKey(key)));
-      expect(
-        button.style?.foregroundColor?.resolve(const {}),
-        AppColors.quantityButtonBlue,
-      );
-    }
-
-    final add = find.text('Agregar').hitTestable();
-    final addButton = tester.widget<FilledButton>(
-      find.ancestor(
-        of: add,
-        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
-      ),
-    );
-    expect(
-      addButton.style?.backgroundColor?.resolve(const {}),
-      AppColors.addButtonGreen,
-    );
-    await tester.ensureVisible(add);
-    await tester.tap(add);
-    await tester.pumpAndSettle();
-    expect(container.read(carritoControllerProvider).lineas, 1);
-    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
-    expect(
-      tester
-          .widget<Text>(
-            find.byKey(const ValueKey('quantity-value')).hitTestable(),
-          )
-          .data,
-      '1',
-    );
-
-    expect(find.byKey(const ValueKey('clear-order')), findsNothing);
-    expect(container.read(carritoControllerProvider).lineas, 1);
-  });
-
-  testWidgets('selector segmentado actualiza variante e importe', (
-    tester,
-  ) async {
-    final container = _container(
-      cart: _CartStore(),
-      directions: const [_address],
-    );
-    addTearDown(container.dispose);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(home: PedidoScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('30kg'), findsOneWidget);
-    expect(find.text('45kg'), findsOneWidget);
-    expect(_optionColor(tester, 2), AppColors.accent);
-    expect(_optionColor(tester, 3), AppColors.white);
-    expect(find.text(r'$600.00'), findsOneWidget);
-
-    await tester.tap(find.byKey(const ValueKey('product-option-3')));
-    await tester.pumpAndSettle();
-
-    expect(find.byKey(const ValueKey('product-image-3')), findsOneWidget);
-    expect(find.text(r'$900.00'), findsOneWidget);
-    expect(_optionColor(tester, 2), AppColors.white);
-    expect(_optionColor(tester, 3), AppColors.accent);
-  });
-
-  testWidgets('card de gas estacionario conserva captura y agregado', (
-    tester,
-  ) async {
-    final container = _container(
-      cart: _CartStore(),
-      directions: const [_address],
-      products: const [_stationaryProduct],
-    );
-    addTearDown(container.dispose);
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(home: PedidoScreen()),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('Gas estacionario'), findsOneWidget);
-    expect(find.byKey(const ValueKey('product-image-9')), findsOneWidget);
-    expect(find.text('Importe por litro:'), findsOneWidget);
-    expect(find.text(r'$12.00'), findsOneWidget);
-    final modeSelector = tester.widget(
-      find.byWidgetPredicate((widget) => widget is SegmentedButton),
-    );
-    expect(
-      (modeSelector as dynamic).style?.side?.resolve({
-        WidgetState.selected,
-      })?.color,
-      AppColors.secondary,
-    );
-    expect(
-      (modeSelector as dynamic).style?.side
-          ?.resolve(const <WidgetState>{})
-          ?.color,
-      AppColors.secondary,
-    );
-    await tester.enterText(find.byType(TextField), '100');
-    await tester.tap(find.text('Agregar').hitTestable());
-    await tester.pumpAndSettle();
-
-    expect(
-      container.read(carritoControllerProvider).items.single.productoId,
-      9,
-    );
-  });
-
-  for (final screenSize in const [
-    Size(360, 640),
-    Size(390, 844),
-    Size(430, 932),
-  ]) {
-    testWidgets('card de Pedido no desborda en $screenSize', (tester) async {
-      tester.view.devicePixelRatio = 1;
-      tester.view.physicalSize = screenSize;
-      addTearDown(tester.view.resetDevicePixelRatio);
-      addTearDown(tester.view.resetPhysicalSize);
+  for (final hasRule in [true, false]) {
+    testWidgets('recarga actualiza cantidad solo con regla: $hasRule', (
+      tester,
+    ) async {
       final container = _container(
         cart: _CartStore(),
         directions: const [_address],
+        products: [
+          Producto(
+            id: 90,
+            descripcion: hasRule ? 'CROQUETAS 2 KG' : 'CROQUETAS 15 KG',
+            presentacion: 'BOLSA',
+            servicioId: ServicioIds.croquetas,
+            precioCentavos: 5000,
+          ),
+        ],
+        minimums: const MontosMinimos(
+          dineroCentavos: 60000,
+          litros: 60,
+          unidades: 10,
+          isMultiploCroquetas: true,
+          valorMultiploCroquetas: 10,
+        ),
+      );
+      addTearDown(container.dispose);
+      final repository =
+          container.read(pedidoRepositoryProvider) as _PedidoRepository;
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: PedidoScreen()),
+        ),
+      );
+      await _pumpUi(tester);
+      await tester.ensureVisible(find.byType(PageView));
+      await _pumpUi(tester);
+      String? quantity() =>
+          tester
+              .widget<Text>(find.byKey(const ValueKey('quantity-value')))
+              .data;
+      expect(quantity(), hasRule ? '10' : '1');
+      for (final minimum in [20, 5, 5]) {
+        await tester.tap(find.byKey(const ValueKey('quantity-plus')));
+        await tester.pump();
+        final previous = quantity();
+        repository.minimums = MontosMinimos(
+          dineroCentavos: 60000,
+          litros: 60,
+          unidades: minimum,
+          isMultiploCroquetas: true,
+          valorMultiploCroquetas: minimum,
+        );
+        await container
+            .read(pedidoControllerProvider.notifier)
+            .load(refresh: true);
+        await _pumpUi(tester);
+        expect(quantity(), hasRule ? '$minimum' : previous);
+        final amount = int.parse(quantity()!) * 50;
+        expect(find.text('\$${amount.toStringAsFixed(2)}'), findsOneWidget);
+      }
+      await tester.tap(find.byKey(const ValueKey('quantity-plus')));
+      await tester.pump();
+      final previous = quantity();
+      repository.failMinimums = true;
+      await container
+          .read(pedidoControllerProvider.notifier)
+          .load(refresh: true);
+      await _pumpUi(tester);
+      expect(quantity(), previous);
+    });
+  }
+
+  for (final multiples in [true, false]) {
+    testWidgets('croquetas 2 kg respetan mínimo y múltiplos: $multiples', (
+      tester,
+    ) async {
+      final container = _container(
+        cart: _CartStore(),
+        directions: const [_address],
+        products: const [
+          Producto(
+            id: 90,
+            descripcion: 'BOLSA DE CROQUETAS 2kg',
+            presentacion: 'BOLSA',
+            servicioId: ServicioIds.croquetas,
+            precioCentavos: 5000,
+          ),
+        ],
+        minimums: MontosMinimos(
+          dineroCentavos: 60000,
+          litros: 60,
+          unidades: 10,
+          isMultiploCroquetas: multiples,
+          valorMultiploCroquetas: 10,
+        ),
       );
       addTearDown(container.dispose);
       await tester.pumpWidget(
@@ -195,12 +156,405 @@ void main() {
           child: const MaterialApp(home: PedidoScreen()),
         ),
       );
+      await _pumpUi(tester);
+      await tester.ensureVisible(find.byType(PageView));
+      await _pumpUi(tester);
+      String? quantity() =>
+          tester
+              .widget<Text>(find.byKey(const ValueKey('quantity-value')))
+              .data;
+      expect(quantity(), '10');
+      await tester.tap(find.byKey(const ValueKey('quantity-minus')));
+      await tester.pump();
+      expect(quantity(), '10');
+      expect(
+        find.text(
+          multiples
+              ? 'La cantidad mínima es 10 bolsas y debe ser múltiplo de 10.'
+              : 'La cantidad mínima es 10 bolsas.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(find.byKey(const ValueKey('quantity-plus')));
+      await tester.pump();
+      expect(quantity(), multiples ? '20' : '11');
+      await tester.tap(find.byKey(const ValueKey('quantity-minus')));
+      await tester.pump();
+      expect(quantity(), '10');
+      await tester.tap(find.byKey(const ValueKey('product-add')));
+      await _pumpUi(tester);
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        10,
+      );
+      expect(quantity(), '10');
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: Consumer(
+                builder:
+                    (context, ref, child) => CartItemControls(
+                      item: ref.watch(carritoControllerProvider).items.single,
+                      index: 0,
+                    ),
+              ),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        10,
+      );
+      await tester.tap(find.byKey(const ValueKey('cart-item-plus-0')));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        multiples ? 20 : 11,
+      );
+      await tester.tap(find.byKey(const ValueKey('cart-item-minus-0')));
+      await tester.pumpAndSettle();
+      expect(
+        container.read(carritoControllerProvider).items.single.cantidad,
+        10,
+      );
+    });
+  }
 
-      await tester.ensureVisible(find.byKey(const ValueKey('product-add')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const ValueKey('quantity-minus')), findsOneWidget);
-      expect(find.byKey(const ValueKey('quantity-plus')), findsOneWidget);
+  testWidgets('producto nuevo aparece y puede agregarse sin reconocer su ID', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+
+      directions: const [_address],
+
+      products: const [_dynamicProduct],
+    );
+
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+
+    await _pumpUi(tester);
+
+    expect(find.text('CROQUETAS PARA GATO 15 KG'), findsOneWidget);
+
+    expect(find.text('15 KG'), findsOneWidget);
+
+    expect(find.byKey(const ValueKey('product-image-25')), findsOneWidget);
+
+    expect(find.text(r'$340.00'), findsOneWidget);
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
+
+    await tester.tap(
+      _inCurrentPage(tester, find.byKey(const ValueKey('product-add'))),
+    );
+
+    await _pumpUi(tester);
+
+    final item = container.read(carritoControllerProvider).items.single;
+
+    expect(item.productoId, 25);
+
+    expect(item.urlIcono, contains('croquetas_gato.png'));
+  });
+
+  testWidgets('muestra selector, producto, agrega y actualiza badge', (
+    tester,
+  ) async {
+    final cart = _CartStore();
+
+    final container = _container(cart: cart, directions: const [_address]);
+
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+
+    await _pumpUi(tester);
+
+    expect(find.text('Dirección de entrega'), findsOneWidget);
+
+    expect(find.text('Gas en cilindro'), findsOneWidget);
+
+    expect(find.text('CASA'), findsWidgets);
+
+    expect(
+      tester.widget<Icon>(find.byIcon(Icons.home)).color,
+
+      AppColors.accent,
+    );
+
+    expect(find.byKey(const ValueKey('clear-order')), findsNothing);
+
+    expect(find.text('Limpiar'), findsNothing);
+
+    final appBar = tester.widget<AppBar>(find.byType(AppBar));
+
+    expect(appBar.foregroundColor, AppColors.white);
+
+    expect(tester.widget<Text>(find.text('Pedido')).style, isNull);
+
+    expect(
+      appBar.actions!.whereType<IconButton>().single.color,
+
+      AppColors.white,
+    );
+
+    expect(
+      tester
+          .widget<Text>(
+            _inCurrentPage(
+              tester,
+              find.byKey(const ValueKey('product-amount')),
+            ),
+          )
+          .style
+          ?.color,
+
+      AppColors.accent,
+    );
+
+    for (final key in const ['quantity-minus', 'quantity-plus']) {
+      final button = tester.widget<IconButton>(
+        _inCurrentPage(tester, find.byKey(ValueKey(key))),
+      );
+
+      expect(
+        button.style?.foregroundColor?.resolve(const {}),
+
+        AppColors.quantityButtonBlue,
+      );
+    }
+
+    final add = _inCurrentPage(tester, find.text('Agregar'));
+
+    final addButton = tester.widget<FilledButton>(
+      find.ancestor(
+        of: add,
+
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      ),
+    );
+
+    expect(
+      addButton.style?.backgroundColor?.resolve(const {}),
+
+      AppColors.addButtonGreen,
+    );
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
+
+    await tester.tap(add);
+
+    await _pumpUi(tester);
+
+    expect(container.read(carritoControllerProvider).lineas, 1);
+
+    expect(container.read(carritoControllerProvider).items.single.cantidad, 1);
+
+    expect(
+      tester
+          .widget<Text>(
+            _inCurrentPage(
+              tester,
+              find.byKey(const ValueKey('quantity-value')),
+            ).hitTestable(),
+          )
+          .data,
+
+      '1',
+    );
+
+    expect(find.byKey(const ValueKey('clear-order')), findsNothing);
+
+    expect(container.read(carritoControllerProvider).lineas, 1);
+  });
+
+  testWidgets('selector segmentado actualiza variante e importe', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+
+      directions: const [_address],
+    );
+
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+
+    await _pumpUi(tester);
+
+    expect(find.text('30kg'), findsOneWidget);
+
+    expect(find.text('45kg'), findsOneWidget);
+
+    expect(_optionColor(tester, 2), AppColors.accent);
+
+    expect(_optionColor(tester, 3), AppColors.white);
+
+    expect(find.text(r'$600.00'), findsOneWidget);
+
+    await tester.tap(find.byKey(const ValueKey('product-option-3')));
+
+    await _pumpUi(tester);
+
+    expect(find.byKey(const ValueKey('product-image-3')), findsOneWidget);
+
+    expect(find.text(r'$900.00'), findsOneWidget);
+
+    expect(_optionColor(tester, 2), AppColors.white);
+
+    expect(_optionColor(tester, 3), AppColors.accent);
+  });
+
+  testWidgets('card de gas estacionario conserva captura y agregado', (
+    tester,
+  ) async {
+    final container = _container(
+      cart: _CartStore(),
+
+      directions: const [_address],
+
+      products: const [_stationaryProduct],
+    );
+
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+
+    await _pumpUi(tester);
+
+    expect(find.text('Gas estacionario'), findsOneWidget);
+
+    expect(find.byKey(const ValueKey('product-image-9')), findsOneWidget);
+
+    expect(find.text('Importe por litro:'), findsOneWidget);
+
+    expect(find.text(r'$12.00'), findsOneWidget);
+
+    final modeSelector = tester.widget(
+      find.byWidgetPredicate((widget) => widget is SegmentedButton),
+    );
+
+    expect(
+      (modeSelector as dynamic).style?.side?.resolve({
+        WidgetState.selected,
+      })?.color,
+
+      AppColors.secondary,
+    );
+
+    expect(
+      (modeSelector as dynamic).style?.side
+          ?.resolve(const <WidgetState>{})
+          ?.color,
+
+      AppColors.secondary,
+    );
+
+    await tester.enterText(find.byType(TextField), '100');
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
+
+    await tester.tap(
+      _inCurrentPage(tester, find.text('Agregar')).hitTestable(),
+    );
+
+    await _pumpUi(tester);
+
+    expect(
+      container.read(carritoControllerProvider).items.single.productoId,
+
+      9,
+    );
+  });
+
+  for (final screenSize in const [
+    Size(360, 640),
+
+    Size(390, 844),
+
+    Size(430, 932),
+  ]) {
+    testWidgets('card de Pedido no desborda en $screenSize', (tester) async {
+      tester.view.devicePixelRatio = 1;
+
+      tester.view.physicalSize = screenSize;
+
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      addTearDown(tester.view.resetPhysicalSize);
+
+      final container = _container(
+        cart: _CartStore(),
+
+        directions: const [_address],
+      );
+
+      addTearDown(container.dispose);
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+
+          child: const MaterialApp(home: PedidoScreen()),
+        ),
+      );
+
+      await _pumpUi(tester);
+
+      await tester.ensureVisible(find.byType(PageView));
+
+      await _pumpUi(tester);
+
+      expect(
+        _inCurrentPage(tester, find.byKey(const ValueKey('quantity-minus'))),
+        findsOneWidget,
+      );
+
+      expect(
+        _inCurrentPage(tester, find.byKey(const ValueKey('quantity-plus'))),
+        findsOneWidget,
+      );
+
       expect(tester.takeException(), isNull);
     });
   }
@@ -210,42 +564,68 @@ void main() {
   ) async {
     final container = _container(
       cart: _CartStore(),
+
       directions: const [_address],
     );
+
     addTearDown(container.dispose);
+
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
+
         child: const MaterialApp(home: PedidoScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+
+    await _pumpUi(tester);
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
 
     for (var page = 0; page < 3; page++) {
-      final plus = find.byKey(const ValueKey('quantity-plus')).hitTestable();
-      await tester.ensureVisible(plus);
+      final plus = _inCurrentPage(
+        tester,
+        find.byKey(const ValueKey('quantity-plus')),
+      );
+
       for (var index = 0; index < 3; index++) {
         await tester.tap(plus);
+
         await tester.pump();
       }
-      await tester.tap(find.text('Agregar').hitTestable());
-      await tester.pumpAndSettle();
+
+      await tester.tap(
+        _inCurrentPage(tester, find.text('Agregar')).hitTestable(),
+      );
+
+      await _pumpUi(tester);
+
       expect(
         tester
             .widget<Text>(
-              find.byKey(const ValueKey('quantity-value')).hitTestable(),
+              _inCurrentPage(
+                tester,
+                find.byKey(const ValueKey('quantity-value')),
+              ).hitTestable(),
             )
             .data,
+
         '1',
       );
+
       if (page < 2) {
         await tester.drag(find.byType(PageView), const Offset(-500, 0));
-        await tester.pumpAndSettle();
+
+        await _pumpUi(tester);
       }
     }
 
     final items = container.read(carritoControllerProvider).items;
+
     expect(items.map((item) => item.productoId), [2, 4, 20]);
+
     expect(items.map((item) => item.cantidad), everyElement(4));
   });
 
@@ -253,35 +633,53 @@ void main() {
     tester,
   ) async {
     final container = _container(cart: _CartStore(), directions: const []);
+
     addTearDown(container.dispose);
+
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
+
         child: const MaterialApp(home: PedidoScreen()),
       ),
     );
-    await tester.pumpAndSettle();
+
+    await _pumpUi(tester);
+
     expect(find.text('No tienes una dirección registrada.'), findsOneWidget);
+
     expect(find.text('Agregar dirección'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.menu));
-    await tester.pumpAndSettle();
+
+    await _pumpUi(tester);
+
     final labels = [
       'Pedido',
+
       'Mis pedidos',
+
       'Mis direcciones',
+
       'Perfil',
+
       'Carburaciones',
+
       'Aviso de privacidad',
+
       'Cerrar sesión',
     ];
+
     final drawer = find.byType(Drawer);
+
     for (final label in labels) {
       expect(
         find.descendant(of: drawer, matching: find.text(label)),
+
         findsOneWidget,
       );
     }
+
     final positions =
         labels
             .map(
@@ -293,7 +691,9 @@ void main() {
                       .dy,
             )
             .toList();
+
     expect(positions, orderedEquals([...positions]..sort()));
+
     expect(find.text('VALERIA CORDERO'), findsOneWidget);
   });
 
@@ -301,47 +701,191 @@ void main() {
     tester,
   ) async {
     final directions = Completer<List<Direccion>>();
+
     final container = _container(
       cart: _CartStore(),
+
       directions: const [],
+
       directionsFuture: directions.future,
     );
+
     addTearDown(container.dispose);
+
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
+
         child: const MaterialApp(home: PedidoScreen()),
       ),
     );
+
     await tester.pump();
+
     await tester.pump();
 
     final skeleton = find.byKey(const ValueKey('direcciones-skeleton'));
+
     expect(skeleton, findsOneWidget);
+
     expect(tester.getSize(skeleton).height, 116);
+
     expect(find.text('Dirección de entrega'), findsOneWidget);
 
     directions.complete(const [_address]);
-    await tester.pumpAndSettle();
+
+    await _pumpUi(tester);
+
     expect(skeleton, findsNothing);
+
     expect(find.byType(DropdownButtonFormField<Direccion>), findsOneWidget);
+  });
+
+  testWidgets('cada croqueta conserva una cantidad independiente', (
+    tester,
+  ) async {
+    final cart = _CartStore();
+
+    final container = _container(
+      cart: cart,
+
+      directions: const [_address],
+
+      products: const [_dynamicProduct, _secondDynamicProduct],
+    );
+
+    addTearDown(container.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+
+        child: const MaterialApp(home: PedidoScreen()),
+      ),
+    );
+
+    await _pumpUi(tester);
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
+
+    await tester.tap(
+      _inCurrentPage(
+        tester,
+        find.byKey(const ValueKey('quantity-plus')),
+      ).hitTestable(),
+    );
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
+
+    await tester.tap(
+      _inCurrentPage(
+        tester,
+        find.byKey(const ValueKey('quantity-plus')),
+      ).hitTestable(),
+    );
+
+    await tester.pump();
+
+    expect(find.text('3'), findsOneWidget);
+
+    await tester.drag(find.byType(PageView), const Offset(-500, 0));
+
+    await _pumpUi(tester);
+
+    expect(find.byKey(const ValueKey('product-image-26')), findsOneWidget);
+
+    expect(find.text('1'), findsOneWidget);
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await _pumpUi(tester);
+
+    await tester.tap(
+      _inCurrentPage(
+        tester,
+        find.byKey(const ValueKey('quantity-plus')),
+      ).hitTestable(),
+    );
+
+    final secondAdd = _inCurrentPage(tester, find.text('Agregar'));
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await tester.tap(secondAdd.hitTestable());
+
+    await _pumpUi(tester);
+
+    await tester.drag(find.byType(PageView), const Offset(500, 0));
+
+    await _pumpUi(tester);
+
+    expect(find.text('3'), findsOneWidget);
+
+    final firstAdd = _inCurrentPage(tester, find.text('Agregar'));
+
+    await tester.ensureVisible(find.byType(PageView));
+
+    await tester.tap(firstAdd.hitTestable());
+
+    await _pumpUi(tester);
+
+    final items = container.read(carritoControllerProvider).items;
+
+    expect(items.map((item) => item.productoId), [26, 25]);
+
+    expect(items.map((item) => item.cantidad), [2, 3]);
   });
 }
 
 ProviderContainer _container({
   required _CartStore cart,
+
   required List<Direccion> directions,
+
   Future<List<Direccion>>? directionsFuture,
+
   List<Producto>? products,
+  MontosMinimos minimums = const MontosMinimos.empty(),
 }) => ProviderContainer(
   overrides: [
     authRepositoryProvider.overrideWithValue(_AuthRepository()),
+
+    clientesSoapServiceProvider.overrideWith((ref) {
+      final service = ClientesSoapService(
+        endpoint: Uri.parse('https://example.test/clientes.asmx'),
+
+        soapService: SoapService(
+          httpClient: SoapHttpClient(
+            client: MockClient(
+              (request) async => http.Response(
+                '<ValidarFechaEntregaResult>'
+                '<permite_entrega>true</permite_entrega>'
+                '</ValidarFechaEntregaResult>',
+
+                200,
+              ),
+            ),
+          ),
+        ),
+      );
+
+      ref.onDispose(service.close);
+
+      return service;
+    }),
+
     direccionRepositoryProvider.overrideWithValue(
       _DirectionRepository(directions, loadFuture: directionsFuture),
     ),
+
     pedidoRepositoryProvider.overrideWithValue(
-      _PedidoRepository(products ?? _defaultProducts),
+      _PedidoRepository(products ?? _defaultProducts, minimums),
     ),
+
     carritoStoreProvider.overrideWithValue(cart),
   ],
 );
@@ -350,83 +894,158 @@ final class _AuthRepository implements AuthRepositoryContract {
   @override
   SessionData? getSession() => const SessionData(
     claveUsuario: 12,
+
     nombreUsuario: 'VALERIA CORDERO',
+
     claveTelefono: 2,
+
     subcanalUsuario: 1,
   );
+
   @override
   Future<LoginResult> login({
     required String telefono,
+
     required String contrasena,
   }) => throw UnimplementedError();
+
   @override
   Future<void> logout() async {}
 }
 
 final class _PedidoRepository implements PedidoRepositoryContract {
-  const _PedidoRepository(this.products);
+  _PedidoRepository(this.products, this.minimums);
+
+  MontosMinimos minimums;
+  bool failMinimums = false;
 
   final List<Producto> products;
 
   @override
   Future<CalificacionResult> calificarServicio(CalificacionRequest request) =>
       throw UnimplementedError();
+
   @override
   Future<CancelarPedidoResult> cancelarPedido(int pedidoId) =>
       throw UnimplementedError();
+
   @override
   Future<List<PedidoHistorial>> getPedidos(int clienteId) async => const [];
+
   @override
   Future<PedidoSeguimientoInfo> getUnPedido(int pedidoId) =>
       throw UnimplementedError();
+
   @override
   Future<CreateOrderResult> createOrder(CreateOrderRequest request) =>
       throw UnimplementedError();
+
   @override
   Future<List<TiempoFase>> getTiempos() async => const [];
+
   @override
   Future<List<Producto>> getPrecios() async => products;
 
   @override
-  Future<MontosMinimos> getMontosMinimos() async => const MontosMinimos.empty();
+  Future<MontosMinimos> getMontosMinimos() async {
+    if (failMinimums) throw StateError('No se pudieron cargar los mínimos');
+    return minimums;
+  }
 }
 
 const _defaultProducts = [
   Producto(
     id: 2,
+
     descripcion: 'CILINDRO 30 KG',
+
     presentacion: '30 KG',
+
     servicioId: 1,
+
     precioCentavos: 60000,
   ),
+
   Producto(
     id: 3,
+
     descripcion: 'CILINDRO 45 KG',
+
     presentacion: '45 KG',
+
     servicioId: 1,
+
     precioCentavos: 90000,
   ),
+
   Producto(
     id: 4,
+
     descripcion: 'GARRAFÓN NATURAL',
+
     presentacion: '20 L',
+
     servicioId: 3,
+
     precioCentavos: 5000,
   ),
+
   Producto(
     id: 20,
+
     descripcion: 'BULTO DE ADULTO 20 KG',
+
     presentacion: '20 KG',
+
     servicioId: 9,
+
     precioCentavos: 40000,
   ),
 ];
 
+const _dynamicProduct = Producto(
+  id: 25,
+
+  descripcion: 'CROQUETAS PARA GATO 15 KG',
+
+  presentacion: '15 KG',
+
+  servicioId: 9,
+
+  precioCentavos: 34000,
+
+  tipoProductoId: 4,
+
+  tipoProducto: 'Alimento para mascota',
+
+  urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
+);
+
+const _secondDynamicProduct = Producto(
+  id: 26,
+
+  descripcion: 'CROQUETAS PARA CACHORRO 12 KG',
+
+  presentacion: '12 KG',
+
+  servicioId: 9,
+
+  precioCentavos: 36000,
+
+  tipoProductoId: 4,
+
+  tipoProducto: 'Alimento para mascota',
+);
+
 const _stationaryProduct = Producto(
   id: 9,
+
   descripcion: 'GAS ESTACIONARIO',
+
   presentacion: 'LITRO',
+
   servicioId: 1,
+
   precioCentavos: 1200,
 );
 
@@ -434,52 +1053,71 @@ Color? _optionColor(WidgetTester tester, int productId) {
   final container = tester.widget<AnimatedContainer>(
     find.byKey(ValueKey('product-option-$productId')),
   );
+
   return (container.decoration as BoxDecoration).color;
 }
 
 final class _CartStore implements CarritoStore {
   List<ItemPedido> items = [];
+
   @override
   List<ItemPedido> read() => items;
+
   @override
   Future<void> save(List<ItemPedido> value) async => items = [...value];
 }
 
 final class _DirectionRepository implements DireccionRepositoryContract {
   _DirectionRepository(this.directions, {this.loadFuture});
+
   final List<Direccion> directions;
+
   final Future<List<Direccion>>? loadFuture;
+
   Direccion? selected;
+
   @override
   Future<List<Direccion>> getDirecciones(int clienteId) async {
     if (loadFuture != null) return loadFuture!;
+
     return directions;
   }
 
   @override
   Direccion? getSelected() => selected;
+
   @override
   Future<void> saveSelected(Direccion direccion) async => selected = direccion;
+
   @override
   Future<void> clearSelected() async => selected = null;
+
   @override
   Future<Direccion> getDireccion(int direccionId) async => _address;
+
   @override
   Future<List<Colonia>> getColonias() async => const [];
+
   @override
   Future<List<Calle>> getCalles(int coloniaId) async => const [];
+
   @override
   Future<List<Cerrada>> getCerradas(int coloniaId) async => const [];
+
   @override
   Future<DireccionOperationResult> guardar(
     int clienteId,
+
     DireccionRequest request,
   ) => throw UnimplementedError();
+
   @override
   Future<DireccionOperationResult> actualizar(
     int direccionId,
+
     DireccionRequest request,
   ) => throw UnimplementedError();
+
   @override
   Future<DireccionOperationResult> desactivar(int direccionId, int clienteId) =>
       throw UnimplementedError();
@@ -487,34 +1125,92 @@ final class _DirectionRepository implements DireccionRepositoryContract {
 
 const _address = Direccion(
   id: 9,
+
   descripcion: 'CASA',
+
   tipoCalle: 'CALLE',
+
   idCalle: 2,
+
   calle: 'HIDALGO',
+
   numeroInterior: '',
+
   numeroExterior: '123',
+
   idColonia: 3,
+
   colonia: 'CENTRO',
+
   idCiudad: 1,
+
   ciudad: 'TORREÓN',
+
   idEstado: 5,
+
   estado: 'COAHUILA',
+
   idZona: 0,
+
   zona: '',
+
   idCodigoPostal: 0,
+
   codigoPostal: '',
+
   referencias: '',
+
   activa: true,
+
   latitud: 25.5,
+
   longitud: -103.4,
+
   observaciones: '',
+
   entreCalle1: '',
+
   entreCalle2: '',
+
   entreCalle3: '',
+
   idSegmento: 1,
+
   cerrada: '',
+
   requiereClave: false,
+
   clave: '',
+
   idRuta: 0,
+
   tienePedido: false,
 );
+
+Future<void> _pumpUi(
+  WidgetTester tester, {
+  Duration duration = const Duration(seconds: 1),
+}) async {
+  // Evita pumpAndSettle(): el skeleton/shimmer mantiene frames programados
+  // de forma continua y hace que pumpAndSettle termine por timeout.
+  await tester.pump();
+  // Avanza varios frames para completar tambi?n el rebote del carrusel
+  // y las transiciones que empiezan despu?s del primer frame.
+  final frame = Duration(microseconds: duration.inMicroseconds ~/ 20);
+  for (var index = 0; index < 20; index++) {
+    await tester.pump(frame);
+  }
+}
+
+// PageView puede mantener montadas cards vecinas fuera de la vista.
+// Acota el finder antes de desplazar o pulsar un control repetido.
+Finder _inCurrentPage(WidgetTester tester, Finder matching) {
+  final pageView = tester.widget<PageView>(find.byType(PageView));
+  final page = pageView.controller!.page!.round();
+  final children =
+      (pageView.childrenDelegate as SliverChildListDelegate).children;
+  return find.descendant(
+    of: find.byKey(children[page].key!),
+    matching: matching,
+  );
+}

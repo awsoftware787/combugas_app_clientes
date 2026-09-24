@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../controllers/carrito_controller.dart';
+import '../controllers/catalogo_productos_controller.dart';
 import '../controllers/confirmacion_controller.dart';
 import '../models/item_pedido.dart';
 import '../models/metodo_pago.dart';
@@ -22,6 +23,9 @@ class ConfirmacionScreen extends ConsumerStatefulWidget {
 
 class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   String? _accessKey;
+  bool _preparing = true;
+  String? _preparationError;
+  Set<int> _unavailableProductIds = {};
   late final bool _hasActiveOrder;
 
   @override
@@ -31,10 +35,49 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
         ref.read(direccionControllerProvider).selected?.tienePedido ?? false;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref
+      _prepare();
+    });
+  }
+
+  Future<void> _prepare() async {
+    setState(() {
+      _preparing = true;
+      _preparationError = null;
+      _unavailableProductIds = {};
+    });
+    try {
+      await ref
+          .read(catalogoProductosControllerProvider.notifier)
+          .load(refresh: true);
+      if (!mounted) return;
+      final catalog = ref.read(catalogoProductosControllerProvider);
+      if (catalog.error != null) throw StateError(catalog.error!);
+      final availableIds = catalog.productos.map((product) => product.id).toSet();
+      _unavailableProductIds = ref
+          .read(carritoControllerProvider)
+          .items
+          .map((item) => item.productoId)
+          .where((id) => !availableIds.contains(id))
+          .toSet();
+      if (_unavailableProductIds.isNotEmpty) {
+        _preparationError = 'Un producto no se encuentra disponible.';
+        return;
+      }
+      await ref
+          .read(carritoControllerProvider.notifier)
+          .actualizarPrecios(catalog.productos);
+      if (!mounted) return;
+      await ref
           .read(confirmacionControllerProvider.notifier)
           .prepare(ref.read(carritoControllerProvider).items);
-    });
+    } catch (_) {
+      if (mounted) {
+        _preparationError =
+            'No se pudieron actualizar los precios. Intenta nuevamente.';
+      }
+    } finally {
+      if (mounted) setState(() => _preparing = false);
+    }
   }
 
   @override
@@ -82,6 +125,10 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
             else
               ...cart.items.asMap().entries.map(
                 (entry) => Card(
+                  color:
+                      _unavailableProductIds.contains(entry.value.productoId)
+                          ? Colors.red.shade100
+                          : null,
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: CartItemTile(
@@ -89,7 +136,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                       controls: CartItemControls(
                         item: entry.value,
                         index: entry.key,
-                        enabled: !confirmation.saving,
+                        enabled: !confirmation.saving && !_preparing,
                       ),
                     ),
                   ),
@@ -103,29 +150,34 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
-            ...MetodoPago.values.map(
-              (payment) => Card(
-                child: RadioListTile<MetodoPago>(
-                  value: payment,
-                  groupValue: confirmation.metodoPago,
-                  onChanged:
-                      confirmation.saving
-                          ? null
-                          : (value) {
-                            if (value != null) {
-                              ref
-                                  .read(confirmacionControllerProvider.notifier)
-                                  .selectPayment(value);
-                            }
-                          },
-                  secondary: Image.asset(
-                    payment.asset,
-                    width: 46,
-                    height: 46,
-                    fit: BoxFit.contain,
-                  ),
-                  title: Text(payment.descripcion),
-                ),
+            RadioGroup<MetodoPago>(
+              groupValue: confirmation.metodoPago,
+              onChanged: (value) {
+                if (!confirmation.saving && value != null) {
+                  ref
+                      .read(confirmacionControllerProvider.notifier)
+                      .selectPayment(value);
+                }
+              },
+              child: Column(
+                children:
+                    MetodoPago.values
+                        .map(
+                          (payment) => Card(
+                            child: RadioListTile<MetodoPago>(
+                              value: payment,
+                              enabled: !confirmation.saving,
+                              secondary: Image.asset(
+                                payment.asset,
+                                width: 46,
+                                height: 46,
+                                fit: BoxFit.contain,
+                              ),
+                              title: Text(payment.descripcion),
+                            ),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
             const SizedBox(height: 8),
@@ -142,7 +194,8 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                     : 'Clave de acceso: $_accessKey',
               ),
             ),
-            if (confirmation.status == ConfirmacionStatus.loadingTime)
+            if (_preparing ||
+                confirmation.status == ConfirmacionStatus.loadingTime)
               const Padding(
                 padding: EdgeInsets.all(12),
                 child: Center(child: CircularProgressIndicator()),
@@ -163,12 +216,17 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
               ),
+            if (_preparationError != null) ...[
+              Text(_preparationError!),
+              TextButton(onPressed: _prepare, child: const Text('Reintentar')),
+            ],
             const SizedBox(height: 8),
           ],
         ),
         bottomNavigationBar: _ConfirmationActions(
           saving: confirmation.saving,
-          enabled: cart.items.isNotEmpty,
+          enabled:
+              cart.items.isNotEmpty && !_preparing && _preparationError == null,
           hasActiveOrder: _hasActiveOrder,
           onClear: _clearCart,
           onConfirm: _confirm,
@@ -178,7 +236,7 @@ class _ConfirmacionScreenState extends ConsumerState<ConfirmacionScreen> {
   }
 
   Future<void> _confirm() async {
-    if (_hasActiveOrder) return;
+    if (_hasActiveOrder || _preparing || _preparationError != null) return;
     final accepted = await showDialog<bool>(
       context: context,
       builder:

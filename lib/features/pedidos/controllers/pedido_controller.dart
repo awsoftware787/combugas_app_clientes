@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/network_exception.dart';
 import '../data/pedido_repository.dart';
 import '../models/producto.dart';
+import 'catalogo_productos_controller.dart';
 
 enum PedidoStatus { idle, loading, ready, error }
 
@@ -13,6 +14,7 @@ final class PedidoState {
     this.montosMinimos = const MontosMinimos.empty(),
     this.error,
     this.refreshing = false,
+    this.revisionPrecios = 0,
   });
 
   final PedidoStatus status;
@@ -20,6 +22,7 @@ final class PedidoState {
   final MontosMinimos montosMinimos;
   final String? error;
   final bool refreshing;
+  final int revisionPrecios;
 
   Producto? producto(int id) {
     for (final item in productos) {
@@ -51,15 +54,26 @@ final class PedidoController extends Notifier<PedidoState> {
       productos: state.productos,
       montosMinimos: state.montosMinimos,
       refreshing: refresh && hasCatalog,
+      revisionPrecios: state.revisionPrecios,
     );
     try {
+      final catalogController = ref.read(
+        catalogoProductosControllerProvider.notifier,
+      );
+      await catalogController.load(refresh: refresh);
+      final catalog = ref.read(catalogoProductosControllerProvider);
+      if (catalog.status == CatalogoProductosStatus.error) {
+        throw StateError(catalog.error ?? 'No fue posible cargar productos');
+      }
       final repository = ref.read(pedidoRepositoryProvider);
-      final productos = await repository.getPrecios();
+      final productos = catalog.productos;
       final minimos = await repository.getMontosMinimos();
       state = PedidoState(
         status: PedidoStatus.ready,
         productos: productos,
         montosMinimos: minimos,
+        revisionPrecios: state.revisionPrecios + 1,
+        error: catalog.error,
       );
     } catch (error) {
       final message = _message(error);
@@ -68,6 +82,7 @@ final class PedidoController extends Notifier<PedidoState> {
           status: PedidoStatus.ready,
           productos: state.productos,
           montosMinimos: state.montosMinimos,
+          revisionPrecios: state.revisionPrecios,
           error:
               'No se pudieron actualizar los productos. Se conserva la lista anterior.',
         );

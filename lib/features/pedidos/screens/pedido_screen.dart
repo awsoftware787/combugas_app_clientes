@@ -4,9 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_assets.dart';
+import '../../../core/network/network_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../auth/data/auth_repository.dart';
 import '../../direcciones/controllers/direccion_controller.dart';
 import '../../direcciones/models/direccion.dart';
 import '../controllers/carrito_controller.dart';
@@ -32,10 +34,13 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _validarFechaEntrega();
+    });
     Future.microtask(() async {
       await Future.wait([
         ref.read(direccionControllerProvider.notifier).load(),
-        ref.read(pedidoControllerProvider.notifier).load(),
+        ref.read(pedidoControllerProvider.notifier).load(refresh: true),
       ]);
       if (!mounted) return;
       final hour = DateTime.now().hour;
@@ -49,6 +54,144 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  // Future<void> _validarFechaEntrega() async {
+  //   try {
+  //     final validation =
+  //         await ref.read(clientesSoapServiceProvider).validarFechaEntrega();
+  //     if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+  //     if (!validation.permiteEntrega) {
+  //       await showDialog<void>(
+  //         context: context,
+  //         builder:
+  //             (dialogContext) => AlertDialog(
+  //               title: const Text(
+  //                 '¡Aviso!',
+  //                 textAlign: TextAlign.center,
+  //                 style: TextStyle(
+  //                   color: Colors.blueAccent,
+  //                   fontWeight: FontWeight.bold,
+  //                 ),
+  //               ),
+  //               content: Text(
+  //                 validation.mensaje ??
+  //                     'El día de hoy no contamos con servicio de entrega de pedidos.',
+  //                 textAlign: TextAlign.center,
+  //               ),
+  //               actions: [
+  //                 TextButton(
+  //                   onPressed: () => Navigator.pop(dialogContext),
+  //                   child: const Text('Aceptar'),
+  //                 ),
+  //               ],
+  //             ),
+  //       );
+  //     }
+  //   } catch (error) {
+  //     if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+  //     _message(
+  //       error is NetworkException
+  //           ? error.message
+  //           : 'Ocurrió un error inesperado. Inténtalo nuevamente.',
+  //     );
+  //   }
+  // }
+
+  Future<void> _validarFechaEntrega() async {
+    try {
+      final validation =
+          await ref.read(clientesSoapServiceProvider).validarFechaEntrega();
+
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+
+      if (!validation.permiteEntrega) {
+        await showDialog<void>(
+          context: context,
+          barrierDismissible: true,
+          builder:
+              (dialogContext) => Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFFFF3E0),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.event_busy_rounded,
+                          color: Color(0xFFE65100),
+                          size: 34,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Sin servicio por hoy',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF2D2D2D),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        validation.mensaje ??
+                            'Hoy no contamos con servicio de entrega de pedidos. Te invitamos a intentarlo nuevamente en otro momento.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          height: 1.5,
+                          color: Color(0xFF666666),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFB71C1C),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: const Text(
+                            'Entendido',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        );
+      }
+    } catch (error) {
+      if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+
+      _message(
+        error is NetworkException
+            ? error.message
+            : 'Ocurrió un error inesperado. Inténtalo nuevamente.',
+      );
+    }
   }
 
   @override
@@ -202,10 +345,20 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
     final subchannel = session?.subcanalUsuario ?? 0;
     return buildProductCatalog(state.productos).map((group) {
       if (group.isStationary) {
+        final product = group.products.single;
         return _StationaryPage(
           key: ValueKey(group.key),
-          product: group.products.single,
-          minimums: state.montosMinimos,
+          product: product,
+          minimums: MontosMinimos(
+            dineroCentavos:
+                product.montoMinimoEstCentavos > 0
+                    ? product.montoMinimoEstCentavos
+                    : state.montosMinimos.dineroCentavos,
+            litros:
+                product.litroMinimoEst > 0
+                    ? product.litroMinimoEst
+                    : state.montosMinimos.litros,
+          ),
         );
       }
       return _ProductPage(
@@ -213,23 +366,34 @@ class _PedidoScreenState extends ConsumerState<PedidoScreen> {
         title: group.title,
         products: group.products,
         subchannel: subchannel,
+        minimums: state.montosMinimos,
+        pricesRevision: state.revisionPrecios,
       );
     }).toList();
   }
 
   Future<void> _addAddress() async {
     await context.push('/direcciones/nueva');
+    if (mounted) {
+      await ref.read(pedidoControllerProvider.notifier).load(refresh: true);
+    }
     if (mounted) await ref.read(direccionControllerProvider.notifier).load();
   }
 
-  void _continue() {
+  Future<void> _continue() async {
     if (!_hasAddress()) return;
-    context.push('/confirmacion');
+    await context.push('/confirmacion');
+    if (mounted) {
+      await ref.read(pedidoControllerProvider.notifier).load(refresh: true);
+    }
   }
 
-  void _openCart() {
+  Future<void> _openCart() async {
     if (!_hasAddress()) return;
-    context.push('/carrito');
+    await context.push('/carrito');
+    if (mounted) {
+      await ref.read(pedidoControllerProvider.notifier).load(refresh: true);
+    }
   }
 
   // void _openCart() {
@@ -305,7 +469,7 @@ class _DireccionSelector extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<Direccion>(
-          value: state.selected,
+          initialValue: state.selected,
           isExpanded: true,
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.home, color: AppColors.accent),
@@ -386,39 +550,90 @@ class _ProductPage extends ConsumerStatefulWidget {
     required this.title,
     required this.products,
     required this.subchannel,
+    required this.minimums,
+    required this.pricesRevision,
   });
   final String title;
   final List<Producto> products;
   final int subchannel;
+  final MontosMinimos minimums;
+  final int pricesRevision;
 
   @override
   ConsumerState<_ProductPage> createState() => _ProductPageState();
 }
 
-class _ProductPageState extends ConsumerState<_ProductPage> {
+class _ProductPageState extends ConsumerState<_ProductPage>
+    with AutomaticKeepAliveClientMixin<_ProductPage> {
   int _quantity = 1;
   int _selected = 0;
 
+  int get _initialQuantity =>
+      widget.products.isEmpty
+          ? 1
+          : widget.minimums.cantidadInicial(widget.products[_selected]);
+
+  @override
+  void initState() {
+    super.initState();
+    _quantity = _initialQuantity;
+  }
+
+  @override
+  void didUpdateWidget(covariant _ProductPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (_selected >= widget.products.length) _selected = 0;
+    if (oldWidget.pricesRevision != widget.pricesRevision &&
+        widget.products.isNotEmpty &&
+        widget.products[_selected].esCroqueta2Kg) {
+      _quantity = _initialQuantity;
+    }
+  }
+
+  void _decrease(Producto product) {
+    final quantity = _quantity - widget.minimums.incremento(product);
+    final error = widget.minimums.validarCantidad(product, quantity);
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    if (quantity > 0) setState(() => _quantity = quantity);
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     if (widget.products.isEmpty) {
       return const Center(child: Text('Producto no disponible.'));
     }
     if (_selected >= widget.products.length) _selected = 0;
     final product = widget.products[_selected];
     final label =
-        product.esCroqueta ? product.opcionCroqueta : product.descripcion;
+        product.esCroqueta && widget.products.length == 1
+            ? product.presentacion
+            : product.esCroqueta
+            ? product.opcionCroqueta
+            : product.descripcion;
     return ProductDisplayCard(
       product: product,
       title: widget.title,
       priceLabel: formatoMoneda(product.precioCentavos * _quantity),
       priceKey: const ValueKey('product-amount'),
       productSelector:
-          ProductOptionSelector.supports(product)
+          widget.products.length > 1
               ? ProductOptionSelector(
                 products: widget.products,
                 selectedIndex: _selected,
-                onSelected: (value) => setState(() => _selected = value),
+                onSelected:
+                    (value) => setState(() {
+                      _selected = value;
+                      _quantity = _initialQuantity;
+                    }),
                 layout: ProductOptionSelectorLayout.segments,
               )
               : Text(label, textAlign: TextAlign.center),
@@ -429,9 +644,14 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
             child: _QuantitySelector(
               quantity: _quantity,
               onDecrease:
-                  _quantity > 1 ? () => setState(() => _quantity--) : null,
-              onIncrease: () => setState(() => _quantity++),
-              onReset: () => setState(() => _quantity = 1),
+                  product.esCroqueta2Kg || _quantity > 1
+                      ? () => _decrease(product)
+                      : null,
+              onIncrease:
+                  () => setState(
+                    () => _quantity += widget.minimums.incremento(product),
+                  ),
+              onReset: () => setState(() => _quantity = _initialQuantity),
             ),
           ),
           const SizedBox(width: 8),
@@ -452,10 +672,11 @@ class _ProductPageState extends ConsumerState<_ProductPage> {
                         producto: product,
                         cantidad: _quantity,
                         subcanalUsuario: widget.subchannel,
+                        minimos: widget.minimums,
                       );
                   if (!context.mounted) return;
                   if (result.agregado) {
-                    setState(() => _quantity = 1);
+                    setState(() => _quantity = _initialQuantity);
                   }
                   ScaffoldMessenger.of(
                     context,

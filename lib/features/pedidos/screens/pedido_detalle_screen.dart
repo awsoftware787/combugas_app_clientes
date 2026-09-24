@@ -6,8 +6,10 @@ import '../../../core/constants/app_assets.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/branded_app_bar_title.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../controllers/catalogo_productos_controller.dart';
 import '../controllers/pedido_detalle_controller.dart';
 import '../models/item_pedido.dart';
+import '../models/producto.dart';
 import '../presentation/pedido_formatters.dart';
 import '../widgets/cart_item_tile.dart';
 import '../widgets/pedido_list_item.dart';
@@ -25,11 +27,14 @@ class _PedidoDetalleScreenState extends ConsumerState<PedidoDetalleScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-      () => ref
-          .read(pedidoDetalleControllerProvider.notifier)
-          .load(widget.pedidoId),
-    );
+    Future.microtask(() async {
+      await Future.wait([
+        ref
+            .read(pedidoDetalleControllerProvider.notifier)
+            .load(widget.pedidoId),
+        ref.read(catalogoProductosControllerProvider.notifier).load(),
+      ]);
+    });
   }
 
   @override
@@ -44,6 +49,7 @@ class _PedidoDetalleScreenState extends ConsumerState<PedidoDetalleScreen> {
       }
     });
     final state = ref.watch(pedidoDetalleControllerProvider);
+    final catalogo = ref.watch(catalogoProductosControllerProvider).productos;
     return Scaffold(
       appBar: AppBar(
         foregroundColor: AppColors.white,
@@ -62,6 +68,7 @@ class _PedidoDetalleScreenState extends ConsumerState<PedidoDetalleScreen> {
         ),
         _ => _PedidoDetailBody(
           state: state,
+          catalogo: catalogo,
           onCancel: _cancel,
           onTracking: () => context.push('/seguimiento/${widget.pedidoId}'),
         ),
@@ -109,10 +116,12 @@ class _PedidoDetailBody extends StatelessWidget {
     required this.state,
     required this.onCancel,
     required this.onTracking,
+    required this.catalogo,
   });
   final PedidoDetalleState state;
   final VoidCallback onCancel;
   final VoidCallback onTracking;
+  final List<Producto> catalogo;
 
   @override
   Widget build(BuildContext context) {
@@ -137,14 +146,25 @@ class _PedidoDetailBody extends StatelessWidget {
         const Divider(),
         Text('Productos', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
-        ...pedido.productos.map(
-          (product) => Card(
+        ...pedido.productos.map((product) {
+          Producto? productoCatalogo;
+          for (final item in catalogo) {
+            if (item.id == product.productoId) {
+              productoCatalogo = item;
+              break;
+            }
+          }
+          return Card(
             child: Padding(
               padding: const EdgeInsets.all(12),
-              child: CartItemTile(item: product.toCartItem()),
+              child: CartItemTile(
+                item: product.toCartItem(),
+                productoCatalogo: productoCatalogo,
+                historicalFallback: true,
+              ),
             ),
-          ),
-        ),
+          );
+        }),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

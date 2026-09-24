@@ -7,6 +7,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test(
+    'rechaza bolsas de 2 kg debajo del mínimo o fuera del múltiplo',
+    () async {
+      final store = _Store();
+      final container = _container(store);
+      addTearDown(container.dispose);
+      final controller = container.read(carritoControllerProvider.notifier);
+      const product = Producto(
+        id: 90,
+        descripcion: 'CROQUETAS 2 KG',
+        presentacion: 'BOLSA',
+        servicioId: ServicioIds.croquetas,
+        precioCentavos: 5000,
+      );
+      const minimums = MontosMinimos(
+        dineroCentavos: 60000,
+        litros: 60,
+        unidades: 10,
+        isMultiploCroquetas: true,
+        valorMultiploCroquetas: 10,
+      );
+      for (final quantity in [0, 1, 9, 11, 15]) {
+        final result = await controller.agregarProducto(
+          producto: product,
+          cantidad: quantity,
+          subcanalUsuario: 1,
+          minimos: minimums,
+        );
+        expect(result.agregado, isFalse);
+        expect(
+          result.mensaje,
+          'La cantidad mínima es 10 bolsas y debe ser múltiplo de 10.',
+        );
+        expect(store.items, isEmpty);
+      }
+      for (final quantity in [10, 20]) {
+        final result = await controller.agregarProducto(
+          producto: product,
+          cantidad: quantity,
+          subcanalUsuario: 1,
+          minimos: minimums,
+        );
+        expect(result.agregado, isTrue);
+      }
+      expect(store.items.single.cantidad, 30);
+      expect(store.items.single.importeCentavos, 150000);
+    },
+  );
+
   test('restaura, persiste y limpia el carrito', () async {
     final store = _Store([_item]);
     final container = _container(store);
@@ -118,6 +167,38 @@ void main() {
     },
   );
 
+  test('croquetas del mismo tipo conservan identidad por producto', () async {
+    final store = _Store();
+    final container = _container(store);
+    addTearDown(container.dispose);
+    final controller = container.read(carritoControllerProvider.notifier);
+
+    await controller.agregarProducto(
+      producto: _dynamicProduct,
+      cantidad: 1,
+      subcanalUsuario: 1,
+    );
+    await controller.agregarProducto(
+      producto: _anotherDynamicProduct,
+      cantidad: 2,
+      subcanalUsuario: 1,
+    );
+
+    expect(container.read(carritoControllerProvider).items, hasLength(2));
+    expect(
+      container
+          .read(carritoControllerProvider)
+          .items
+          .map((item) => item.productoId),
+      [25, 26],
+    );
+
+    await controller.eliminarLinea(0);
+    final remaining = container.read(carritoControllerProvider).items.single;
+    expect(remaining.productoId, 26);
+    expect(remaining.cantidad, 2);
+  });
+
   test('cantidad modificada con más se acumula al volver a agregar', () async {
     final store = _Store();
     final container = _container(store);
@@ -213,6 +294,28 @@ void main() {
       expect(store.items, isEmpty);
     },
   );
+
+  test('producto dinámico conserva metadatos e icono en carrito', () async {
+    final store = _Store();
+    final container = _container(store);
+    addTearDown(container.dispose);
+
+    final result = await container
+        .read(carritoControllerProvider.notifier)
+        .agregarProducto(
+          producto: _dynamicProduct,
+          cantidad: 2,
+          subcanalUsuario: 1,
+        );
+
+    final item = container.read(carritoControllerProvider).items.single;
+    expect(result.agregado, isTrue);
+    expect(item.productoId, 25);
+    expect(item.importeCentavos, 68000);
+    expect(item.tipoProductoId, 4);
+    expect(item.tipoProducto, 'Alimento para mascota');
+    expect(item.urlIcono, contains('croquetas_gato.png'));
+  });
 }
 
 ProviderContainer _container(_Store store) => ProviderContainer(
@@ -262,6 +365,25 @@ const _stationary = Producto(
   presentacion: 'LITRO',
   servicioId: 1,
   precioCentavos: 1200,
+);
+const _dynamicProduct = Producto(
+  id: 25,
+  descripcion: 'CROQUETAS PARA GATO 15 KG',
+  presentacion: '15 KG',
+  servicioId: 9,
+  precioCentavos: 34000,
+  tipoProductoId: 4,
+  tipoProducto: 'Alimento para mascota',
+  urlIcono: 'https://servidor/Images/productos/croquetas_gato.png',
+);
+const _anotherDynamicProduct = Producto(
+  id: 26,
+  descripcion: 'CROQUETAS PARA CACHORRO 12 KG',
+  presentacion: '12 KG',
+  servicioId: 9,
+  precioCentavos: 36000,
+  tipoProductoId: 4,
+  tipoProducto: 'Alimento para mascota',
 );
 final _item = ItemPedido(
   productoId: 2,

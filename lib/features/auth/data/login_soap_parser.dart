@@ -18,7 +18,7 @@ final class LoginSoapParser {
 
       if (succeeded && message == 'LOG') {
         final payload = _jsonObject(data);
-        if (_int(payload, '_mercado') != 1) {
+        if (_int(payload, '_mercado') == 2) {
           return const LoginInstitutionalAccount();
         }
         if (_bool(payload, '_bloqueado')) {

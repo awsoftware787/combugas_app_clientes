@@ -187,12 +187,12 @@ GoRouter _router({String initialLocation = '/register'}) {
   return GoRouter(
     initialLocation: initialLocation,
     routes: [
-      GoRoute(path: '/login', builder: (_, __) => const Text('LOGIN')),
-      GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(path: '/login', builder: (_, _) => const Text('LOGIN')),
+      GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
       GoRoute(
         path: '/verification',
         builder:
-            (_, __) => const Column(
+            (_, _) => const Column(
               children: [
                 Expanded(child: VerificationScreen(accountKey: 44)),
                 Text('cuenta: 44'),

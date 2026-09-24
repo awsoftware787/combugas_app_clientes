@@ -15,7 +15,7 @@ import 'historial_test_support.dart';
 import 'pedido_historial_fixture.dart';
 
 void main() {
-  testWidgets('oculta navegación inferior y la restaura al salir', (
+  testWidgets('conserva el modo global de barras al entrar y salir', (
     tester,
   ) async {
     final calls = <MethodCall>[];
@@ -45,40 +45,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(
-      calls,
-      contains(
-        isA<MethodCall>()
-            .having(
-              (call) => call.method,
-              'method',
-              'SystemChrome.setEnabledSystemUIOverlays',
-            )
-            .having((call) => call.arguments, 'overlays', [
-              'SystemUiOverlay.top',
-            ]),
-      ),
-    );
-
-    calls.clear();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
 
     expect(
-      calls,
-      contains(
-        isA<MethodCall>()
-            .having(
-              (call) => call.method,
-              'method',
-              'SystemChrome.setEnabledSystemUIMode',
-            )
-            .having(
-              (call) => call.arguments,
-              'mode',
-              'SystemUiMode.edgeToEdge',
-            ),
+      calls.where(
+        (call) =>
+            call.method == 'SystemChrome.setEnabledSystemUIOverlays' ||
+            call.method == 'SystemChrome.setEnabledSystemUIMode',
       ),
+      isEmpty,
     );
   });
 

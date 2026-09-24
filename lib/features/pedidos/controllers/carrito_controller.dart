@@ -31,7 +31,12 @@ final class CarritoController extends Notifier<CarritoState> {
     required Producto producto,
     required int cantidad,
     required int subcanalUsuario,
+    MontosMinimos minimos = const MontosMinimos.empty(),
   }) async {
+    final error = minimos.validarCantidad(producto, cantidad);
+    if (error != null) {
+      return AgregarResultado(agregado: false, mensaje: error);
+    }
     if (producto.esAgua && subcanalUsuario != 1) {
       return const AgregarResultado(
         agregado: false,
@@ -48,6 +53,9 @@ final class CarritoController extends Notifier<CarritoState> {
       items[index] = previous.copyWith(
         descripcion: producto.descripcion,
         presentacion: producto.presentacion,
+        tipoProductoId: producto.tipoProductoId,
+        tipoProducto: producto.tipoProducto,
+        urlIcono: producto.urlIcono,
         cantidad: previous.cantidad + cantidad,
         importeCentavos: previous.importeCentavos + importe,
         fecha: now,
@@ -122,6 +130,27 @@ final class CarritoController extends Notifier<CarritoState> {
 
   Future<void> clear() => _replace(const []);
 
+  Future<void> actualizarPrecios(List<Producto> productos) async {
+    final porId = {for (final producto in productos) producto.id: producto};
+    final items = state.items
+        .map((item) {
+          final producto = porId[item.productoId];
+          if (producto == null || producto.precioCentavos <= 0) {
+            throw StateError('Precio no disponible para ${item.productoId}');
+          }
+          final importe = (item.cantidad * producto.precioCentavos).round();
+          return item.copyWith(
+            importeCentavos: importe,
+            descripcion:
+                producto.esEstacionario
+                    ? '${item.cantidad.toStringAsFixed(2)} litros gas estacionario = ${formatoMoneda(importe)}'
+                    : producto.descripcion,
+          );
+        })
+        .toList(growable: false);
+    await _replace(items);
+  }
+
   Future<void> eliminarLinea(int index) async {
     if (index < 0 || index >= state.items.length) return;
     final items = [...state.items]..removeAt(index);
@@ -175,6 +204,9 @@ final class CarritoController extends Notifier<CarritoState> {
     fecha: fecha,
     servicioId: producto.servicioId,
     presentacion: producto.presentacion,
+    tipoProductoId: producto.tipoProductoId,
+    tipoProducto: producto.tipoProducto,
+    urlIcono: producto.urlIcono,
   );
 
   bool _esMismoProducto(ItemPedido actual, ItemPedido nuevo) {
@@ -203,6 +235,9 @@ final class CarritoController extends Notifier<CarritoState> {
       fecha: DateTime.now(),
       servicioId: producto.servicioId,
       presentacion: producto.presentacion,
+      tipoProductoId: producto.tipoProductoId,
+      tipoProducto: producto.tipoProducto,
+      urlIcono: producto.urlIcono,
     );
     await _replace([...state.items, item]);
   }

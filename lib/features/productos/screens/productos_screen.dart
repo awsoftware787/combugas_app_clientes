@@ -9,9 +9,9 @@ import '../../auth/controllers/auth_controller.dart';
 import '../../pedidos/models/item_pedido.dart';
 import '../../pedidos/models/producto.dart';
 import '../../pedidos/presentation/product_catalog.dart';
-import '../../pedidos/presentation/producto_asset_resolver.dart';
 import '../../pedidos/widgets/pedido_drawer.dart';
 import '../../pedidos/widgets/product_option_selector.dart';
+import '../../pedidos/widgets/producto_icono.dart';
 import '../controllers/productos_controller.dart';
 
 class ProductosRouteScreen extends ConsumerWidget {
@@ -44,7 +44,7 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
   void initState() {
     super.initState();
     Future.microtask(
-      () => ref.read(productosControllerProvider.notifier).load(),
+      () => ref.read(productosControllerProvider.notifier).load(refresh: true),
     );
   }
 
@@ -126,13 +126,6 @@ class _ProductosScreenState extends ConsumerState<ProductosScreen> {
                 ),
               ),
             ),
-            // const SizedBox(height: 14),
-            // Center(
-            //   child: SizedBox(
-            //     width: contentWidth,
-            //     child: const _ProductBenefits(),
-            //   ),
-            // ),
             const SizedBox(height: 28),
             _ProductIndicator(current: _page + 1, total: catalog.length),
           ],
@@ -190,7 +183,11 @@ class _PublicProductPageState extends State<_PublicProductPage> {
     if (_selected >= widget.group.products.length) _selected = 0;
     final product = widget.group.products[_selected];
     final label =
-        product.esCroqueta ? product.opcionCroqueta : product.descripcion;
+        product.esCroqueta && widget.group.products.length == 1
+            ? product.presentacion
+            : product.esCroqueta
+            ? product.opcionCroqueta
+            : product.descripcion;
     return _PublicProductCard(
       group: widget.group,
       product: product,
@@ -275,9 +272,10 @@ class _PublicProductCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Image.asset(
-                    ProductoAssetResolver.forProducto(product),
-                    key: ValueKey('product-image-${product.id}'),
+                  child: ProductoIcono.producto(
+                    producto: product,
+                    showLoadingSkeleton: true,
+                    imageKey: ValueKey('product-image-${product.id}'),
                     fit: BoxFit.contain,
                   ),
                 ),
@@ -291,7 +289,7 @@ class _PublicProductCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          if (ProductOptionSelector.supports(product))
+          if (group.products.length > 1)
             ProductOptionSelector(
               products: group.products,
               selectedIndex: selectedIndex,
@@ -381,81 +379,6 @@ class _CarouselArrow extends StatelessWidget {
       icon: Opacity(
         opacity: onPressed == null ? 0.3 : 1,
         child: Image.asset(asset, width: 22, height: 22),
-      ),
-    ),
-  );
-}
-
-class _ProductBenefits extends StatelessWidget {
-  const _ProductBenefits();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      border: Border.all(color: AppColors.secondary),
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: const Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _Benefit(
-          icon: Icons.verified_user_outlined,
-          title: 'Seguro',
-          description: 'Cilindros certificados y de alta calidad',
-        ),
-        _Benefit(
-          icon: Icons.local_shipping_outlined,
-          title: 'Confiable',
-          description: 'Llevamos el gas hasta tu hogar',
-        ),
-        _Benefit(
-          icon: Icons.support_agent,
-          title: 'Atención',
-          description: 'Soporte rápido y personalizado',
-        ),
-      ],
-    ),
-  );
-}
-
-class _Benefit extends StatelessWidget {
-  const _Benefit({
-    required this.icon,
-    required this.title,
-    required this.description,
-  });
-
-  final IconData icon;
-  final String title;
-  final String description;
-
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Column(
-        children: [
-          Icon(icon, color: AppColors.accent, size: 24),
-          const SizedBox(height: 5),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 3),
-          Text(
-            description,
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppColors.menuBackground,
-              fontSize: 10,
-              height: 1.2,
-            ),
-          ),
-        ],
       ),
     ),
   );

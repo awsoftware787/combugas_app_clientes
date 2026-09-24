@@ -25,10 +25,10 @@ class DireccionCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Row(
           children: [
-            Radio<int>(
-              value: direccion.id,
+            RadioGroup<int>(
               groupValue: selected ? direccion.id : null,
               onChanged: (_) => onSelect(),
+              child: Radio<int>(value: direccion.id),
             ),
             Expanded(
               child: Column(

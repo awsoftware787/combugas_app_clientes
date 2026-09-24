@@ -2,7 +2,7 @@ import '../../../core/constants/app_assets.dart';
 import '../models/item_pedido.dart';
 import '../models/producto.dart';
 
-/// Fuente única de verdad para las imágenes de productos.
+/// Fuente única de verdad para la imagen local usada cuando no hay URL remota.
 abstract final class ProductoAssetResolver {
   static String forProducto(Producto producto) => resolve(
     productoId: producto.id,
@@ -23,32 +23,5 @@ abstract final class ProductoAssetResolver {
     required int servicioId,
     String descripcion = '',
     String presentacion = '',
-  }) {
-    switch (productoId) {
-      case ProductoIds.cilindro30:
-      case ProductoIds.cilindro45:
-        return AppAssets.productCylinder;
-      case ProductoIds.garrafonNatural:
-        return AppAssets.productWater;
-      case ProductoIds.garrafonAlcalino:
-        return AppAssets.productAlkalineWater;
-      case ProductoIds.sixNatural:
-        return AppAssets.productSixPack;
-      case ProductoIds.sixAlcalino:
-        return AppAssets.productAlkalineSixPack;
-      case ProductoIds.estacionario:
-        return AppAssets.productStationaryTank;
-    }
-
-    // El catálogo Android no define IDs constantes para croquetas: el servicio
-    // identifica la familia y la presentación determina bolsa o bulto.
-    final text = '$presentacion $descripcion'.toUpperCase();
-    if (servicioId == ServicioIds.croquetas ||
-        text.contains('BULTO') ||
-        text.contains('BOLSA')) {
-      if (text.contains('BULTO')) return AppAssets.productDogFoodBulk;
-      if (text.contains('BOLSA')) return AppAssets.productDogFoodBag;
-    }
-    return AppAssets.productFallback;
-  }
+  }) => AppAssets.productFallback;
 }

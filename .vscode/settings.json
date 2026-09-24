@@ -1,0 +1,6 @@
+{
+    "gradle.nestedProjects": [
+        "android"
+    ],
+    "java.import.gradle.enabled": false
+}

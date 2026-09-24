@@ -1,3 +1,6 @@
+import 'package:combugas_clientes/core/network/soap_http_client.dart';
+import 'package:combugas_clientes/core/network/soap_service.dart';
+import 'package:combugas_clientes/features/auth/data/clientes_soap_service.dart';
 import 'package:combugas_clientes/core/network/network_exception.dart';
 import 'package:combugas_clientes/features/auth/controllers/auth_controller.dart';
 import 'package:combugas_clientes/features/auth/data/auth_repository.dart';
@@ -21,6 +24,8 @@ import 'package:combugas_clientes/features/pedidos/models/pedido_historial.dart'
 import 'package:combugas_clientes/features/pedidos/models/producto.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 void main() {
   test(
@@ -141,6 +146,25 @@ Future<_TestContext> _context({Object? error, List<ItemPedido>? items}) async {
   final container = ProviderContainer(
     overrides: [
       authRepositoryProvider.overrideWithValue(_AuthRepository()),
+      clientesSoapServiceProvider.overrideWith((ref) {
+        final service = ClientesSoapService(
+          endpoint: Uri.parse('https://example.test/clientes.asmx'),
+          soapService: SoapService(
+            httpClient: SoapHttpClient(
+              client: MockClient(
+                (request) async => http.Response(
+                  '<ValidarFechaEntregaResult>'
+                  '<permite_entrega>true</permite_entrega>'
+                  '</ValidarFechaEntregaResult>',
+                  200,
+                ),
+              ),
+            ),
+          ),
+        );
+        ref.onDispose(service.close);
+        return service;
+      }),
       direccionRepositoryProvider.overrideWithValue(_DirectionRepository()),
       pedidoRepositoryProvider.overrideWithValue(repository),
       carritoStoreProvider.overrideWithValue(cart),

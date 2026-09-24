@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../controllers/carrito_controller.dart';
+import '../controllers/pedido_controller.dart';
 import '../models/item_pedido.dart';
+import '../models/producto.dart';
 import 'cart_item_tile.dart';
 
 class CartItemControls extends ConsumerWidget {
@@ -41,12 +43,7 @@ class CartItemControls extends ConsumerWidget {
         key: ValueKey('cart-item-plus-$index'),
         tooltip: 'Aumentar cantidad',
         icon: Icons.add,
-        onPressed:
-            enabled
-                ? () => ref
-                    .read(carritoControllerProvider.notifier)
-                    .incrementarLinea(index)
-                : null,
+        onPressed: enabled ? () => _increase(context, ref) : null,
       ),
       const SizedBox(width: 4),
       IconButton(
@@ -61,11 +58,46 @@ class CartItemControls extends ConsumerWidget {
   );
 
   Future<void> _decrementOrRemove(BuildContext context, WidgetRef ref) async {
+    if (await _changeCroquettes(context, ref, -1)) return;
     final changed = await ref
         .read(carritoControllerProvider.notifier)
         .disminuirLinea(index);
     if (changed || !context.mounted) return;
     await _confirmAndRemove(context, ref);
+  }
+
+  Future<void> _increase(BuildContext context, WidgetRef ref) async {
+    if (await _changeCroquettes(context, ref, 1)) return;
+    await ref.read(carritoControllerProvider.notifier).incrementarLinea(index);
+  }
+
+  Future<bool> _changeCroquettes(
+    BuildContext context,
+    WidgetRef ref,
+    int direction,
+  ) async {
+    final product = Producto(
+      id: item.productoId,
+      descripcion: item.descripcion,
+      presentacion: item.presentacion,
+      servicioId: item.servicioId,
+      precioCentavos: 0,
+    );
+    if (!product.esCroqueta2Kg) return false;
+    final minimums = ref.read(pedidoControllerProvider).montosMinimos;
+    final quantity =
+        item.cantidad.toInt() + direction * minimums.incremento(product);
+    final error = minimums.validarCantidad(product, quantity);
+    if (error != null) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(error)));
+    } else {
+      await ref
+          .read(carritoControllerProvider.notifier)
+          .actualizarCantidad(index, quantity.toDouble());
+    }
+    return true;
   }
 
   Future<void> _confirmAndRemove(BuildContext context, WidgetRef ref) async {

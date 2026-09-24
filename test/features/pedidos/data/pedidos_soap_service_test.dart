@@ -13,6 +13,39 @@ import 'package:http/testing.dart';
 import '../pedido_historial_fixture.dart';
 
 void main() {
+  for (final bit in [true, false, 1, 0, '"1"', '"0"']) {
+    test('lee columnas de croquetas con bit $bit', () async {
+      final service = PedidosSoapService(
+        endpoint: Uri.parse('http://localhost/ws/pedidos.asmx'),
+        soapService: SoapService(
+          httpClient: SoapHttpClient(
+            client: MockClient(
+              (request) async => http.Response(
+                _response(
+                  'getMontosMinimos',
+                  '[{"montominimo_dinero":600,"montominimo_litros":60,'
+                      '"montominimo_unidades":10,"is_multiplo_croquetas":$bit,'
+                      '"valor_multiplo_croquetas":10}]',
+                ),
+                200,
+              ),
+            ),
+          ),
+        ),
+      );
+      addTearDown(service.close);
+      final minimums = await service.getMontosMinimos();
+      expect(minimums.dineroCentavos, 60000);
+      expect(minimums.litros, 60);
+      expect(minimums.unidades, 10);
+      expect(minimums.valorMultiploCroquetas, 10);
+      expect(
+        minimums.isMultiploCroquetas,
+        bit == true || bit == 1 || bit == '"1"',
+      );
+    });
+  }
+
   test('precios y mínimos usan pedidos.asmx sin parámetros', () async {
     final endpoint = Uri.parse('http://localhost/ws/pedidos.asmx');
     var calls = 0;

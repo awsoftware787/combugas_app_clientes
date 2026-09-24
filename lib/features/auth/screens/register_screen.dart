@@ -236,7 +236,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         if (!didPop) context.go('/login');
       },
       child: Scaffold(
-        body: ColoredBox(
+        body: Material(
           color: AppColors.primary,
           child: SafeArea(
             child: Center(

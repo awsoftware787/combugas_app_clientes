@@ -38,7 +38,8 @@ String buildDireccionGeocodingQuery({
 }
 
 Future<LatLng?> geocodeDireccion(String address) async {
-  final locations = await locationFromAddress(address);
+  final geocoding = Geocoding();
+  final locations = await geocoding.locationFromAddress(address);
   if (locations.isEmpty) return null;
   return LatLng(locations.first.latitude, locations.first.longitude);
 }
@@ -353,7 +354,7 @@ class _DireccionFormState extends State<DireccionForm> {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<Cerrada>(
-                  value: _cerrada,
+                  initialValue: _cerrada,
                   isExpanded: true,
                   decoration: const InputDecoration(
                     labelText: 'Cerrada (opcional)',
