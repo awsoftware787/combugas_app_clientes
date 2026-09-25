@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_assets.dart';
+import '../../../core/constants/app_environment.dart';
 import '../../../core/constants/external_urls.dart';
+import '../../../core/constants/service_endpoints.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_version_text.dart';
 import '../controllers/auth_controller.dart';
@@ -157,6 +159,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final serviceUri =
+        currentEnvironment == AppEnvironment.dev
+            ? Uri.tryParse(ServiceEndpoints.baseUrl)
+            : null;
 
     return Scaffold(
       body: DecoratedBox(
@@ -298,6 +304,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
               ),
+              if (serviceUri != null && serviceUri.hasAuthority)
+                Positioned(
+                  left: 16,
+                  bottom: 10,
+                  child: Text(
+                    'Puerto: ${serviceUri.port}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ),
               const Positioned(
                 right: 16,
                 bottom: 10,
